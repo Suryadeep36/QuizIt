@@ -42,14 +42,16 @@ public class SecurityConfig {
 
         http.csrf(e-> e.disable())
                 .cors(Customizer.withDefaults())
-//                .authorizeHttpRequests(authorizeHttpRequest  -> authorizeHttpRequest
-//                        .requestMatchers(HttpMethod.POST, "/quizit/register").permitAll()
-////                        .requestMatchers(HttpMethod.POST, "/quizit/login").permitAll()
-//                        .anyRequest().authenticated()
-//                )
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                .authorizeHttpRequests(authorizeHttpRequest  -> authorizeHttpRequest
+                        .requestMatchers(HttpMethod.POST, "/quizit/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/quizit/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/quizit/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/quizit/register").permitAll()
+                        .anyRequest().authenticated()
                 )
+//                .authorizeHttpRequests(auth -> auth
+//                        .anyRequest().permitAll()
+//                )
                 .exceptionHandling(ex->ex.authenticationEntryPoint((request, response, e) -> {
 //                                    e.printStackTrace();
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());

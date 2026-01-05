@@ -4,6 +4,8 @@ package com.example.quizit.dtos;
 import com.example.quizit.entities.Role;
 import com.example.quizit.enums.Provider;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.Instant;
@@ -21,9 +23,12 @@ public class UserDto {
     private UUID id;
 
     private String email;
-    private String role;
     private String username;
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
+
 
     private String image;
 

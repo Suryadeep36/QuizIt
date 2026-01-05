@@ -7,7 +7,7 @@ public record TokenResponse(
         String refreshToken,
         long expiresIn,
         String tokenType,
-        UserDto userDto
+        UserDto user
 ) {
         public static TokenResponse of(String accessToken, String refreshToken, long expiresIn, UserDto userDto)
         {

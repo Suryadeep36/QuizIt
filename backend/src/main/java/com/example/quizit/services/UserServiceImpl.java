@@ -26,8 +26,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(UserDto userDto) {
 
+
         if(userDto.getEmail()== null || userDto.getEmail().isBlank() ){
             throw new IllegalArgumentException("Email is required");
+        }
+
+        if (userDto.getUsername()== null || userDto.getUsername().isBlank() ){
+            throw new IllegalArgumentException("Username is required");
         }
 
         if (userRepository.existsByemail(userDto.getEmail())) {

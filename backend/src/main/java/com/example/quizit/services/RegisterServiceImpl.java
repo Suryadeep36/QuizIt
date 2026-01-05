@@ -24,9 +24,13 @@ public class RegisterServiceImpl implements RegisterService {
         //verify password
         //otp
 
+        if(userDto.getPassword() == null || userDto.getPassword().isBlank()){
+            throw new IllegalArgumentException("Password is required");
+        }
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         UserDto user = userService.createUser(userDto);
         return user;
+
     }
 
 }
