@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   LayoutDashboard,
   Settings,
@@ -14,7 +14,6 @@ import {
   ListTodo,
   AlertCircle,
   Trophy,
-  ShieldCheck,
 } from "lucide-react";
 import { useParams } from "react-router";
 
@@ -35,43 +34,123 @@ export default function QuizManagementDashboard() {
     },
   ]);
 
-  const addQuestion = (type) => {
-    const newQuestion = {
-      id: crypto.randomUUID(),
-      type,
-      text: "",
-      points: 1,
-      timeLimit: 30,
-      correctAnswer: "",
-      options: type === "MCQ" ? ["", "", "", ""] : undefined,
+  const normalizeQuestionFromApi = (q) => ({
+    questionId: q.questionId,
+    quizId: q.quizId,
+    content: q.content ?? "",
+    questionType: q.questionType,
+    duration: q.duration ?? 30,
+    points: q.points ?? 1,
+    difficultyLevel: q.difficultyLevel,
+
+    options: q.options
+      ? ["A", "B", "C", "D"].map((key) => q.options[key] ?? "")
+      : undefined,
+
+    correctAnswer: q.correctAnswer,
+  });
+
+  const mapOptionsToApi = (optionsArray) => ({
+    A: optionsArray[0],
+    B: optionsArray[1],
+    C: optionsArray[2],
+    D: optionsArray[3],
+  });
+
+  function debounce(fn, delay = 500) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        fn(...args);
+      }, delay);
     };
-    setQuestions((prev) => [...prev, newQuestion]);
+  }
+
+  const addQuestion = async (type) => {
+    const newQuestion = {
+      quizId: quizId,
+      content: "",
+      questionType: type,
+      duration: 30,
+      difficultyLevel: "NORMAL",
+      options:
+        type === "MCQ"
+          ? {
+              A: "",
+              B: "",
+              C: "",
+              D: "",
+            }
+          : {},
+      correctAnswer: type === "MCQ" ? { key: "A" } : {},
+    };
+    const res = await fetch(`http://localhost:3000/quizit/question`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newQuestion),
+    });
+
+    const savedQuestion = await res.json();
+    setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
   };
+
+  const deleteQuestion = async (questionId) => {
+    setQuestions((prev) => prev.filter((q) => q.questionId !== questionId));
+
+    try {
+      await fetch(`http://localhost:3000/quizit/question/${questionId}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      console.error("Failed to delete question");
+    }
+  };
+
+  const updateLocalQuestion = (questionId, patch) => {
+    setQuestions((prev) =>
+      prev.map((q) => (q.questionId === questionId ? { ...q, ...patch } : q))
+    );
+  };
+  const updateQuestion = useRef(
+    debounce(async (questionId, patch) => {
+      console.log(patch);
+      await fetch(`http://localhost:3000/quizit/question/${questionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+    }, 600)
+  ).current;
 
   useEffect(() => {
     if (!quizId) return;
 
-    const fetchQuiz = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:3000/quizit/quiz/${quizId}`
-        );
+        setLoading(true);
 
-        const data = await response.json();
+        const [quizRes, quesRes] = await Promise.all([
+          fetch(`http://localhost:3000/quizit/quiz/${quizId}`),
+          fetch(`http://localhost:3000/quizit/questions/${quizId}`),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch quiz");
-        }
-        console.log(data);
-        setQuiz(data);
+        const quizData = await quizRes.json();
+        const quesData = await quesRes.json();
+
+        if (!quizRes.ok) throw new Error(quizData.message);
+        if (!quesRes.ok) throw new Error(quesData.message);
+
+        setQuiz(quizData);
+        setQuestions(quesData.map(normalizeQuestionFromApi));
       } catch (err) {
-        setError(err.message);
+        console.error(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuiz();
+    fetchData();
   }, [quizId]);
 
   if (loading) {
@@ -197,7 +276,7 @@ export default function QuizManagementDashboard() {
               <div className="space-y-6">
                 {questions.map((q, index) => (
                   <div
-                    key={q.id}
+                    key={q.questionId}
                     className="bg-slate-50/90 backdrop-blur-sm border border-slate-200/50 rounded-[2rem] p-8 hover:shadow-xl transition-all group"
                   >
                     <div className="flex items-start justify-between gap-6">
@@ -208,7 +287,7 @@ export default function QuizManagementDashboard() {
                           </span>
                           <span className="text-slate-300">•</span>
                           <span className="text-slate-600 text-xs font-medium uppercase tracking-widest">
-                            {q.type}
+                            {q.questionType}
                           </span>
                         </div>
 
@@ -216,51 +295,145 @@ export default function QuizManagementDashboard() {
                           type="text"
                           placeholder="What would you like to ask?"
                           className="text-xl md:text-2xl font-semibold bg-transparent border-none outline-none text-slate-800 placeholder:text-slate-300 w-full"
-                          defaultValue={q.text}
+                          value={q.content || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            updateLocalQuestion(q.questionId, {
+                              content: value,
+                            });
+                            updateQuestion(q.questionId, { content: value });
+                          }}
                         />
 
-                        {/* MCQ Options */}
-                        {q.type === "MCQ" && (
+                        {q.questionType === "MCQ" && (
                           <div className="grid md:grid-cols-2 gap-4 mt-6">
-                            {q.options?.map((opt, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 focus-within:border-[#4a9cb0] focus-within:bg-white transition-all"
-                              >
+                            {q.options.map((value, i) => {
+                              const key = String.fromCharCode(65 + i);
+                              const isCorrect = q.correctAnswer?.key === key;
+                              const selectCorrectAnswer = () => {
+                                const newCorrect = { key };
+                                updateLocalQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
+                                updateQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
+                              };
+                              return (
                                 <div
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${
-                                    i === 0
-                                      ? "border-[#f5a65b] text-[#f5a65b] bg-[#f5a65b]/10"
-                                      : "border-slate-300 text-slate-400"
-                                  }`}
+                                  key={key}
+                                  className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white`}
+                                  onClick={selectCorrectAnswer}
                                 >
-                                  {String.fromCharCode(65 + i)}
+                                  <div
+                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${
+                                      isCorrect
+                                        ? "border-[#f5a65b] text-[#f5a65b] bg-[#f5a65b]/10"
+                                        : "border-slate-300 text-slate-400"
+                                    }`}
+                                  >
+                                    {key}
+                                  </div>
+
+                                  <input
+                                    type="text"
+                                    placeholder={`Option ${key}`}
+                                    className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
+                                    value={value}
+                                    onChange={(e) => {
+                                      const updatedOptions = [...q.options];
+                                      updatedOptions[i] = e.target.value;
+
+                                      updateLocalQuestion(q.questionId, {
+                                        options: updatedOptions,
+                                      });
+
+                                      updateQuestion(q.questionId, {
+                                        options:
+                                          mapOptionsToApi(updatedOptions),
+                                      });
+                                    }}
+                                  />
+
+                                  {isCorrect && (
+                                    <CheckCircle2 className="w-4 h-4 text-[#4a9cb0]" />
+                                  )}
                                 </div>
-                                <input
-                                  type="text"
-                                  placeholder={`Option ${i + 1}`}
-                                  className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
-                                  defaultValue={opt}
-                                />
-                                {i === 0 && (
-                                  <CheckCircle2 className="w-4 h-4 text-[#4a9cb0]" />
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
 
-                        {/* Metadata Configuration */}
+                        {q.questionType === "NUMERICAL" && (
+                          <div className="mt-4">
+                            <label className="text-sm font-bold text-slate-600 mb-2 block">
+                              Correct Answer
+                            </label>
+                            <input
+                              type="number"
+                              className="w-48 bg-white/80 border border-slate-200 rounded-2xl p-3 outline-none text-slate-800 focus:border-[#4a9cb0]"
+                              value={q.correctAnswer?.value || ""}
+                              placeholder="Enter correct answer"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                const newCorrect = { value };
+                                updateLocalQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
+                                updateQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {q.questionType === "TRUE_FALSE" && (
+                          <div className="flex items-center gap-4 mt-4">
+                            {["TRUE", "FALSE"].map((val) => {
+                              const isSelected = q.correctAnswer?.value === val;
+                              return (
+                                <button
+                                  key={val}
+                                  className={`px-4 py-2 rounded-xl font-bold transition-colors ${
+                                    isSelected
+                                      ? "bg-[#4a9cb0] text-white"
+                                      : "bg-white/80 text-slate-800 border border-slate-200"
+                                  }`}
+                                  onClick={() => {
+                                    const newCorrect = { value: val };
+                                    updateLocalQuestion(q.questionId, {
+                                      correctAnswer: newCorrect,
+                                    });
+                                    updateQuestion(q.questionId, {
+                                      correctAnswer: newCorrect,
+                                    });
+                                  }}
+                                >
+                                  {val}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                         <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-200 mt-8">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-slate-500" />
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                               Time Limit
                             </span>
-                            <select className="bg-transparent text-sm font-bold text-[#4a9cb0] border-none focus:ring-0 cursor-pointer">
-                              <option value="30">30s</option>
-                              <option value="60">60s</option>
-                              <option value="120">2m</option>
+                            <select
+                              className="bg-transparent text-sm font-bold text-[#4a9cb0] border-none focus:ring-0 cursor-pointer"
+                              defaultValue={q.duration}
+                              onChange={(e) => {
+                                const duration = Number(e.target.value);
+                                updateLocalQuestion(q.questionId, { duration });
+                                updateQuestion(q.questionId, { duration });
+                              }}
+                            >
+                              <option value={30}>30s</option>
+                              <option value={60}>60s</option>
+                              <option value={120}>2m</option>
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
@@ -272,6 +445,11 @@ export default function QuizManagementDashboard() {
                               type="number"
                               className="w-12 bg-transparent text-sm font-bold text-[#4a9cb0] border-none focus:ring-0 p-0"
                               defaultValue={q.points}
+                              onChange={(e) => {
+                                const points = Number(e.target.value);
+                                updateLocalQuestion(q.questionId, { points });
+                                updateQuestion(q.questionId, { points });
+                              }}
                             />
                           </div>
                         </div>
@@ -281,7 +459,10 @@ export default function QuizManagementDashboard() {
                         <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition-colors">
                           <Copy className="w-5 h-5" />
                         </button>
-                        <button className="p-2 hover:bg-red-50 rounded-lg text-slate-500 hover:text-red-500 transition-colors">
+                        <button
+                          className="p-2 hover:bg-red-50 rounded-lg text-slate-500 hover:text-red-500 transition-colors"
+                          onClick={() => deleteQuestion(q.questionId)}
+                        >
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>

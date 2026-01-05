@@ -28,7 +28,7 @@ public class QuestionServiceImpl implements QuestionService {
     public QuestionDto getQuestionById(String uuid) {
 
         UUID id = UUID.fromString(uuid);
-        Question question = questionRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Question with id " + id + " not found"));
+        Question question = questionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Question with id " + id + " not found"));
 
         return modelMapper.map(question, QuestionDto.class);
     }
@@ -39,7 +39,7 @@ public class QuestionServiceImpl implements QuestionService {
         UUID id = UserHelper.parseUUID(quizId);
         return questionRepository.findByQuiz_QuizId(UUID.fromString(quizId))
                 .stream()
-                .map(question->modelMapper.map(question,QuestionDto.class))
+                .map(question -> modelMapper.map(question, QuestionDto.class))
                 .toList();
 
     }
@@ -73,15 +73,15 @@ public class QuestionServiceImpl implements QuestionService {
         if (questionDto == null) {
             throw new ResourceNotFoundException();
         }
-         UUID  uuid = UserHelper.parseUUID(id);
 
-        Question existingQuestion = questionRepository.findById(uuid).orElseThrow(()-> new ResourceNotFoundException("Question not found!"));
+        UUID uuid = UserHelper.parseUUID(id);
 
+        Question existingQuestion = questionRepository.findById(uuid)
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found!"));
 
-        if(questionDto.getQuizId() != null ) {
-         Quiz quiz = quizRepository.findById(questionDto.getQuizId())
+        if (questionDto.getQuizId() != null) {
+            Quiz quiz = quizRepository.findById(questionDto.getQuizId())
                     .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
-
             existingQuestion.setQuiz(quiz);
         }
         if (questionDto.getCorrectAnswer() != null) {
@@ -90,21 +90,29 @@ public class QuestionServiceImpl implements QuestionService {
         if (questionDto.getDuration() != null) {
             existingQuestion.setDuration(questionDto.getDuration());
         }
-
+        if (questionDto.getContent() != null) {
             existingQuestion.setContent(questionDto.getContent());
+        }
+        if (questionDto.getQuestionType() != null) {
             existingQuestion.setQuestionType(questionDto.getQuestionType());
+        }
+        if (questionDto.getDifficultyLevel() != null) {
             existingQuestion.setDifficultyLevel(questionDto.getDifficultyLevel());
+        }
+        if (questionDto.getOptions() != null) {
             existingQuestion.setOptions(questionDto.getOptions());
+        }
 
-        Question newQuestion=    questionRepository.save(existingQuestion);
-        return modelMapper.map(newQuestion, QuestionDto.class);
+        Question savedQuestion = questionRepository.save(existingQuestion);
+        return modelMapper.map(savedQuestion, QuestionDto.class);
     }
+
 
     @Override
     public void DeleteQuestion(String uuid) {
 
         UUID id = UserHelper.parseUUID(uuid);
-        Question question = questionRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Question not found!"));
+        Question question = questionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Question not found!"));
         questionRepository.delete(question);
     }
 }

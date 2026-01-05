@@ -42,12 +42,7 @@ export default function Dashboard() {
     },
   ]);
 
-  const checkLogin = useAuth((state) => state.checkLogin);
-  const user = useAuth((state) => state.user);
-
-  const [loading, setLoading] = useState(false);
-
-  const hostId = user.id;
+  const hostId = "58142d30-76cb-4650-9d43-d366d93bf455";
   const isDraftQuiz = (quiz) => !quiz.mode;
   const isServerQuiz = (quiz) => quiz.mode === "SERVER";
   const isRandomizedQuiz = (quiz) => quiz.mode === "RANDOMIZED";
