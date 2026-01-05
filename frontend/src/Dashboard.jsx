@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-
+import useAuth from "./auth/store";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import { getQuizsByHostId } from "./services/AuthService";
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {
@@ -37,21 +41,33 @@ export default function Dashboard() {
       hostUserId: "a94d6b81-bfff-4742-8dbe-92d684a93000",
     },
   ]);
-  const [loading, setLoading] = useState(true);
 
-  const hostId = "a94d6b81-bfff-4742-8dbe-92d684a93000";
+  const checkLogin = useAuth((state) => state.checkLogin);
+  const user = useAuth((state) => state.user);
+
+  const [loading, setLoading] = useState(false);
+
+  const hostId = user.id;
   const isDraftQuiz = (quiz) => !quiz.mode;
   const isServerQuiz = (quiz) => quiz.mode === "SERVER";
   const isRandomizedQuiz = (quiz) => quiz.mode === "RANDOMIZED";
+
   useEffect(() => {
-    fetch(`http://localhost:3000/quizit/quiz/host/${hostId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setQuizzes(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true);
+      const data = await getQuizsByHostId(hostId);
+      setQuizzes(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchQuizzes();
+}, []);
+
 
   if (loading) {
     return (
@@ -74,6 +90,15 @@ export default function Dashboard() {
           </div>
 
           <div className="flex gap-3 mt-4 md:mt-0">
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <AccountCircleIcon color="primary" />
+              <Typography variant="subtitle1" fontWeight={500}>
+                {user.username}
+              </Typography>
+            </Box>
+
+
             <button
               className="px-5 py-2 rounded-lg bg-white border border-cyan-200
               text-cyan-700 hover:bg-cyan-50 transition"
@@ -121,19 +146,18 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <span
-                    className={`px-3 py-1 text-xs rounded-full ${
-                      isDraftQuiz(quiz)
+                    className={`px-3 py-1 text-xs rounded-full ${isDraftQuiz(quiz)
                         ? "bg-gray-100 text-gray-600"
                         : isServerQuiz(quiz)
-                        ? "bg-green-100 text-green-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
                   >
                     {isDraftQuiz(quiz)
                       ? "Draft"
                       : isServerQuiz(quiz)
-                      ? "Live (Host-controlled)"
-                      : "Self-paced"}
+                        ? "Live (Host-controlled)"
+                        : "Self-paced"}
                   </span>
                 </div>
 

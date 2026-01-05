@@ -10,40 +10,59 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import LandingPage from './LandingPage.jsx'
 import AuthPage from './AuthPage.jsx'
 import QuizManagementDashboard from './QuizManagementDashboard.jsx'
+import { Toaster } from 'react-hot-toast'
+import ProtectedRoute from './auth/ProtectedRoute.jsx'
+import UnprotectedRoute from './auth/unprotectedRoute.jsx'
+
 
 const router = createBrowserRouter([
   {
+    element: <UnprotectedRoute/>,
+    children: [
+      {
+        path: "/auth",
+        element: <AuthPage />
+      }
+    ]
+  },
+  {
     path: "/",
-    element: <LandingPage />
+    element: <LandingPage />,
   },
+  
+
+  // 🔒 PROTECTED ROUTES
   {
-    path: "/auth",
-    element: <AuthPage />
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
+      },
+      {
+        path: "/createQuiz",
+        element: <CreateQuiz />,
+      },
+      {
+        path: "/quiz/:quizId",
+        element: <QuizManagementDashboard />,
+      },
+      {
+        path: "/runQuiz/:quizId",
+        element: <RunQuiz />,
+      },
+      {
+        path: "/quizAnalytics/:quizId",
+        element: <UserAnalytics />,
+      },
+    ],
   },
-  {
-    path: "/dashboard",
-    element: <Dashboard />
-  },
-  {
-    path: "/runQuiz/:quizId",
-    element: <RunQuiz />
-  },
-  {
-    path: "/quizAnalytics/:quizId",
-    element: <UserAnalytics />
-  },
-  {
-    path: "/createQuiz",
-    element: <CreateQuiz />
-  },
-  {
-    path: "/quiz/:quizId",
-    element: <QuizManagementDashboard />
-  }
-])
+]);
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <Toaster />
     <RouterProvider router={router} />
   </StrictMode>,
 )

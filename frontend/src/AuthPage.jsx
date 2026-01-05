@@ -1,7 +1,123 @@
 import { useState } from "react";
-
+import toast from "react-hot-toast";
+import { registerUser ,loginUser} from "./services/AuthService";
+import { useNavigate } from "react-router";
+import CircularProgress from "@mui/material/CircularProgress";
+import useAuth from "./auth/store";
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
+  const login = useAuth(state=>state.login);
+  
+  const [signupData, setSignupData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+  const [loginData, setLoginData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const [signupError, setSignupError] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+
+  const handleSignupChange = (e) => {
+    setSignupData({
+      ...signupData,
+      [e.target.name]: e.target.value,
+    });
+  };
+  const handleLoginChange = (e) => {
+    setLoginData({
+      ...loginData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+
+  const handleSignup = async () => {
+    if (signupLoading) return;
+
+    setSignupLoading(true);
+    setSignupError("");
+
+    if (!signupData.username.trim() || !signupData.email.trim() || !signupData.password.trim()) {
+      toast.error("Please fill in all fields");
+      setSignupLoading(false);
+      return;
+    }
+
+    try {
+      await registerUser({
+        email: signupData.email,
+        username: signupData.username,
+        password: signupData.password,
+        enable: true,
+      });
+
+      toast.success("Registration successful! Please sign in.");
+
+      setSignupData({
+        username: "",
+        email: "",
+        password: "",
+      });
+
+      setIsSignUp(false);
+    } catch (err) {
+      setSignupError(
+        err.response?.data?.message || err.message || "Registration failed"
+      );
+    } finally {
+      setSignupLoading(false);
+    }
+  };
+
+
+  const handleLogin = async () => {
+    if (loginLoading) return;
+
+    setLoginLoading(true);
+    setLoginError("");
+
+    if (!loginData.email.trim() || !loginData.password.trim()) {
+      toast.error("Please fill in all fields");
+      setLoginLoading(false);
+      return;
+    }
+
+    try {
+    //   const userData  =   await loginUser({
+    //     email: loginData.email,
+    //     password: loginData.password,
+    //   });
+    const userData = await login(loginData)
+    
+     console.log(userData)
+    
+      toast.success("Login successful!");
+
+      setLoginData({
+        email: "",
+        password: "",
+      });
+
+      navigate("/dashboard");
+    } catch (err) {
+      setLoginError(
+        err.response?.data?.message || err.message || "Login failed"
+      );
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-600 to-teal-500 px-4">
@@ -11,15 +127,34 @@ export default function AuthPage() {
             <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
             <p className="text-gray-500 mb-6">Sign in to manage your quizzes</p>
 
-            <input className="auth-input" placeholder="Email" />
+            <input
+              type="email"
+              className="auth-input"
+              placeholder="Email"
+              name="email"
+              value={loginData.email}
+              onChange={handleLoginChange}
+            />
             <input
               className="auth-input"
               placeholder="Password"
               type="password"
+              name="password"
+              value={loginData.password}
+              onChange={handleLoginChange}
             />
 
-            <button className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded">
-              Sign In
+            {loginError && (
+              <p className="text-red-500 text-sm mb-2">{loginError}</p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleLogin}
+              disabled={loginLoading}
+              className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
+            >
+              {loginLoading ? <CircularProgress size={24} color="inherit" />: "Login"}
             </button>
           </div>
 
@@ -27,17 +162,41 @@ export default function AuthPage() {
             <h2 className="text-3xl font-bold mb-2">Create Account</h2>
             <p className="text-gray-500 mb-6">Start creating smarter quizzes</p>
 
-            <input className="auth-input" placeholder="Name" />
-            <input className="auth-input" placeholder="Email" />
+            <input
+              type="name"
+              className="auth-input"
+              placeholder="Username"
+              name="username"
+              value={signupData.username}
+              onChange={handleSignupChange}
+            />
+            <input
+              type="email"
+              className="auth-input"
+              placeholder="Email"
+              name="email"
+              value={signupData.email}
+              onChange={handleSignupChange}
+            />
             <input
               className="auth-input"
               placeholder="Password"
               type="password"
+              name="password"
+              value={signupData.password}
+              onChange={handleSignupChange}
             />
 
-            <button className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded">
-              Sign Up
+            {signupError && <p className="text-red-500 text-sm mb-2">{signupError}</p>}
+
+            <button
+              onClick={handleSignup}
+              disabled={signupLoading}
+              className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
+            >
+              {signupLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
             </button>
+
           </div>
         </div>
 
