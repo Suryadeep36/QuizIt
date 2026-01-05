@@ -24,7 +24,7 @@ export default function Dashboard() {
       createdAt: null,
       startTime: null,
       endTime: null,
-      mode: null, // Draft quiz
+      mode: null, 
       quizName: "Parth",
       quizType: null,
       hostUserId: "a94d6b81-bfff-4742-8dbe-92d684a93000",
