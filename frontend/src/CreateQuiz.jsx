@@ -11,12 +11,18 @@ import {
   Settings2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { createQuiz } from "./services/AuthService";
+import useAuth from "./auth/store";
 
 export default function CreateQuiz() {
   const navigate = useNavigate();
   const toInstant = (dateTimeLocal) => {
     return dateTimeLocal ? new Date(dateTimeLocal).toISOString() : null;
   };
+  const checkLogin = useAuth((state) => state.checkLogin);
+  const user = useAuth((state) => state.user);
+  const hostId = user.id;
+
   const [quiz, setQuiz] = useState({
     quizName: "",
     mode: "SERVER",
@@ -48,24 +54,19 @@ export default function CreateQuiz() {
       allowGuest: quiz.mode === "SERVER" ? quiz.allowGuest : false,
       shuffleQuestions: quiz.shuffleQuestions,
       showLeaderboard: quiz.showLeaderboard,
-      host: "a94d6b81-bfff-4742-8dbe-92d684a93000",
+      host: hostId,
     };
 
     try {
-      const response = await fetch("http://localhost:3000/quizit/quiz", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      // const response = await fetch("http://localhost:3000/quizit/quiz", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(payload),
+      // });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create quiz");
-      }
-
+      const data = await createQuiz(payload);
       console.log("Quiz Created:", data);
       navigate(`/quiz/${data.quizId}`);
     } catch (error) {
@@ -261,7 +262,7 @@ export default function CreateQuiz() {
             <button
               type="button"
               className="px-8 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
-              onClick={() => alert("Creation cancelled")}
+              onClick={() => navigate(`/dashboard`)}
             >
               <X className="w-5 h-5" />
               Cancel

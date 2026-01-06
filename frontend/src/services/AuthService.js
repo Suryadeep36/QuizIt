@@ -16,6 +16,11 @@ export const logoutUser = async () => {
   return;
 };
 
+export const createQuiz = async (quizData) => {
+  const response = await apiClient.post(`/quiz`, quizData)
+  return response.data
+}
+
 export const getQuizsByHostId = async (hostId) => {
   const response = await apiClient.get(`/quiz/host/${hostId}`);
   return response.data;
