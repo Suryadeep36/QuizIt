@@ -16,7 +16,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useParams } from "react-router";
-import { deleteQuestionById, getQuestionsByQuizId, getQuizById, getQuizsByHostId } from "./services/AuthService";
+import { createQuestion, deleteQuestionById, getQuestionsByQuizId, getQuizById, getQuizsByHostId, updateQuestionById } from "./services/AuthService";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -107,12 +107,7 @@ export default function QuizManagementDashboard() {
   };
   const updateQuestion = useRef(
     debounce(async (questionId, patch) => {
-      console.log(patch);
-      await fetch(`http://localhost:3000/quizit/question/${questionId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
+      await updateQuestionById(questionId, patch)
     }, 600)
   ).current;
   
@@ -122,14 +117,12 @@ export default function QuizManagementDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const quizData = await getQuizById(quizId);
-        // const [quizData, quesData] = await Promise.all([
-        //   getQuizById(quizId),
-        //   getQuestionsByQuizId(quizId),
-        // ]);
-        console.log(quizData)
+        const [quizData, quesData] = await Promise.all([
+          getQuizById(quizId),
+          getQuestionsByQuizId(quizId),
+        ]);
         setQuiz(quizData);
-        // setQuestions(quesData.map(normalizeQuestionFromApi));
+        setQuestions(quesData.map(normalizeQuestionFromApi));
       } catch (err) {
         console.error(err.message);
       } finally {
