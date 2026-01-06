@@ -16,6 +16,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useParams } from "react-router";
+import { deleteQuestionById, getQuestionsByQuizId, getQuizById, getQuizsByHostId } from "./services/AuthService";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -85,13 +86,7 @@ export default function QuizManagementDashboard() {
           : {},
       correctAnswer: type === "MCQ" ? { key: "A" } : {},
     };
-    const res = await fetch(`http://localhost:3000/quizit/question`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newQuestion),
-    });
-
-    const savedQuestion = await res.json();
+    const savedQuestion = await createQuestion(newQuestion);
     setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
   };
 
@@ -99,9 +94,7 @@ export default function QuizManagementDashboard() {
     setQuestions((prev) => prev.filter((q) => q.questionId !== questionId));
 
     try {
-      await fetch(`http://localhost:3000/quizit/question/${questionId}`, {
-        method: "DELETE",
-      });
+      await deleteQuestionById(questionId);
     } catch (err) {
       console.error("Failed to delete question");
     }
@@ -122,27 +115,21 @@ export default function QuizManagementDashboard() {
       });
     }, 600)
   ).current;
-
+  
   useEffect(() => {
     if (!quizId) return;
 
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        const [quizRes, quesRes] = await Promise.all([
-          fetch(`http://localhost:3000/quizit/quiz/${quizId}`),
-          fetch(`http://localhost:3000/quizit/questions/${quizId}`),
-        ]);
-
-        const quizData = await quizRes.json();
-        const quesData = await quesRes.json();
-
-        if (!quizRes.ok) throw new Error(quizData.message);
-        if (!quesRes.ok) throw new Error(quesData.message);
-
+        const quizData = await getQuizById(quizId);
+        // const [quizData, quesData] = await Promise.all([
+        //   getQuizById(quizId),
+        //   getQuestionsByQuizId(quizId),
+        // ]);
+        console.log(quizData)
         setQuiz(quizData);
-        setQuestions(quesData.map(normalizeQuestionFromApi));
+        // setQuestions(quesData.map(normalizeQuestionFromApi));
       } catch (err) {
         console.error(err.message);
       } finally {

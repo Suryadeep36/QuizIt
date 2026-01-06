@@ -24,7 +24,7 @@ export default function Dashboard() {
       createdAt: null,
       startTime: null,
       endTime: null,
-      mode: null, 
+      mode: null, // Draft quiz
       quizName: "Parth",
       quizType: null,
       hostUserId: "a94d6b81-bfff-4742-8dbe-92d684a93000",
@@ -42,7 +42,12 @@ export default function Dashboard() {
     },
   ]);
 
-  const hostId = "58142d30-76cb-4650-9d43-d366d93bf455";
+  const checkLogin = useAuth((state) => state.checkLogin);
+  const user = useAuth((state) => state.user);
+
+  const [loading, setLoading] = useState(false);
+
+  const hostId = user.id;
   const isDraftQuiz = (quiz) => !quiz.mode;
   const isServerQuiz = (quiz) => quiz.mode === "SERVER";
   const isRandomizedQuiz = (quiz) => quiz.mode === "RANDOMIZED";
@@ -59,7 +64,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-
   fetchQuizzes();
 }, []);
 
