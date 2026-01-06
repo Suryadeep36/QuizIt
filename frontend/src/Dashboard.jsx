@@ -5,6 +5,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import { getQuizsByHostId } from "./services/AuthService";
+import toast from "react-hot-toast";
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {
@@ -59,12 +60,12 @@ export default function Dashboard() {
       const data = await getQuizsByHostId(hostId);
       setQuizzes(data);
     } catch (err) {
+      toast.error(  err.response?.data?.message || err.message || "Quiz are not loaded!")
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
-
   fetchQuizzes();
 }, []);
 

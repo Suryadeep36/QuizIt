@@ -1,4 +1,3 @@
-import useAuth from "../auth/store";
 import apiClient from "../config/ApiClient";
 
 export const registerUser = async(signupData)=>{
