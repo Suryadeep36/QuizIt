@@ -63,20 +63,22 @@ public class ParticipantServiceImpl implements ParticipantService {
             throw new IllegalArgumentException("Quiz Id cannot be null");
         }
 
-        if (participantDto.getUserId() == null) {
-            throw new IllegalArgumentException("User Id cannot be null");
-        }
+
 
         Quiz quiz = quizRepository.findById(participantDto.getQuizId())
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
-        User user = userRepository.findById(participantDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
 
         Participant participant = modelMapper.map(participantDto, Participant.class);
 
+        if(participantDto.getUserId() != null)
+        {
+            User user = userRepository.findById(participantDto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+          participant.setUser(user);
+        }
         participant.setQuiz(quiz);
-        participant.setUser(user);
 
         Participant saved = participantRepository.save(participant);
         return modelMapper.map(saved, ParticipantDto.class);

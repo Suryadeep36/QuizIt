@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/quizit/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/quizit/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/quizit/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/quizit/participant").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/quizit/participants/quiz/*").permitAll()
                         .anyRequest().authenticated()
                 )
 //                .authorizeHttpRequests(auth -> auth

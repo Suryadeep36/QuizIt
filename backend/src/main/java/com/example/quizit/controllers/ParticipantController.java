@@ -33,6 +33,7 @@ public class ParticipantController {
 
     @PostMapping("/participant")
     public ResponseEntity<ParticipantDto> createParticipant(@RequestBody ParticipantDto participantDto) {
+//        System.out.println(participantDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(participantService.createParticipant(participantDto));
     }
@@ -41,6 +42,7 @@ public class ParticipantController {
     public ResponseEntity<ParticipantDto> updateParticipant(
             @PathVariable String id,
             @RequestBody ParticipantDto participantDto) {
+
         return ResponseEntity.ok(participantService.updateParticipant(id, participantDto));
     }
 

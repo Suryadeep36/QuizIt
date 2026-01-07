@@ -16,6 +16,7 @@ import java.util.UUID;
 public class ParticipantDto {
 
     private UUID participantId;
+    private String participantName;
     private UUID quizId;
     private UUID userId;
     private ParticipantStatus status;
