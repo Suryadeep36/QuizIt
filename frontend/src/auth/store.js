@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { persist } from 'zustand/middleware'
-import { loginUser, logoutUser } from "../services/AuthService";
+import { createParticipant, loginUser, logoutUser } from "../services/AuthService";
 // import { useNavigate } from "react-router";
 const LOCAL_KEY = "quizit_auth"
-
+const PARTICIPANT_KEY = "participant"
 // AuthState = {
 //     accessToken :null,
 //     user:null,
@@ -75,3 +75,44 @@ const useAuth = create(
 )
 
 export default useAuth;
+
+
+export const useParticipant = create(
+    persist(
+        (set, get) => ({
+            participant: {
+                id: null,
+                status: null,
+                name: null,
+            },
+            isParticipant: () => {
+                if (get().participant.id != null && get().participant.name != null)
+                    return true;
+
+                return false;
+            },
+            participantCreation: async (createData) => {
+                try {
+                    const responseData = await createParticipant(createData);
+                    console.log(responseData)
+                    set({
+                        participant: {
+                                id: responseData.participantId,
+                                status: responseData.status,
+                                name: responseData.participantName,
+                             }
+                        }
+                    )
+                    return responseData;
+                }
+                catch {
+                    throw error;
+                }
+
+            }
+        }),
+        {
+            name: PARTICIPANT_KEY,
+        }
+    )
+)

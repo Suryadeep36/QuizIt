@@ -13,11 +13,15 @@ import QuizManagementDashboard from './QuizManagementDashboard.jsx'
 import { Toaster } from 'react-hot-toast'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
 import UnprotectedRoute from './auth/unprotectedRoute.jsx'
+import RunningQuiz from './RunningQuiz.jsx'
+import QuizPlayer from './QuizPlayer.jsx'
+import JoinQuizPage from './JoinQuizPage.jsx'
+import QuizRoom from './QuizRoom.jsx'
 
 
 const router = createBrowserRouter([
   {
-    element: <UnprotectedRoute/>,
+    element: <UnprotectedRoute />,
     children: [
       {
         path: "/auth",
@@ -25,11 +29,23 @@ const router = createBrowserRouter([
       }
     ]
   },
+
+
+
   {
     path: "/",
     element: <LandingPage />,
   },
-  
+  {
+    path: "quiz/:quizId/join",
+    element: <JoinQuizPage />
+  },
+  {
+    path: "/quiz/:quizId/quizroom",
+    element: <QuizRoom />,
+  },
+
+
 
   // 🔒 PROTECTED ROUTES
   {
@@ -55,6 +71,12 @@ const router = createBrowserRouter([
         path: "/quizAnalytics/:quizId",
         element: <UserAnalytics />,
       },
+      {
+        path: "/runningQuiz",
+        element: <QuizPlayer />,
+      },
+
+
     ],
   },
 ]);

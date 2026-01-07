@@ -49,3 +49,9 @@ export const deleteQuestionById = async (questionId) => {
   await apiClient.delete(`/question/${questionId}`);
   return;
 };
+
+
+export const createParticipant = async (participantData) => {
+  const response = await apiClient.post(`/participant`,participantData );
+  return response.data;
+};

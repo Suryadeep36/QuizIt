@@ -10,6 +10,7 @@ import {
   Trophy,
   Settings2,
 } from "lucide-react";
+import toast from "react-hot-toast"
 import { useNavigate } from "react-router";
 import { createQuiz } from "./services/AuthService";
 import useAuth from "./auth/store";
@@ -71,7 +72,8 @@ export default function CreateQuiz() {
       navigate(`/quiz/${data.quizId}`);
     } catch (error) {
       console.error("Quiz creation failed:", error);
-      alert(`❌ Error: ${error.message}`);
+        toast.error(  error.response?.data?.message || err.message || "Quiz are not loaded!")
+      // alert(`❌ Error: ${error.message}`);
     }
   };
 
