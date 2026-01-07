@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { socket } from "./services/socket"
 import { createParticipant } from "./services/AuthService";
 import toast from "react-hot-toast";
 import useAuth, { useParticipant } from "./auth/store";
