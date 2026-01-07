@@ -78,21 +78,34 @@ export default function HostLiveQuiz() {
 
   useEffect(() => {
     async function init() {
-      const questions = await getQuestionsByQuizId(quizId);
-      console.log(questions);
-      setQuestions(questions);
+      try {
+        setIsLoading(true);
 
-      if (!isQuizSessionCreated.current) {
-        isQuizSessionCreated.current = true;
-        const sessionData = await createQuizSession({ quizId, hostId });
-        console.log(sessionData);
-        setSessionId(sessionData.sessionId);
+        const questionsRes = await getQuestionsByQuizId(quizId);
+        console.log("Questions:", questionsRes);
+        setQuestions(questionsRes);
+
+        if (!isQuizSessionCreated.current) {
+          isQuizSessionCreated.current = true;
+
+          const sessionRes = await createQuizSession({
+            quizId: quizId,
+            hostId: hostId,
+          });
+
+          console.log("Session Created:", sessionRes);
+          setSessionId(sessionRes.sessionId);
+        }
+      } catch (err) {
+        console.error("Initialization error:", err);
+        setError("Failed to initialize quiz session");
+      } finally {
+        setIsLoading(false);
       }
     }
 
     init();
-    setIsLoading(false);
-  }, []);
+  }, [quizId, hostId]);
 
   const startQuiz = () => {
     setStage("question");
