@@ -29,6 +29,7 @@ export default function HostLiveQuiz() {
   const user = useAuth((state) => state.user);
   const hostId = user.id;
   const [sessionId, setSessionId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState([
     {
       id: 1,
@@ -90,6 +91,7 @@ export default function HostLiveQuiz() {
     }
 
     init();
+    setIsLoading(false);
   }, []);
 
   const startQuiz = () => {
@@ -120,6 +122,13 @@ export default function HostLiveQuiz() {
   const answeredCount = participants.filter((p) => p.answered).length;
   const progressPercent = (answeredCount / participants.length) * 100;
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-400 border-t-transparent"></div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] text-slate-800 font-sans selection:bg-white/30">
       <header className="border-b border-white/20 bg-white/10 backdrop-blur-md px-8 py-4 shadow-sm sticky top-0 z-40">
