@@ -37,6 +37,7 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, View error) throws Exception {
 
@@ -49,6 +50,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/quizit/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/quizit/participant").permitAll()
                         .requestMatchers(HttpMethod.GET, "/quizit/participants/quiz/*").permitAll()
+                        .requestMatchers("/quiz-websocket/**").permitAll()
+                        .requestMatchers("/quiz-websocket").permitAll()
+                        .requestMatchers("/quizit/quiz-session").permitAll()
+                        .requestMatchers("/quizit/quiz-session/**").permitAll()
                         .anyRequest().authenticated()
                 )
 //                .authorizeHttpRequests(auth -> auth
@@ -89,6 +94,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
+
 
 //    @Bean
 //    public UserDetailsService users(){
