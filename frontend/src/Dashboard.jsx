@@ -177,7 +177,7 @@ export default function Dashboard() {
                     <>
                       <button className="dashboard-btn">Analytics</button>
 
-                      <Link to={`/runQuiz/${quiz.quizId}`}>
+                      <Link to={`/run-quiz-host/${quiz.quizId}`}>
                         <button className="dashboard-btn-primary">
                           Run Quiz
                         </button>
