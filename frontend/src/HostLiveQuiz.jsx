@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Zap, Users, Share2, Play, Settings, ChevronRight } from "lucide-react";
 import ParticipantsList from "./Components/ParticipantsList";
 
@@ -6,6 +6,13 @@ import QuestionDisplay from "./Components/QuestionDisplay";
 import QuestionSidebar from "./Components/QuestionSidebar";
 import LiveIndicator from "./Components/LiveIndicator";
 import ResponseStats from "./Components/ResponseStats";
+import { useWS } from "./stores/webSocketStore";
+import {
+  createQuizSession,
+  getQuestionsByQuizId,
+} from "./services/AuthService";
+import useAuth from "./auth/store";
+import { useParams } from "react-router";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
@@ -18,8 +25,11 @@ export default function HostLiveQuiz() {
     { id: 3, name: "Sneha", score: 0, answered: false, correct: false },
     { id: 4, name: "Priya", score: 0, answered: false, correct: false },
   ]);
-
-  const questions = [
+  const { quizId } = useParams();
+  const user = useAuth((state) => state.user);
+  const hostId = user.id;
+  const [sessionId, setSessionId] = useState(null);
+  const [questions, setQuestions] = useState([
     {
       id: 1,
       text: "Is Suryadeep smart?",
@@ -44,7 +54,9 @@ export default function HostLiveQuiz() {
       correctAnswer: 0,
       responses: { 0: 4, 1: 0, 2: 0, 3: 0 },
     },
-  ];
+  ]);
+  const isQuizSessionCreated = useRef(false);
+  const { client } = useWS();
 
   useEffect(() => {
     let interval;
@@ -62,6 +74,23 @@ export default function HostLiveQuiz() {
     }
     return () => clearInterval(interval);
   }, [stage, isPaused]);
+
+  useEffect(() => {
+    async function init() {
+      const questions = await getQuestionsByQuizId(quizId);
+      console.log(questions);
+      setQuestions(questions);
+
+      if (!isQuizSessionCreated.current) {
+        isQuizSessionCreated.current = true;
+        const sessionData = await createQuizSession({ quizId, hostId });
+        console.log(sessionData);
+        setSessionId(sessionData.sessionId);
+      }
+    }
+
+    init();
+  }, []);
 
   const startQuiz = () => {
     setStage("question");

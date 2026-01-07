@@ -15,6 +15,7 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@react-navigation/native": "^7.1.26",
+    "@stomp/stompjs": "^7.2.1",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.2",
     "lucide-react": "^0.562.0",
@@ -26,6 +27,7 @@
     "react-router-dom": "^7.11.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
+    "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.1.18",
     "zustand": "^5.0.9"
   },

@@ -16,9 +16,9 @@ export const logoutUser = async () => {
 };
 
 export const createQuiz = async (quizData) => {
-  const response = await apiClient.post(`/quiz`, quizData)
-  return response.data
-}
+  const response = await apiClient.post(`/quiz`, quizData);
+  return response.data;
+};
 
 export const getQuizsByHostId = async (hostId) => {
   const response = await apiClient.get(`/quiz/host/${hostId}`);
@@ -50,8 +50,16 @@ export const deleteQuestionById = async (questionId) => {
   return;
 };
 
-
 export const createParticipant = async (participantData) => {
-  const response = await apiClient.post(`/participant`,participantData );
+  const response = await apiClient.post(`/participant`, participantData);
+  return response.data;
+};
+
+export const createQuizSession = async ({ quizId, hostId }) => {
+  const response = await apiClient.post(
+    `/quiz-session/create`,
+    {},
+    { params: { quizId, hostId } }
+  );
   return response.data;
 };
