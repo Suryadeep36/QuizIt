@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { Zap, Users, Share2, Play, Settings, ChevronRight } from "lucide-react";
 import ParticipantsList from "./Components/ParticipantsList";
 
@@ -10,122 +10,257 @@ import { useWS } from "./stores/webSocketStore";
 import {
   createQuizSession,
   getQuestionsByQuizId,
+  getQuizSessionBySessionId,
 } from "./services/AuthService";
 import useAuth from "./auth/store";
 import { useParams } from "react-router";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timer, setTimer] = useState(30);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [participants, setParticipants] = useState([
-    { id: 1, name: "Jay", score: 0, answered: false, correct: false },
-    { id: 2, name: "Ravi", score: 0, answered: false, correct: false },
-    { id: 3, name: "Sneha", score: 0, answered: false, correct: false },
-    { id: 4, name: "Priya", score: 0, answered: false, correct: false },
-  ]);
+  const [participants, setParticipants] = useState([]);
   const { quizId } = useParams();
-  const user = useAuth((state) => state.user);
-  const hostId = user.id;
+  const hostId = useAuth((state) => state.user.id);
   const [sessionId, setSessionId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [questions, setQuestions] = useState([
-    {
-      id: 1,
-      text: "Is Suryadeep smart?",
-      type: "TRUE_FALSE",
-      options: ["True", "False"],
-      correctAnswer: 0,
-      responses: { 0: 3, 1: 1 },
-    },
-    {
-      id: 2,
-      text: "What is JavaScript?",
-      type: "MCQ",
-      options: ["Language", "Framework", "Library", "Compiler"],
-      correctAnswer: 0,
-      responses: { 0: 2, 1: 1, 2: 1, 3: 0 },
-    },
-    {
-      id: 3,
-      text: "Which framework is this quiz built with?",
-      type: "MCQ",
-      options: ["React", "Vue", "Angular", "Svelte"],
-      correctAnswer: 0,
-      responses: { 0: 4, 1: 0, 2: 0, 3: 0 },
-    },
-  ]);
-  const isQuizSessionCreated = useRef(false);
-  const { client } = useWS();
+
+  const connectWS = useWS((s) => s.connect);
+  const client = useWS((s) => s.client);
+  const isConnected = useWS((s) => s.isConnected);
+
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const renderCorrectAnswer = (question) => {
+    if(!question) return;
+    const { type, correctAnswer, options } = question;
+
+    switch (type) {
+      case "MCQ": {
+        const key = correctAnswer?.key;
+        const value = options?.[key];
+
+        return (
+          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+            <p className="text-3xl font-bold text-[#4a9cb0]">
+              {key ? `${key}: ${value}` : "—"}
+            </p>
+          </div>
+        );
+      }
+
+      case "TRUE_FALSE": {
+        return (
+          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+            <p className="text-3xl font-bold text-[#4a9cb0]">
+              {correctAnswer?.value}
+            </p>
+          </div>
+        );
+      }
+
+      case "NUMERICAL": {
+        return (
+          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+            <p className="text-3xl font-bold text-[#4a9cb0]">
+              {correctAnswer?.value}
+            </p>
+          </div>
+        );
+      }
+
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
-    let interval;
-    if (stage === "question" && !isPaused) {
-      interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            setStage("reveal");
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (stage !== "question" || isPaused) return;
+
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          console.log("reveal")
+          setStage("reveal");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     return () => clearInterval(interval);
   }, [stage, isPaused]);
 
   useEffect(() => {
+    connectWS();
+  }, [connectWS]);
+
+  useEffect(() => {
     async function init() {
       try {
-        setIsLoading(true);
+        setLoading(true);
 
         const questionsRes = await getQuestionsByQuizId(quizId);
-        console.log("Questions:", questionsRes);
         setQuestions(questionsRes);
 
-        if (!isQuizSessionCreated.current) {
-          isQuizSessionCreated.current = true;
+        const stored = localStorage.getItem("quizSession");
 
+        if (stored) {
+          const { sessionId: storedSessionId, quizId: storedQuizId } =
+            JSON.parse(stored);
+
+          if (storedQuizId === quizId) {
+            try {
+              const sessionRes = await getQuizSessionBySessionId(
+                storedSessionId
+              );
+
+              console.log("Reconnected session:", sessionRes);
+
+              setSessionId(sessionRes.sessionId);
+              setStage(
+                sessionRes.status === "STARTED" ? "question" : "waiting"
+              );
+
+              if (
+                sessionRes.status === "STARTED" &&
+                sessionRes.currentQuestion
+              ) {
+                const q = sessionRes.currentQuestionState;
+                const fullQ = questions.find(
+                  (x) => x.questionId === q.questionId
+                );
+                setCurrentQuestion({
+                  questionId: q.questionId,
+                  content: q.content,
+                  options: q.options,
+                  duration: q.duration,
+                  type: q.questionType,
+                  correctAnswer: fullQ?.correctAnswer || null, 
+                });
+                setStage("question");
+                setTimer(sessionRes.currentQuestionState.duration);
+              }
+
+              setLoading(false);
+              return; 
+            } catch (err) {
+              console.warn("Reconnect failed, creating new session...", err);
+              localStorage.removeItem("quizSession"); 
+            }
+          } else {
+            console.warn("Stored session quizId mismatch — clearing storage");
+            localStorage.removeItem("quizSession");
+          }
+        }
+
+        // Only create new session if we don't have sessionId yet
+        if (!sessionId) {
           const sessionRes = await createQuizSession({
-            quizId: quizId,
-            hostId: hostId,
+            quizId,
+            hostId,
           });
 
-          console.log("Session Created:", sessionRes);
+          console.log("New Session Created:", sessionRes);
+
           setSessionId(sessionRes.sessionId);
+
+          localStorage.setItem(
+            "quizSession",
+            JSON.stringify({
+              sessionId: sessionRes.sessionId,
+              quizId,
+            })
+          );
         }
       } catch (err) {
         console.error("Initialization error:", err);
         setError("Failed to initialize quiz session");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     }
 
     init();
   }, [quizId, hostId]);
 
-  const startQuiz = () => {
-    setStage("question");
-    setTimer(30);
-    setParticipants((prev) =>
-      prev.map((p) => ({ ...p, answered: false, correct: false }))
+  useEffect(() => {
+    if (!client || !sessionId || !isConnected) return;
+
+    const subscription = client.subscribe(
+      `/topic/quiz/${sessionId}`,
+      (message) => {
+        const msg = JSON.parse(message.body);
+        console.log("WS Message:", msg);
+
+        switch (msg.messageType) {
+          case "PLAYER_JOINED":
+            setParticipants((prev) => [
+              ...prev,
+              {
+                id: msg.payload.sessionId,
+                participantId: msg.payload.participantId,
+                name: msg.payload.name,
+                answered: false,
+                correct: false,
+              },
+            ]);
+            break;
+
+          case "START_QUIZ":
+          case "NEXT_QUESTION": {
+            const q = msg.payload;
+            const fullQ = questions.find((x) => x.questionId === q.questionId);
+            console.log(q);
+            console.log(fullQ);
+            setCurrentQuestion({
+              questionId: q.questionId,
+              content: q.content,
+              options: q.options,
+              duration: q.duration,
+              type: q.questionType,
+              correctAnswer: fullQ?.correctAnswer || null, // host-only
+            });
+
+            setTimer(q.duration);
+            setStage("question");
+            setParticipants((prev) =>
+              prev.map((p) => ({ ...p, answered: false, correct: false }))
+            );
+            break;
+          }
+
+          case "TIMER_UPDATE":
+            setTimer(msg.payload.remainingSeconds);
+            break;
+
+          case "QUIZ_ENDED":
+            setStage("ended");
+            break;
+
+          default:
+            console.log("Unknown WS message:", msg);
+        }
+      }
     );
+
+    return () => subscription.unsubscribe();
+  }, [client, sessionId, questions]);
+
+  const startQuiz = () => {
+    client.publish({
+      destination: `/app/quiz/start/${sessionId}`,
+      body: "",
+    });
   };
 
   const nextQuestion = () => {
-    if (currentQuestion + 1 < questions.length) {
-      setCurrentQuestion(currentQuestion + 1);
-      setTimer(30);
-      setStage("question");
-      setParticipants((prev) =>
-        prev.map((p) => ({ ...p, answered: false, correct: false }))
-      );
-    } else {
-      setStage("leaderboard");
-    }
+    client.publish({
+      destination: `/app/quiz/next/${sessionId}`,
+      body: "",
+    });
   };
 
   const revealAnswer = () => {
@@ -133,9 +268,11 @@ export default function HostLiveQuiz() {
   };
 
   const answeredCount = participants.filter((p) => p.answered).length;
-  const progressPercent = (answeredCount / participants.length) * 100;
+  const progressPercent = participants.length
+    ? (answeredCount / participants.length) * 100
+    : 0;
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-400 border-t-transparent"></div>
@@ -214,16 +351,16 @@ export default function HostLiveQuiz() {
           {stage === "question" && (
             <>
               <QuestionDisplay
-                question={questions[currentQuestion]}
+                question={currentQuestion}
                 timer={timer}
                 isPaused={isPaused}
                 onPauseToggle={() => setIsPaused(!isPaused)}
                 onReveal={revealAnswer}
               />
 
-              <div className="grid grid-cols-2 gap-6">
+              {/* <div className="grid grid-cols-2 gap-6">
                 <ResponseStats
-                  question={questions[currentQuestion]}
+                  question={currentQuestion}
                   answeredCount={answeredCount}
                   totalParticipants={participants.length}
                   progressPercent={progressPercent}
@@ -257,7 +394,7 @@ export default function HostLiveQuiz() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </>
           )}
 
@@ -268,24 +405,16 @@ export default function HostLiveQuiz() {
                   <h2 className="text-3xl font-bold mb-6 text-white">
                     Correct Answer
                   </h2>
-                  <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
-                    <p className="text-3xl font-bold text-[#4a9cb0]">
-                      {
-                        questions[currentQuestion].options[
-                          questions[currentQuestion].correctAnswer
-                        ]
-                      }
-                    </p>
-                  </div>
+                  {renderCorrectAnswer(currentQuestion)}
                 </div>
 
-                <ResponseStats
-                  question={questions[currentQuestion]}
+                {/* <ResponseStats
+                  question={currentQuestion}
                   answeredCount={participants.length}
                   totalParticipants={participants.length}
                   progressPercent={100}
                   showResults={true}
-                />
+                /> */}
               </div>
 
               <button
@@ -341,7 +470,6 @@ export default function HostLiveQuiz() {
               <button
                 onClick={() => {
                   setStage("waiting");
-                  setCurrentQuestion(0);
                   setTimer(30);
                 }}
                 className="group relative px-8 py-3 bg-white text-[#4a9cb0] font-bold text-lg rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-gray-50"

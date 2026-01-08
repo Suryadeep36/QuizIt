@@ -1,25 +1,24 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import Dashboard from './Dashboard.jsx'
-import CreateQuiz from './CreateQuiz.jsx'
-import RunQuiz from './RunQuiz.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
+import Dashboard from "./Dashboard.jsx";
+import CreateQuiz from "./CreateQuiz.jsx";
+import RunQuiz from "./RunQuiz.jsx";
 import UserAnalytics from "./UserAnalytics.jsx";
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import LandingPage from './LandingPage.jsx'
-import AuthPage from './AuthPage.jsx'
-import QuizManagementDashboard from './QuizManagementDashboard.jsx'
-import { Toaster } from 'react-hot-toast'
-import ProtectedRoute from './auth/ProtectedRoute.jsx'
-import UnprotectedRoute from './auth/unprotectedRoute.jsx'
-import RunningQuiz from './ParticipantLiveQuiz.jsx'
-import QuizPlayer from './QuizPlayer.jsx'
-import JoinQuizPage from './JoinQuizPage.jsx'
-import QuizRoom from './QuizRoom.jsx'
-import HostLiveQuiz from './HostLiveQuiz.jsx'
-import ParticipantLiveQuiz from './ParticipantLiveQuiz.jsx'
-
+import { createBrowserRouter, RouterProvider } from "react-router";
+import LandingPage from "./LandingPage.jsx";
+import AuthPage from "./AuthPage.jsx";
+import QuizManagementDashboard from "./QuizManagementDashboard.jsx";
+import { Toaster } from "react-hot-toast";
+import ProtectedRoute from "./auth/ProtectedRoute.jsx";
+import UnprotectedRoute from "./auth/unprotectedRoute.jsx";
+import RunningQuiz from "./ParticipantLiveQuiz.jsx";
+import QuizPlayer from "./QuizPlayer.jsx";
+import JoinQuizPage from "./JoinQuizPage.jsx";
+import QuizRoom from "./QuizRoom.jsx";
+import HostLiveQuiz from "./HostLiveQuiz.jsx";
+import ParticipantLiveQuiz from "./ParticipantLiveQuiz.jsx";
 
 const router = createBrowserRouter([
   {
@@ -27,30 +26,27 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/auth",
-        element: <AuthPage />
-      }
-    ]
+        element: <AuthPage />,
+      },
+    ],
   },
-
-
 
   {
     path: "/",
     element: <LandingPage />,
   },
   {
-    path: "quiz/:quizId/join",
-    element: <JoinQuizPage />
+    path: "quiz/:quizId/join/:sessionId",
+    element: <JoinQuizPage />,
   },
   {
-    path: "/quiz/:quizId/quizroom",
+    path: "/quiz/:sessionId/quizroom",
     element: <QuizRoom />,
   },
   {
-   path:"/demorun",
-   element:<ParticipantLiveQuiz/>
+    path: "/demorun",
+    element: <ParticipantLiveQuiz />,
   },
-
 
   // 🔒 PROTECTED ROUTES
   {
@@ -81,18 +77,17 @@ const router = createBrowserRouter([
         path: "/runningQuiz",
         element: <QuizPlayer />,
       },
-{
+      {
         path: "/run-quiz-host/:quizId",
-        element: <HostLiveQuiz />
-      }
+        element: <HostLiveQuiz />,
+      },
     ],
   },
 ]);
 
-
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Toaster />
     <RouterProvider router={router} />
-  </StrictMode>,
-)
+  </StrictMode>
+);

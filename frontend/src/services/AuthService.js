@@ -78,3 +78,10 @@ export const getParticipantAnalytics = async (participantId) => {
   return response.data;
 };
 
+
+export const getQuizSessionBySessionId = async (sessionId) => {
+  const response = await apiClient.get(
+    `quiz-session/${sessionId}/host-reconnect`
+  )
+  return response.data;
+}

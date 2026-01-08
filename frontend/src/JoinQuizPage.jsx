@@ -4,59 +4,60 @@ import { createParticipant } from "./services/AuthService";
 import toast from "react-hot-toast";
 import useAuth, { useParticipant } from "./auth/store";
 export default function JoinQuizPage() {
-  const { quizId } = useParams();
+  const { quizId, sessionId } = useParams();
   const navigate = useNavigate();
-  
+
   const [name, setName] = useState("");
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
-  const checkLogin = useAuth((state)=>state.checkLogin);
-  const participantCreation = useParticipant((state)=>state.participantCreation);
-  const isParticipant= useParticipant((state)=>state.isParticipant);
-  const participant = useParticipant((state)=>state.participant);
-  const user = useAuth((state)=>state.user);
+  const checkLogin = useAuth((state) => state.checkLogin);
+  const participantCreation = useParticipant(
+    (state) => state.participantCreation
+  );
+  const isParticipant = useParticipant((state) => state.isParticipant);
+  const participant = useParticipant((state) => state.participant);
+  const user = useAuth((state) => state.user);
   const handleJoin = async () => {
     if (!name.trim()) return;
 
     let userId = null;
-    
 
-    if(checkLogin())
-    {
-        userId  = user.id;
+    if (checkLogin()) {
+      userId = user.id;
     }
-  
-    if(isParticipant())
-    {
-       setJoined(true);
-       navigate(`/quiz/${quizId}/quizroom`);
-       return;
+
+    // Already joined? just redirect
+    if (isParticipant() && participant?.quizId === quizId) {
+      setJoined(true);
+      console.log(sessionId);
+      navigate(`/quiz/${sessionId}/quizroom`);
+      return;
     }
+
     setLoading(true);
     try {
-       const data= await participantCreation({participantName:name,quizId:quizId,status:"ACTIVE",userId:userId});
-      //  console.log(participant); 
-        navigate(`/quiz/${quizId}/quizroom`);
+      const newParticipant = await participantCreation({
+        participantName: name,
+        quizId,
+        status: "ACTIVE",
+        userId,
+      });
+
+      useParticipant.getState().setParticipant(newParticipant);
+
+      setJoined(true);
+      console.log(sessionId);
+      navigate(`/quiz/${sessionId}/quizroom`);
     } catch (err) {
-      toast.error(  err.response?.data?.message || err.message || "Participant not crated!")
+      toast.error(
+        err.response?.data?.message || err.message || "Participant not created!"
+      );
       console.error(err);
     } finally {
-      setJoined(true);
       setLoading(false);
     }
-
-  
   };
 
-//   useEffect(() => {
-//     socket.on("quiz-started", () => {
-//       navigate(`/play/${quizId}`);
-//     });
-
-//     return () => {
-//       socket.off("quiz-started");
-//     };
-//   }, [quizId]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
@@ -80,9 +81,7 @@ export default function JoinQuizPage() {
       ) : (
         <div className="text-center">
           <h2 className="text-xl">Waiting for host to start…</h2>
-          <p className="text-gray-500 mt-2">
-            Don’t refresh this page
-          </p>
+          <p className="text-gray-500 mt-2">Don’t refresh this page</p>
         </div>
       )}
     </div>
