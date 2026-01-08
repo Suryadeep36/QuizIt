@@ -15,6 +15,11 @@ export const logoutUser = async () => {
   return;
 };
 
+export const refreshToken= async ()=>{
+   const response =  await apiClient.post("/refresh");
+   return response.data;
+}
+
 export const createQuiz = async (quizData) => {
   const response = await apiClient.post(`/quiz`, quizData);
   return response.data;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import useAuth from "./auth/store";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Typography from "@mui/material/Typography";
@@ -47,28 +47,40 @@ export default function Dashboard() {
   const user = useAuth((state) => state.user);
 
   const [loading, setLoading] = useState(false);
-
-  const hostId = user.id;
+  const navigate  = useNavigate();
+  
+ const hostId = (user && user.id) ? user.id : null;;
   const isDraftQuiz = (quiz) => !quiz.mode;
   const isServerQuiz = (quiz) => quiz.mode === "SERVER";
   const isRandomizedQuiz = (quiz) => quiz.mode === "RANDOMIZED";
 
-  useEffect(() => {
+useEffect(() => {
+  if (!checkLogin()) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+
+
+  if (!user?.id) return;
+
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
-      const data = await getQuizsByHostId(hostId);
+      const data = await getQuizsByHostId(user.id);
       setQuizzes(data);
     } catch (err) {
-      toast.error(  err.response?.data?.message || err.message || "Quiz are not loaded!")
-      console.error(err);
+      toast.error(
+        err.response?.data?.message ||
+        err.message ||
+        "Quizzes are not loaded!"
+      );
     } finally {
       setLoading(false);
     }
   };
-  fetchQuizzes();
-}, []);
 
+  fetchQuizzes();
+}, [user?.id, checkLogin, navigate]);
 
   if (loading) {
     return (
@@ -78,6 +90,8 @@ export default function Dashboard() {
     );
   }
 
+  
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-50 px-6 py-10">
       <div className="max-w-6xl mx-auto">
@@ -95,7 +109,7 @@ export default function Dashboard() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <AccountCircleIcon color="primary" />
               <Typography variant="subtitle1" fontWeight={500}>
-                {user.username}
+                {user?.username}
               </Typography>
             </Box>
 

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from 'zustand/middleware'
-import { createParticipant, loginUser, logoutUser } from "../services/AuthService";
+import { createParticipant as createParticipantApi, loginUser, logoutUser } from "../services/AuthService";
 // import { useNavigate } from "react-router";
 const LOCAL_KEY = "quizit_auth"
 const PARTICIPANT_KEY = "participant"
@@ -52,7 +52,8 @@ const useAuth = create(
                         authStatus: false,
                         authLoading: false
                     })
-                    // navigate("/")
+                    localStorage.removeItem(LOCAL_KEY);
+                    // window.location.replace("/auth");
                 } catch (error) {
                     throw error;
                 }
@@ -66,6 +67,14 @@ const useAuth = create(
                 if (get().accessToken && get().authStatus)
                     return true;
                 else return false;
+            },
+
+            setLocalData:(accessToken,user,authStatus)=>{
+                set({
+                    accessToken,
+                    user,
+                    authStatus
+                })
             }
         }),
         {
@@ -93,7 +102,7 @@ export const useParticipant = create(
             },
             participantCreation: async (createData) => {
                 try {
-                    const responseData = await createParticipant(createData);
+                    const responseData = await createParticipantApi(createData);
                     console.log(responseData)
                     set({
                         participant: {
@@ -105,7 +114,7 @@ export const useParticipant = create(
                     )
                     return responseData;
                 }
-                catch {
+                catch(error){
                     throw error;
                 }
 
