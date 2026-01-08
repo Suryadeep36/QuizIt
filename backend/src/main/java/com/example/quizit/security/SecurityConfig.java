@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/quiz-websocket").permitAll()
                         .requestMatchers("/quizit/quiz-session").permitAll()
                         .requestMatchers("/quizit/quiz-session/**").permitAll()
+                        .requestMatchers("/quizit/question").permitAll()
                         .anyRequest().authenticated()
                 )
 //                .authorizeHttpRequests(auth -> auth

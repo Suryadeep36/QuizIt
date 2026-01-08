@@ -22,6 +22,7 @@ public class QuestionController {
 
     @PostMapping("/question")
     public ResponseEntity<QuestionDto> createQuestion(@RequestBody QuestionDto question) {
+//        System.out.println(question);
         return ResponseEntity.status(HttpStatus.CREATED).body(questionService.createQuestion(question));
     }
 
