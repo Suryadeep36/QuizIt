@@ -38,14 +38,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            if(!jwtService.isAccessToken(token)){
-                filterChain.doFilter(request,response);
-                return;
-            }
 
             try{
 
-               Jws<Claims> parsedToken =  jwtService.parse(token);
+                if(!jwtService.isAccessToken(token)){
+                    filterChain.doFilter(request,response);
+                    return;
+                }
+
+                Jws<Claims> parsedToken =  jwtService.parse(token);
                Claims payload = parsedToken.getPayload();
                 UUID userId = UUID.fromString(payload.getSubject());
 
@@ -71,6 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             catch (ExpiredJwtException e) {
                 request.setAttribute("errException", "token expired");
+                System.out.println("token expired");
                 logger.error("token expired", e);
             }
             catch(Exception e){

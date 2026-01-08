@@ -109,6 +109,13 @@ public class AuthenticationController {
             @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest,
             HttpServletRequest request,HttpServletResponse response)
     {
+        try{
+//            Thread.sleep(5000);
+        }
+        catch (Exception e){
+            throw new BadCredentialsException("Invalid refresh token");
+        }
+
 
         String refreshToken = getRefreshTokenFromRequest(refreshTokenRequest,request).orElseThrow(()->new BadCredentialsException("Refresh token is required"));
 //        System.out.println("refreshToken:"+refreshToken);

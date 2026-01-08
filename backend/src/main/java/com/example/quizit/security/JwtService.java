@@ -92,12 +92,10 @@ public class JwtService {
     }
 
     public boolean isAccessToken(String token) {
-        try {
+
             Claims c = parse(token).getPayload(); // ChatGPT
             return "access".equals(c.get("type"));
-        } catch (JwtException e) {
-            return false; // ChatGPT
-        }
+
     }
 
     public boolean isRefreshToken(String token) {
