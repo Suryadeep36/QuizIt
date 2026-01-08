@@ -74,6 +74,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/quizAnalytics/:quizId",
+        //use this quiz id: 729d508f-6a8f-4301-99b0-31be74959bef
         element: <UserAnalytics />,
       },
       {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import useAuth from '../auth/store';
 import { refreshToken } from '../services/AuthService';
+
 const apiClient = axios.create({
     baseURL: import.meta.env.API_BASE_URL || 'http://localhost:3000/quizit',
     headers: {
@@ -15,7 +16,7 @@ apiClient.interceptors.request.use((config) => {
     const accessToken = useAuth.getState().accessToken;
 
     if (accessToken) {
-        console.log(accessToken)
+        // console.log(accessToken)
         config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
