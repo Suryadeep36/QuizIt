@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router";
 import useAuth from "./store";
 
-const UnprotectedRoute = () => {
+const Unprotected = () => {
   const checkLogin = useAuth(
     (state) => state.checkLogin 
   );
@@ -13,4 +13,4 @@ const UnprotectedRoute = () => {
   return <Outlet />;
 };
 
-export default UnprotectedRoute;
+export default Unprotected;

@@ -16,14 +16,13 @@ import JoinQuizPage from './JoinQuizPage.jsx'
 import QuizRoom from './QuizRoom.jsx'
 import HostLiveQuiz from './HostLiveQuiz.jsx'
 import ParticipantLiveQuiz from './ParticipantLiveQuiz.jsx'
-import Analytics from './Analytics.jsx'
-import UnprotectedRoute from "./auth/unprotectedRoute.jsx";
+import Unprotected from "./auth/Unprotected.jsx";
 import Leaderboard from "./Leaderboard.jsx";
 
 
 const router = createBrowserRouter([
   {
-    element: <UnprotectedRoute/>,
+    element: <Unprotected/>,
     children: [
       {
         path: "/auth",
