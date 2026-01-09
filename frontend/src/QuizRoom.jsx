@@ -20,7 +20,7 @@ export default function QuizRoom() {
       participantId: participant?.id,
       sessionId,
       hasJoined,
-      fullParticipant: participant
+      fullParticipant: participant,
     });
   }, [isConnected, client, participant, sessionId, hasJoined]);
 
@@ -28,7 +28,7 @@ export default function QuizRoom() {
   useEffect(() => {
     console.log("Connecting WebSocket...");
     connect();
-    
+
     return () => {
       console.log("Disconnecting WebSocket...");
     };
@@ -40,7 +40,7 @@ export default function QuizRoom() {
       clientConnected: client?.connected,
       participantId: participant?.id,
       sessionId,
-      hasJoined
+      hasJoined,
     });
 
     if (!isConnected) {
@@ -70,18 +70,45 @@ export default function QuizRoom() {
 
     console.log("✅ All conditions met - Joining session!", {
       sessionId,
-      participantId: participant.id
+      participantId: participant.id,
     });
 
     joinSession(sessionId, participant.id);
     setHasJoined(true);
   }, [isConnected, client?.connected, participant?.id, sessionId, hasJoined]);
 
+  useEffect(() => {
+    if (!isConnected || !client?.connected || !hasJoined) return;
+
+    console.log("Subscribing to start_quiz topic...");
+
+    const subscription = client.subscribe(
+      `/topic/quiz/${sessionId}`,
+      (message) => {
+        const msg = JSON.parse(message.body);
+        console.log("WS Message:", msg);
+
+        switch (msg.messageType) {
+          case "START_QUIZ":
+            navigate(`/play/quiz/${sessionId}`);
+            break;
+          default:
+            console.log("Unknown WS message:", msg);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isConnected, client?.connected, hasJoined, sessionId]);
 
   if (!participant?.id) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-semibold text-red-500">No participant data</h2>
+        <h2 className="text-2xl font-semibold text-red-500">
+          No participant data
+        </h2>
         <p className="mt-2 text-gray-600">Redirecting...</p>
       </div>
     );
@@ -100,7 +127,7 @@ export default function QuizRoom() {
         <p className="mt-1 text-sm text-green-500">✓ Joined session</p>
       )}
       <p className="mt-1 text-sm text-gray-400">Please don't refresh</p>
-      
+
       {/* Debug info - remove in production */}
       <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
         <p>Participant ID: {participant?.id}</p>

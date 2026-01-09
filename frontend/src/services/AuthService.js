@@ -85,3 +85,8 @@ export const getQuizSessionBySessionId = async (sessionId) => {
   )
   return response.data;
 }
+
+export const createQuestionAnalyticsUser = async (QuestionAnalyticsUserData) => {
+  const response = await apiClient.post(`question-analytics-user`,QuestionAnalyticsUserData)
+  return response.data;
+}

@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef, use } from "react";
-import { Zap, Users, Share2, Play, Settings, ChevronRight } from "lucide-react";
+import {
+  Zap,
+  Users,
+  Share2,
+  Play,
+  Settings,
+  ChevronRight,
+  X,
+} from "lucide-react";
 import ParticipantsList from "./Components/ParticipantsList";
 
 import QuestionDisplay from "./Components/QuestionDisplay";
@@ -24,6 +32,8 @@ export default function HostLiveQuiz() {
   const { quizId } = useParams();
   const hostId = useAuth((state) => state.user.id);
   const [sessionId, setSessionId] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [joinLink, setJoinLink] = useState(null);
 
   const connectWS = useWS((s) => s.connect);
   const client = useWS((s) => s.client);
@@ -32,8 +42,32 @@ export default function HostLiveQuiz() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  function normalizeBackendParticipant(p) {
+    return {
+      participantSessionId: p.participantSessionId,
+      participantId: p.participant.participantId,
+      participantName: p.participant.participantName,
+      score: p.score ?? 0,
+      status: p.status,
+      answered: false,
+      correct: false,
+    };
+  }
+
+  function normalizeWsParticipant(p) {
+    return {
+      participantSessionId: p.sessionId,
+      participantId: p.participantId,
+      participantName: p.name,
+      score: 0,
+      status: "JOINED",
+      answered: false,
+      correct: false,
+    };
+  }
+
   const renderCorrectAnswer = (question) => {
-    if(!question) return;
+    if (!question) return;
     const { type, correctAnswer, options } = question;
 
     switch (type) {
@@ -82,7 +116,7 @@ export default function HostLiveQuiz() {
       setTimer((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          console.log("reveal")
+          console.log("reveal");
           setStage("reveal");
           return 0;
         }
@@ -120,13 +154,15 @@ export default function HostLiveQuiz() {
               console.log("Reconnected session:", sessionRes);
 
               setSessionId(sessionRes.sessionId);
+              const normalizedParticipants = sessionRes.participants.map(normalizeBackendParticipant);
+              setParticipants(normalizedParticipants);
               setStage(
                 sessionRes.status === "STARTED" ? "question" : "waiting"
               );
 
               if (
                 sessionRes.status === "STARTED" &&
-                sessionRes.currentQuestion
+                sessionRes.currentQuestionState
               ) {
                 const q = sessionRes.currentQuestionState;
                 const fullQ = questions.find(
@@ -138,17 +174,17 @@ export default function HostLiveQuiz() {
                   options: q.options,
                   duration: q.duration,
                   type: q.questionType,
-                  correctAnswer: fullQ?.correctAnswer || null, 
+                  correctAnswer: fullQ?.correctAnswer || null,
                 });
                 setStage("question");
                 setTimer(sessionRes.currentQuestionState.duration);
               }
 
               setLoading(false);
-              return; 
+              return;
             } catch (err) {
               console.warn("Reconnect failed, creating new session...", err);
-              localStorage.removeItem("quizSession"); 
+              localStorage.removeItem("quizSession");
             }
           } else {
             console.warn("Stored session quizId mismatch — clearing storage");
@@ -188,7 +224,7 @@ export default function HostLiveQuiz() {
 
   useEffect(() => {
     if (!client || !sessionId || !isConnected) return;
-
+    setJoinLink(`http://localhost:5173/quiz/${quizId}/join/${sessionId}`);
     const subscription = client.subscribe(
       `/topic/quiz/${sessionId}`,
       (message) => {
@@ -199,13 +235,7 @@ export default function HostLiveQuiz() {
           case "PLAYER_JOINED":
             setParticipants((prev) => [
               ...prev,
-              {
-                id: msg.payload.sessionId,
-                participantId: msg.payload.participantId,
-                name: msg.payload.name,
-                answered: false,
-                correct: false,
-              },
+              normalizeWsParticipant(msg.payload),
             ]);
             break;
 
@@ -237,7 +267,8 @@ export default function HostLiveQuiz() {
             break;
 
           case "QUIZ_ENDED":
-            setStage("ended");
+            setStage("leaderboard");
+            localStorage.removeItem("quizSession");
             break;
 
           default:
@@ -264,6 +295,10 @@ export default function HostLiveQuiz() {
   };
 
   const revealAnswer = () => {
+       client.publish({
+      destination: `/app/quiz/reveal/${sessionId}`,
+      body: "",
+    });
     setStage("reveal");
   };
 
@@ -302,10 +337,43 @@ export default function HostLiveQuiz() {
               isLive={stage === "question"}
               participantCount={participants.length}
             />
-            <button className="flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium hover:shadow-md">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium hover:shadow-md"
+            >
               <Share2 className="w-4 h-4" />
               Share Link
             </button>
+
+            {isOpen && (
+              <div className="absolute right-0 mt-3 w-80 bg-white text-slate-700 p-4 rounded-xl shadow-xl border border-slate-200 z-20">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-sm">Share Quiz</h4>
+                  <button onClick={() => setIsOpen(false)}>
+                    <X className="w-4 h-4 text-slate-500 hover:text-slate-700" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-500 mb-2">
+                  Participants can join using this link:
+                </p>
+
+                <div className="flex items-center gap-2 bg-slate-100 border border-slate-300 rounded-lg px-2 py-2">
+                  <input
+                    className="flex-1 bg-transparent text-sm text-slate-700 outline-none"
+                    type="text"
+                    readOnly
+                    value={joinLink}
+                  />
+                  <button
+                    onClick={() => navigator.clipboard.writeText(joinLink)}
+                    className="text-blue-600 hover:text-blue-700 font-medium text-xs"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
               <Settings className="w-5 h-5 text-white/80" />
             </button>

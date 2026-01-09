@@ -30,7 +30,7 @@ export default function JoinQuizPage() {
     if (isParticipant() && participant?.quizId === quizId) {
       setJoined(true);
       console.log(sessionId);
-      navigate(`/quiz/${sessionId}/quizroom`);
+      navigate(`/play/quiz/${sessionId}`);
       return;
     }
 
@@ -47,7 +47,7 @@ export default function JoinQuizPage() {
 
       setJoined(true);
       console.log(sessionId);
-      navigate(`/quiz/${sessionId}/quizroom`);
+      navigate(`/play/quiz/${sessionId}`);
     } catch (err) {
       toast.error(
         err.response?.data?.message || err.message || "Participant not created!"

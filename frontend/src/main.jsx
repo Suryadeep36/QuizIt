@@ -44,7 +44,7 @@ const router = createBrowserRouter([
     element: <QuizRoom />,
   },
   {
-    path: "/demorun",
+    path: "/play/quiz/:sessionId",
     element: <ParticipantLiveQuiz />,
   },
 
