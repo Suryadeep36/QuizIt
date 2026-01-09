@@ -1,7 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.jsx";
 import Dashboard from "./Dashboard.jsx";
 import CreateQuiz from "./CreateQuiz.jsx";
 import RunQuiz from "./RunQuiz.jsx";
@@ -12,19 +11,18 @@ import AuthPage from './AuthPage.jsx'
 import QuizManagementDashboard from './QuizManagementDashboard.jsx'
 import { Toaster } from 'react-hot-toast'
 import ProtectedRoute from './auth/ProtectedRoute.jsx'
-import UnprotectedRoute from './auth/unprotectedRoute.jsx'
-import RunningQuiz from './ParticipantLiveQuiz.jsx'
 import QuizPlayer from './QuizPlayer.jsx'
 import JoinQuizPage from './JoinQuizPage.jsx'
 import QuizRoom from './QuizRoom.jsx'
 import HostLiveQuiz from './HostLiveQuiz.jsx'
 import ParticipantLiveQuiz from './ParticipantLiveQuiz.jsx'
 import Analytics from './Analytics.jsx'
+import UnprotectedRoute from "./auth/unprotectedRoute.jsx";
 
 
 const router = createBrowserRouter([
   {
-    element: <UnprotectedRoute />,
+    element: <UnprotectedRoute/>,
     children: [
       {
         path: "/auth",
