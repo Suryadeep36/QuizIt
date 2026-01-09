@@ -76,7 +76,7 @@ public class ParticipantServiceImpl implements ParticipantService {
         {
             User user = userRepository.findById(participantDto.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-          participant.setUser(user);
+            participant.setUser(user);
         }
         participant.setQuiz(quiz);
 
@@ -108,6 +108,6 @@ public class ParticipantServiceImpl implements ParticipantService {
     @Override
     public void deleteParticipant(String id) {
         UUID uuid = UserHelper.parseUUID(id);
-          participantRepository.deleteById(uuid);
+        participantRepository.deleteById(uuid);
     }
 }

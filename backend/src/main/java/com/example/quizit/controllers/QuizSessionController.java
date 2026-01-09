@@ -1,6 +1,7 @@
 package com.example.quizit.controllers;
 
 
+import com.example.quizit.dtos.HostReconnectResponse;
 import com.example.quizit.dtos.QuizSessionDto;
 import com.example.quizit.services.interfaces.QuizSessionService;
 import lombok.RequiredArgsConstructor;
@@ -32,4 +33,11 @@ public class QuizSessionController {
         QuizSessionDto dto = quizSessionService.endQuiz(sessionId);
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/{sessionId}/host-reconnect")
+    public ResponseEntity<HostReconnectResponse> hostReconnect(@PathVariable UUID sessionId){
+        HostReconnectResponse dto = quizSessionService.getHostReconnectState(sessionId);
+        return ResponseEntity.ok(dto);
+    }
+
 }

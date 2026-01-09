@@ -13,10 +13,9 @@ import java.util.UUID;
 @Builder
 public class QuizSessionDto {
     private UUID sessionId;
-    private UUID hostId;
     private UUID quizId;
     private QuizSessionStatus status;
     private Integer currentQuestionIndex;
-    private Instant startedAt;
-    private Instant endedAt;
+    private Integer totalQuestions;
+    private UUID currentQuestionId;
 }

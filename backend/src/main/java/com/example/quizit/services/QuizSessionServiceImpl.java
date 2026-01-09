@@ -1,11 +1,12 @@
 package com.example.quizit.services;
 
-import com.example.quizit.dtos.QuizSessionDto;
+import com.example.quizit.dtos.*;
 import com.example.quizit.entities.*;
 import com.example.quizit.enums.ParticipantSessionStatus;
 import com.example.quizit.enums.ParticipantStatus;
 import com.example.quizit.enums.QuizSessionStatus;
 import com.example.quizit.exceptions.ResourceNotFoundException;
+import com.example.quizit.mapper.QuestionToQuestionUserMapper;
 import com.example.quizit.repositories.*;
 import com.example.quizit.services.interfaces.QuizSessionService;
 import jakarta.transaction.Transactional;
@@ -14,6 +15,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -29,6 +32,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     private final ParticipantSessionRepository participantSessionRepository;
     private final ParticipantRepository participantRepository;
     private final ModelMapper modelMapper;
+
 
 
     @Override
@@ -56,21 +60,41 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     }
 
     @Override
-    public QuizSessionDto findQuizSessionBySessionId(UUID sessionId) {
-
-        QuizSession session = quizSessionRepository.findBySessionId(sessionId)
+    public HostReconnectResponse getHostReconnectState(UUID sessionId) {
+        QuizSession session = quizSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        return modelMapper.map(session, QuizSessionDto.class);
+        UUID quizId = session.getQuiz().getQuizId();
+
+        List<ParticipantSession> participantSessionList = participantSessionRepository.getParticipantSessionByQuizSession_SessionId(sessionId);
+
+
+        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        HostReconnectResponse.HostReconnectResponseBuilder builder = HostReconnectResponse.builder()
+                .sessionId(session.getSessionId())
+                .quizId(session.getQuiz().getQuizId())
+                .status(session.getStatus())
+                .totalQuestions(questions.size())
+                .participants(participantSessionList)
+                .participantCount(participantSessionList.size());
+
+
+        if (session.getStatus() == QuizSessionStatus.STARTED) {
+            builder.currentQuestionIndex(session.getCurrentQuestionIndex());
+            QuestionForUserDto currentQuestion = convertToUserDto(questions.get(session.getCurrentQuestionIndex()));
+            builder.currentQuestionState(currentQuestion);
+        }
+
+        return builder.build();
     }
 
     @Override
-    public QuizSessionDto startQuiz(UUID sessionId) {
+    public QuestionForUserDto startQuiz(UUID sessionId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        if (session.getStatus() != QuizSessionStatus.CREATED) {
+        if (!session.getStatus().equals(QuizSessionStatus.CREATED)) {
             throw new IllegalStateException("Quiz already started or ended");
         }
 
@@ -80,35 +104,66 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         quizSessionRepository.save(session);
 
-        return modelMapper.map(session, QuizSessionDto.class);
+        UUID quizId = session.getQuiz().getQuizId();
+
+        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+
+        if (questions.isEmpty()) {
+            throw new IllegalStateException("No questions found for this quiz!");
+        }
+
+        Question firstQuestion = questions.get(0);
+
+        return convertToUserDto(firstQuestion);
     }
 
+
+    private QuestionForUserDto convertToUserDto(Question q) {
+        return QuestionForUserDto.builder()
+                .questionId(q.getQuestionId())
+                .quizId(q.getQuiz().getQuizId())
+                .content(q.getContent())
+                .options(q.getOptions())
+                .duration(q.getDuration())
+                .questionType(q.getQuestionType())
+                .build();
+    }
+
+
+
     @Override
-    public QuizSessionDto moveToNextQuestion(UUID sessionId) {
+    public QuestionForUserDto moveToNextQuestion(UUID sessionId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        if (session.getStatus() != QuizSessionStatus.STARTED) {
+        if (!session.getStatus().equals(QuizSessionStatus.STARTED)) {
             throw new IllegalStateException("Quiz is not live");
         }
 
-        long totalQuestions = questionRepository.countQuestionByQuiz_QuizId(
-                session.getQuiz().getQuizId()
-        );
+        UUID quizId = session.getQuiz().getQuizId();
 
-        if (session.getCurrentQuestionIndex() + 1 >= totalQuestions) {
-            return endQuiz(sessionId);
+        long totalQuestions = questionRepository.countQuestionByQuiz_QuizId(quizId);
+
+        // if next index EXCEEDS total — end quiz
+        int nextIndex = session.getCurrentQuestionIndex() + 1;
+
+        if (nextIndex >= totalQuestions) {
+            endQuiz(sessionId);
+            return null; // or return a special DTO indicating quiz ended
         }
 
-        session.setCurrentQuestionIndex(
-                session.getCurrentQuestionIndex() + 1
-        );
-
+        // update index
+        session.setCurrentQuestionIndex(nextIndex);
         quizSessionRepository.save(session);
 
-        return modelMapper.map(session, QuizSessionDto.class);
+        // fetch next question
+        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        Question nextQuestion = questions.get(nextIndex);
+
+        return convertToUserDto(nextQuestion);
     }
+
 
 
     @Override
@@ -127,7 +182,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
 
     @Override
-    public QuizSessionDto joinSession(UUID sessionId, UUID participantId) {
+    public ParticipantJoinedMessageDto joinSession(UUID sessionId, UUID participantId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
@@ -159,8 +214,28 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .build();
 
         participantSessionRepository.save(participantSession);
+        ParticipantJoinedMessageDto participantJoinedMessageDto = ParticipantJoinedMessageDto.builder()
+                .messageType("PLAYER_JOINED")
+                .sessionId(sessionId)
+                .participantId(participantId)
+                .name(participant.getParticipantName())
+                .build();
 
-        return modelMapper.map(session, QuizSessionDto.class);
+        return participantJoinedMessageDto;
+    }
+
+    @Override
+    public Map<String, Object> revealAnswer(UUID sessionId) {
+        QuizSession session = quizSessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+
+        if (!session.getStatus().equals(QuizSessionStatus.STARTED)) {
+            throw new IllegalStateException("Quiz is not live");
+        }
+
+        UUID quizId = session.getQuiz().getQuizId();
+        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        Question nextQuestion = questions.get(session.getCurrentQuestionIndex());
+        return nextQuestion.getCorrectAnswer();
     }
 }
-
