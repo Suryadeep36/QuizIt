@@ -82,14 +82,20 @@ export const getLeaderboardByQuizId = async (quizId) => {
   const response = await apiClient.get(`/quiz/${quizId}/leaderboard`);
   return response.data;
 };
+
 export const getQuizSessionBySessionId = async (sessionId) => {
   const response = await apiClient.get(
-    `quiz-session/${sessionId}/host-reconnect`
+    `/quiz-session/${sessionId}/host-reconnect`
   )
   return response.data;
 }
 
 export const createQuestionAnalyticsUser = async (QuestionAnalyticsUserData) => {
-  const response = await apiClient.post(`question-analytics-user`,QuestionAnalyticsUserData)
+  const response = await apiClient.post(`/question-analytics-user`,QuestionAnalyticsUserData)
+  return response.data;
+}
+
+export const endQuiz = async (quizId) => {
+  const response = await apiClient.post(`/quiz/${quizId}/end`);
   return response.data;
 }

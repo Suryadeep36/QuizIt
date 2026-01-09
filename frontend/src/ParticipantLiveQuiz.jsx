@@ -12,10 +12,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { useWS } from "./stores/webSocketStore";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useParticipant } from "./auth/store";
 import { joinSession } from "./services/stompService";
 import { createQuestionAnalyticsUser } from "./services/AuthService";
+
 
 const DUMMY_QUESTIONS = [
   {
@@ -52,6 +53,7 @@ export default function ParticipantLiveQuiz() {
   const [correctAnswer, setCorrectAnswer] = useState(null);
   const participant = useParticipant((s) => s.participant);
   const [hasJoined, setHasJoined] = useState(false);
+  const navigator = useNavigate();
 
   const TOTAL_TIME = 15;
   const renderPlayableOptions = (
@@ -244,11 +246,12 @@ export default function ParticipantLiveQuiz() {
 
           case "REVEAL_ANSWER":
             setStage("reveal");
-            setCorrectAnswer(msg.payload.value);
+            setCorrectAnswer(msg.payload);
             break;
 
           case "QUIZ_ENDED":
             setStage("end");
+            navigator(`/quizAnalytics/${msg.payload.quizId}`);
             break;
 
           default:
@@ -278,7 +281,7 @@ export default function ParticipantLiveQuiz() {
     switch (currentQuestion.questionType) {
       case "MCQ":
         selectedAnswer = {
-          [selectedValue]: currentQuestion.options[selectedValue],
+          key: selectedValue,
         };
         break;
 
@@ -314,17 +317,19 @@ export default function ParticipantLiveQuiz() {
   const isAnswerCorrect = (question, selectedOption) => {
     if (!question || !selectedOption) return false;
 
-    const { questionType, correctAnswer } = question;
-
+    const { questionType } = question;
+    console.log(questionType);
+    console.log(selectedOption);
+    console.log(correctAnswer);
     switch (questionType) {
       case "MCQ":
         return selectedOption === correctAnswer.key;
 
       case "TRUE_FALSE":
-        return selectedOption === correctAnswer;
+        return selectedOption === correctAnswer.value;
 
       case "NUMERICAL":
-        return Number(selectedOption) === Number(correctAnswer);
+        return Number(selectedOption) === Number(correctAnswer.value);
 
       default:
         return false;
@@ -334,8 +339,10 @@ export default function ParticipantLiveQuiz() {
   const renderCorrectText = (question) => {
     if (!question) return "—";
 
-    const { questionType, correctAnswer, options } = question;
-
+    const { questionType, options } = question;
+    console.log(questionType);
+    console.log(options);
+    console.log(correctAnswer);
     switch (questionType) {
       case "MCQ":
         return `${correctAnswer.key}: ${options[correctAnswer.key]}`;
@@ -444,7 +451,7 @@ export default function ParticipantLiveQuiz() {
         )}
 
         {(() => {
-          if (stage !== "reveal") return null;
+          if (stage !== "reveal" || !correctAnswer) return null;
 
           const isCorrect = isAnswerCorrect(currentQuestion, selectedOption);
 

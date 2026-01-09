@@ -18,6 +18,7 @@ import HostLiveQuiz from './HostLiveQuiz.jsx'
 import ParticipantLiveQuiz from './ParticipantLiveQuiz.jsx'
 import Analytics from './Analytics.jsx'
 import UnprotectedRoute from "./auth/unprotectedRoute.jsx";
+import Leaderboard from "./Leaderboard.jsx";
 
 
 const router = createBrowserRouter([
@@ -47,7 +48,10 @@ const router = createBrowserRouter([
     path: "/play/quiz/:sessionId",
     element: <ParticipantLiveQuiz />,
   },
-
+  {
+    path: "/quiz/leaderboard/:quizId",
+    element: <Leaderboard />
+  },
   // 🔒 PROTECTED ROUTES
   {
     element: <ProtectedRoute />,
@@ -80,10 +84,6 @@ const router = createBrowserRouter([
       {
         path: "/run-quiz-host/:quizId",
         element: <HostLiveQuiz />
-      },
-      {
-        path:"/quiz/:quizid/analytics",
-        element:<Analytics/>
       }
     ],
   },

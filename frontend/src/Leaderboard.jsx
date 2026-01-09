@@ -5,6 +5,7 @@ import {
   Medal, CheckCircle, Timer, BarChart2, ChevronLeft
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { getLeaderboardByQuizId } from "./services/AuthService";
 
 export default function Leaderboard() {
   const { quizId } = useParams();
@@ -20,6 +21,7 @@ export default function Leaderboard() {
     try {
       setLoading(true);
       const data = await getLeaderboardByQuizId(quizId);
+      console.log(data)
       setParticipants(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch leaderboard", err);

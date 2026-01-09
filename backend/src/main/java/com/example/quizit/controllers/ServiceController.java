@@ -19,7 +19,7 @@ public class ServiceController {
     private final QuizService quizService;
     @PostMapping("/quiz/{quizId}/end")
     public ResponseEntity<Void> endQuiz(@PathVariable UUID quizId) {
-//        System.out.println("endQuiz");
+        System.out.println("endQuiz");
         quizService.endQuiz(quizId);
         return ResponseEntity.ok().build();
     }
