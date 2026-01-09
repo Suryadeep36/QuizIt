@@ -65,13 +65,16 @@ public class QuizWebSocketController {
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
     }
 
-    @MessageMapping("/app/quiz/reveal/{sessionId}")
-    public void revealAnswer(@DestinationVariable UUID sessionId){
+    @MessageMapping("/quiz/reveal/{sessionId}")
+    public void revealAnswer(@DestinationVariable UUID sessionId) {
         Map<String, Object> correctAnswer = quizSessionService.revealAnswer(sessionId);
-        WsMessageDto< Map<String, Object> > msg = WsMessageDto.<Map<String, Object>>builder()
+        WsMessageDto<Map<String, Object>> msg = WsMessageDto.<Map<String, Object>>builder()
                 .messageType("REVEAL_ANSWER")
                 .payload(correctAnswer)
                 .build();
+
+        System.out.println(">> REVEAL CALLED: " + msg);
+
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
     }
 }

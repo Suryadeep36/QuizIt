@@ -117,6 +117,7 @@ export default function HostLiveQuiz() {
         if (prev <= 1) {
           clearInterval(interval);
           console.log("reveal");
+          revealAnswer();
           setStage("reveal");
           return 0;
         }
@@ -295,7 +296,7 @@ export default function HostLiveQuiz() {
   };
 
   const revealAnswer = () => {
-       client.publish({
+    client.publish({
       destination: `/app/quiz/reveal/${sessionId}`,
       body: "",
     });
