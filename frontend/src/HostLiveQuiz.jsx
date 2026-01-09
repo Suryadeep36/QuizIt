@@ -1,5 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { Zap, Users, Share2, Play, Settings, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef, use } from "react";
+import {
+  Zap,
+  Users,
+  Share2,
+  Play,
+  Settings,
+  ChevronRight,
+  X,
+} from "lucide-react";
 import ParticipantsList from "./Components/ParticipantsList";
 
 import QuestionDisplay from "./Components/QuestionDisplay";
@@ -10,116 +18,302 @@ import { useWS } from "./stores/webSocketStore";
 import {
   createQuizSession,
   getQuestionsByQuizId,
+  getQuizSessionBySessionId,
 } from "./services/AuthService";
 import useAuth from "./auth/store";
 import { useParams } from "react-router";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timer, setTimer] = useState(30);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [participants, setParticipants] = useState([
-    { id: 1, name: "Jay", score: 0, answered: false, correct: false },
-    { id: 2, name: "Ravi", score: 0, answered: false, correct: false },
-    { id: 3, name: "Sneha", score: 0, answered: false, correct: false },
-    { id: 4, name: "Priya", score: 0, answered: false, correct: false },
-  ]);
+  const [participants, setParticipants] = useState([]);
   const { quizId } = useParams();
-  const user = useAuth((state) => state.user);
-  const hostId = user.id;
+  const hostId = useAuth((state) => state.user.id);
   const [sessionId, setSessionId] = useState(null);
-  const [questions, setQuestions] = useState([
-    {
-      id: 1,
-      text: "Is Suryadeep smart?",
-      type: "TRUE_FALSE",
-      options: ["True", "False"],
-      correctAnswer: 0,
-      responses: { 0: 3, 1: 1 },
-    },
-    {
-      id: 2,
-      text: "What is JavaScript?",
-      type: "MCQ",
-      options: ["Language", "Framework", "Library", "Compiler"],
-      correctAnswer: 0,
-      responses: { 0: 2, 1: 1, 2: 1, 3: 0 },
-    },
-    {
-      id: 3,
-      text: "Which framework is this quiz built with?",
-      type: "MCQ",
-      options: ["React", "Vue", "Angular", "Svelte"],
-      correctAnswer: 0,
-      responses: { 0: 4, 1: 0, 2: 0, 3: 0 },
-    },
-  ]);
-  const isQuizSessionCreated = useRef(false);
-  const { client } = useWS();
+  const [isOpen, setIsOpen] = useState(false);
+  const [joinLink, setJoinLink] = useState(null);
+
+  const connectWS = useWS((s) => s.connect);
+  const client = useWS((s) => s.client);
+  const isConnected = useWS((s) => s.isConnected);
+
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  function normalizeBackendParticipant(p) {
+    return {
+      participantSessionId: p.participantSessionId,
+      participantId: p.participant.participantId,
+      participantName: p.participant.participantName,
+      score: p.score ?? 0,
+      status: p.status,
+      answered: false,
+      correct: false,
+    };
+  }
+
+  function normalizeWsParticipant(p) {
+    return {
+      participantSessionId: p.sessionId,
+      participantId: p.participantId,
+      participantName: p.name,
+      score: 0,
+      status: "JOINED",
+      answered: false,
+      correct: false,
+    };
+  }
+
+  const renderCorrectAnswer = (question) => {
+    if (!question) return;
+    const { type, correctAnswer, options } = question;
+
+    switch (type) {
+      case "MCQ": {
+        const key = correctAnswer?.key;
+        const value = options?.[key];
+
+        return (
+          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+            <p className="text-3xl font-bold text-[#4a9cb0]">
+              {key ? `${key}: ${value}` : "—"}
+            </p>
+          </div>
+        );
+      }
+
+      case "TRUE_FALSE": {
+        return (
+          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+            <p className="text-3xl font-bold text-[#4a9cb0]">
+              {correctAnswer?.value}
+            </p>
+          </div>
+        );
+      }
+
+      case "NUMERICAL": {
+        return (
+          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+            <p className="text-3xl font-bold text-[#4a9cb0]">
+              {correctAnswer?.value}
+            </p>
+          </div>
+        );
+      }
+
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
-    let interval;
-    if (stage === "question" && !isPaused) {
-      interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            setStage("reveal");
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (stage !== "question" || isPaused) return;
+
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          console.log("reveal");
+          setStage("reveal");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     return () => clearInterval(interval);
   }, [stage, isPaused]);
 
   useEffect(() => {
-    async function init() {
-      const questions = await getQuestionsByQuizId(quizId);
-      console.log(questions);
-      setQuestions(questions);
+    connectWS();
+  }, [connectWS]);
 
-      if (!isQuizSessionCreated.current) {
-        isQuizSessionCreated.current = true;
-        const sessionData = await createQuizSession({ quizId, hostId });
-        console.log(sessionData);
-        setSessionId(sessionData.sessionId);
+  useEffect(() => {
+    async function init() {
+      try {
+        setLoading(true);
+
+        const questionsRes = await getQuestionsByQuizId(quizId);
+        setQuestions(questionsRes);
+
+        const stored = localStorage.getItem("quizSession");
+
+        if (stored) {
+          const { sessionId: storedSessionId, quizId: storedQuizId } =
+            JSON.parse(stored);
+
+          if (storedQuizId === quizId) {
+            try {
+              const sessionRes = await getQuizSessionBySessionId(
+                storedSessionId
+              );
+
+              console.log("Reconnected session:", sessionRes);
+
+              setSessionId(sessionRes.sessionId);
+              const normalizedParticipants = sessionRes.participants.map(normalizeBackendParticipant);
+              setParticipants(normalizedParticipants);
+              setStage(
+                sessionRes.status === "STARTED" ? "question" : "waiting"
+              );
+
+              if (
+                sessionRes.status === "STARTED" &&
+                sessionRes.currentQuestionState
+              ) {
+                const q = sessionRes.currentQuestionState;
+                const fullQ = questions.find(
+                  (x) => x.questionId === q.questionId
+                );
+                setCurrentQuestion({
+                  questionId: q.questionId,
+                  content: q.content,
+                  options: q.options,
+                  duration: q.duration,
+                  type: q.questionType,
+                  correctAnswer: fullQ?.correctAnswer || null,
+                });
+                setStage("question");
+                setTimer(sessionRes.currentQuestionState.duration);
+              }
+
+              setLoading(false);
+              return;
+            } catch (err) {
+              console.warn("Reconnect failed, creating new session...", err);
+              localStorage.removeItem("quizSession");
+            }
+          } else {
+            console.warn("Stored session quizId mismatch — clearing storage");
+            localStorage.removeItem("quizSession");
+          }
+        }
+
+        // Only create new session if we don't have sessionId yet
+        if (!sessionId) {
+          const sessionRes = await createQuizSession({
+            quizId,
+            hostId,
+          });
+
+          console.log("New Session Created:", sessionRes);
+
+          setSessionId(sessionRes.sessionId);
+
+          localStorage.setItem(
+            "quizSession",
+            JSON.stringify({
+              sessionId: sessionRes.sessionId,
+              quizId,
+            })
+          );
+        }
+      } catch (err) {
+        console.error("Initialization error:", err);
+        setError("Failed to initialize quiz session");
+      } finally {
+        setLoading(false);
       }
     }
 
     init();
-  }, []);
+  }, [quizId, hostId]);
+
+  useEffect(() => {
+    if (!client || !sessionId || !isConnected) return;
+    setJoinLink(`http://localhost:5173/quiz/${quizId}/join/${sessionId}`);
+    const subscription = client.subscribe(
+      `/topic/quiz/${sessionId}`,
+      (message) => {
+        const msg = JSON.parse(message.body);
+        console.log("WS Message:", msg);
+
+        switch (msg.messageType) {
+          case "PLAYER_JOINED":
+            setParticipants((prev) => [
+              ...prev,
+              normalizeWsParticipant(msg.payload),
+            ]);
+            break;
+
+          case "START_QUIZ":
+          case "NEXT_QUESTION": {
+            const q = msg.payload;
+            const fullQ = questions.find((x) => x.questionId === q.questionId);
+            console.log(q);
+            console.log(fullQ);
+            setCurrentQuestion({
+              questionId: q.questionId,
+              content: q.content,
+              options: q.options,
+              duration: q.duration,
+              type: q.questionType,
+              correctAnswer: fullQ?.correctAnswer || null, // host-only
+            });
+
+            setTimer(q.duration);
+            setStage("question");
+            setParticipants((prev) =>
+              prev.map((p) => ({ ...p, answered: false, correct: false }))
+            );
+            break;
+          }
+
+          case "TIMER_UPDATE":
+            setTimer(msg.payload.remainingSeconds);
+            break;
+
+          case "QUIZ_ENDED":
+            setStage("leaderboard");
+            localStorage.removeItem("quizSession");
+            break;
+
+          default:
+            console.log("Unknown WS message:", msg);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [client, sessionId, questions]);
 
   const startQuiz = () => {
-    setStage("question");
-    setTimer(30);
-    setParticipants((prev) =>
-      prev.map((p) => ({ ...p, answered: false, correct: false }))
-    );
+    client.publish({
+      destination: `/app/quiz/start/${sessionId}`,
+      body: "",
+    });
   };
 
   const nextQuestion = () => {
-    if (currentQuestion + 1 < questions.length) {
-      setCurrentQuestion(currentQuestion + 1);
-      setTimer(30);
-      setStage("question");
-      setParticipants((prev) =>
-        prev.map((p) => ({ ...p, answered: false, correct: false }))
-      );
-    } else {
-      setStage("leaderboard");
-    }
+    client.publish({
+      destination: `/app/quiz/next/${sessionId}`,
+      body: "",
+    });
   };
 
   const revealAnswer = () => {
+       client.publish({
+      destination: `/app/quiz/reveal/${sessionId}`,
+      body: "",
+    });
     setStage("reveal");
   };
 
   const answeredCount = participants.filter((p) => p.answered).length;
-  const progressPercent = (answeredCount / participants.length) * 100;
+  const progressPercent = participants.length
+    ? (answeredCount / participants.length) * 100
+    : 0;
 
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-400 border-t-transparent"></div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] text-slate-800 font-sans selection:bg-white/30">
       <header className="border-b border-white/20 bg-white/10 backdrop-blur-md px-8 py-4 shadow-sm sticky top-0 z-40">
@@ -143,10 +337,43 @@ export default function HostLiveQuiz() {
               isLive={stage === "question"}
               participantCount={participants.length}
             />
-            <button className="flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium hover:shadow-md">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium hover:shadow-md"
+            >
               <Share2 className="w-4 h-4" />
               Share Link
             </button>
+
+            {isOpen && (
+              <div className="absolute right-0 mt-3 w-80 bg-white text-slate-700 p-4 rounded-xl shadow-xl border border-slate-200 z-20">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-sm">Share Quiz</h4>
+                  <button onClick={() => setIsOpen(false)}>
+                    <X className="w-4 h-4 text-slate-500 hover:text-slate-700" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-500 mb-2">
+                  Participants can join using this link:
+                </p>
+
+                <div className="flex items-center gap-2 bg-slate-100 border border-slate-300 rounded-lg px-2 py-2">
+                  <input
+                    className="flex-1 bg-transparent text-sm text-slate-700 outline-none"
+                    type="text"
+                    readOnly
+                    value={joinLink}
+                  />
+                  <button
+                    onClick={() => navigator.clipboard.writeText(joinLink)}
+                    className="text-blue-600 hover:text-blue-700 font-medium text-xs"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
               <Settings className="w-5 h-5 text-white/80" />
             </button>
@@ -192,16 +419,16 @@ export default function HostLiveQuiz() {
           {stage === "question" && (
             <>
               <QuestionDisplay
-                question={questions[currentQuestion]}
+                question={currentQuestion}
                 timer={timer}
                 isPaused={isPaused}
                 onPauseToggle={() => setIsPaused(!isPaused)}
                 onReveal={revealAnswer}
               />
 
-              <div className="grid grid-cols-2 gap-6">
+              {/* <div className="grid grid-cols-2 gap-6">
                 <ResponseStats
-                  question={questions[currentQuestion]}
+                  question={currentQuestion}
                   answeredCount={answeredCount}
                   totalParticipants={participants.length}
                   progressPercent={progressPercent}
@@ -235,7 +462,7 @@ export default function HostLiveQuiz() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </>
           )}
 
@@ -246,24 +473,16 @@ export default function HostLiveQuiz() {
                   <h2 className="text-3xl font-bold mb-6 text-white">
                     Correct Answer
                   </h2>
-                  <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
-                    <p className="text-3xl font-bold text-[#4a9cb0]">
-                      {
-                        questions[currentQuestion].options[
-                          questions[currentQuestion].correctAnswer
-                        ]
-                      }
-                    </p>
-                  </div>
+                  {renderCorrectAnswer(currentQuestion)}
                 </div>
 
-                <ResponseStats
-                  question={questions[currentQuestion]}
+                {/* <ResponseStats
+                  question={currentQuestion}
                   answeredCount={participants.length}
                   totalParticipants={participants.length}
                   progressPercent={100}
                   showResults={true}
-                />
+                /> */}
               </div>
 
               <button
@@ -319,7 +538,6 @@ export default function HostLiveQuiz() {
               <button
                 onClick={() => {
                   setStage("waiting");
-                  setCurrentQuestion(0);
                   setTimer(30);
                 }}
                 className="group relative px-8 py-3 bg-white text-[#4a9cb0] font-bold text-lg rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-gray-50"

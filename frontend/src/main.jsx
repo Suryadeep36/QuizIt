@@ -1,10 +1,10 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import Dashboard from './Dashboard.jsx'
-import CreateQuiz from './CreateQuiz.jsx'
-import RunQuiz from './RunQuiz.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
+import Dashboard from "./Dashboard.jsx";
+import CreateQuiz from "./CreateQuiz.jsx";
+import RunQuiz from "./RunQuiz.jsx";
 import UserAnalytics from "./UserAnalytics.jsx";
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import LandingPage from './LandingPage.jsx'
@@ -28,30 +28,27 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/auth",
-        element: <AuthPage />
-      }
-    ]
+        element: <AuthPage />,
+      },
+    ],
   },
-
-
 
   {
     path: "/",
     element: <LandingPage />,
   },
   {
-    path: "quiz/:quizId/join",
-    element: <JoinQuizPage />
+    path: "quiz/:quizId/join/:sessionId",
+    element: <JoinQuizPage />,
   },
   {
-    path: "/quiz/:quizId/quizroom",
+    path: "/quiz/:sessionId/quizroom",
     element: <QuizRoom />,
   },
   {
-   path:"/demorun",
-   element:<ParticipantLiveQuiz/>
+    path: "/play/quiz/:sessionId",
+    element: <ParticipantLiveQuiz />,
   },
-
 
   // 🔒 PROTECTED ROUTES
   {
@@ -82,7 +79,7 @@ const router = createBrowserRouter([
         path: "/runningQuiz",
         element: <QuizPlayer />,
       },
-{
+      {
         path: "/run-quiz-host/:quizId",
         element: <HostLiveQuiz />
       },
@@ -94,10 +91,9 @@ const router = createBrowserRouter([
   },
 ]);
 
-
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Toaster />
     <RouterProvider router={router} />
-  </StrictMode>,
-)
+  </StrictMode>
+);

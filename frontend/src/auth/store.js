@@ -1,9 +1,13 @@
 import { create } from "zustand";
-import { persist } from 'zustand/middleware'
-import { createParticipant as createParticipantApi, loginUser, logoutUser } from "../services/AuthService";
+import { persist } from "zustand/middleware";
+import {
+  createParticipant,
+  loginUser,
+  logoutUser,
+} from "../services/AuthService";
 // import { useNavigate } from "react-router";
-const LOCAL_KEY = "quizit_auth"
-const PARTICIPANT_KEY = "participant"
+const LOCAL_KEY = "quizit_auth";
+const PARTICIPANT_KEY = "participant";
 // AuthState = {
 //     accessToken :null,
 //     user:null,
@@ -16,57 +20,51 @@ const PARTICIPANT_KEY = "participant"
 //   const navigate = useNavigate();
 
 const useAuth = create(
-    persist(
-        (set, get) => ({
+  persist(
+    (set, get) => ({
+      accessToken: null,
+      user: null,
+      authLoading: false,
+      authStatus: false,
+      login: async (loginData) => {
+        set({ authLoading: true });
+        try {
+          const loginResponseData = await loginUser(loginData);
+          // console.log(loginResponseData)
+          set({
+            accessToken: loginResponseData.accessToken,
+            user: loginResponseData.user,
+            authStatus: true,
+          });
+          // console.log(get().user);
+          return loginResponseData;
+        } catch (error) {
+          throw error;
+        } finally {
+          set({ authLoading: false });
+        }
+      },
+      logout: async () => {
+        set({ authLoading: true });
+        try {
+          await logoutUser();
+          set({
             accessToken: null,
             user: null,
-            authLoading: false,
             authStatus: false,
-            login: async (loginData) => {
-                set({ authLoading: true })
-                try {
-                    const loginResponseData = await loginUser(loginData);
-                    // console.log(loginResponseData)
-                    set({
-                        accessToken: loginResponseData.accessToken,
-                        user: loginResponseData.user,
-                        authStatus: true
-                    })
-                    // console.log(get().user);
-                    return loginResponseData;
-                } catch (error) {
-                    throw error;
-                }
-                finally {
-                    set({ authLoading: false })
-                }
-
-            },
-            logout: async () => {
-                set({ authLoading: true })
-                try {
-                    await logoutUser();
-                    set({
-                        accessToken: null,
-                        user: null,
-                        authStatus: false,
-                        authLoading: false
-                    })
+            authLoading: false,
+          });
                     localStorage.removeItem(LOCAL_KEY);
-                    // window.location.replace("/auth");
-                } catch (error) {
-                    throw error;
-                }
-                finally {
-                    set({ authLoading: false })
-                }
-
-
-            },
-            checkLogin: () => {
-                if (get().accessToken && get().authStatus)
-                    return true;
-                else return false;
+          // window.location.replace("/auth");
+        } catch (error) {
+          throw error;
+        } finally {
+          set({ authLoading: false });
+        }
+      },
+      checkLogin: () => {
+        if (get().accessToken && get().authStatus) return true;
+        else return false;
             },
 
             setLocalData:(accessToken,user,authStatus)=>{
@@ -75,53 +73,56 @@ const useAuth = create(
                     user,
                     authStatus
                 })
-            }
-        }),
-        {
-            name: LOCAL_KEY,
-        }
-    )
-)
+      },
+    }),
+    {
+      name: LOCAL_KEY,
+    }
+  )
+);
 
 export default useAuth;
 
-
 export const useParticipant = create(
-    persist(
-        (set, get) => ({
-            participant: {
-                id: null,
-                status: null,
-                name: null,
-            },
-            isParticipant: () => {
-                if (get().participant.id != null && get().participant.name != null)
-                    return true;
+  persist(
+    (set, get) => ({
+      participant: {
+        id: null,
+        name: null,
+        status: null,
+        quizId: null,
+        sessionId: null,
+        userId: null,
+      },
 
-                return false;
-            },
-            participantCreation: async (createData) => {
-                try {
-                    const responseData = await createParticipantApi(createData);
-                    console.log(responseData)
-                    set({
-                        participant: {
-                                id: responseData.participantId,
-                                status: responseData.status,
-                                name: responseData.participantName,
-                             }
-                        }
-                    )
-                    return responseData;
-                }
-                catch(error){
-                    throw error;
-                }
+      isParticipant: () => {
+        const p = get().participant;
+        return !!p.id && !!p.name && !!p.quizId && !!p.sessionId;
+      },
 
-            }
-        }),
-        {
-            name: PARTICIPANT_KEY,
+      setParticipant: (data) => {
+        set({ participant: data });
+      },
+
+      participantCreation: async (createData) => {
+        try {
+          const responseData = await createParticipant(createData);
+          const participantData = {
+            id: responseData.participantId,
+            name: responseData.participantName,
+            status: responseData.status,
+            quizId: createData.quizId,
+            sessionId: createData.sessionId || null,
+            userId: createData.userId || null,
+          };
+          set({ participant: participantData });
+          return participantData;
+        } catch (error) {
+          console.error("Error creating participant:", error);
+          throw error;
         }
-    )
-)
+      },
+    }),
+    { name: PARTICIPANT_KEY }
+  )
+);
