@@ -16,4 +16,5 @@ public interface QuizSessionService {
     ParticipantJoinedMessageDto joinSession(UUID sessionId, UUID userId);
     HostReconnectResponse getHostReconnectState(UUID sessionId);
     Map<String, Object> revealAnswer(UUID sessionId);
+    UUID getQuizIdBySessionId(UUID sessionId);
 }

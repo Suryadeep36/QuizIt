@@ -60,6 +60,12 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     }
 
     @Override
+    public UUID getQuizIdBySessionId(UUID sessionId) {
+       QuizSession session = quizSessionRepository.findQuizSessionBySessionId(sessionId);
+       return session.getQuiz().getQuizId();
+    }
+
+    @Override
     public HostReconnectResponse getHostReconnectState(UUID sessionId) {
         QuizSession session = quizSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));

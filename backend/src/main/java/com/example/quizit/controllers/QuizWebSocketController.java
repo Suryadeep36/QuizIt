@@ -39,9 +39,13 @@ public class QuizWebSocketController {
         QuestionForUserDto nextQuestion = quizSessionService.moveToNextQuestion(sessionId);
 
         if (nextQuestion == null) {
-            WsMessageDto<Void> endedMsg = WsMessageDto.<Void>builder()
+            UUID quizId = quizSessionService.getQuizIdBySessionId(sessionId);
+            EndQuizMsg endQuizMsg = EndQuizMsg.builder()
+                    .quizId(quizId)
+                    .build();
+            WsMessageDto<EndQuizMsg> endedMsg = WsMessageDto.<EndQuizMsg>builder()
                     .messageType("QUIZ_ENDED")
-                    .payload(null)
+                    .payload(endQuizMsg)
                     .build();
             simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, endedMsg);
             return;
@@ -67,6 +71,7 @@ public class QuizWebSocketController {
 
     @MessageMapping("/quiz/reveal/{sessionId}")
     public void revealAnswer(@DestinationVariable UUID sessionId) {
+
         Map<String, Object> correctAnswer = quizSessionService.revealAnswer(sessionId);
         WsMessageDto<Map<String, Object>> msg = WsMessageDto.<Map<String, Object>>builder()
                 .messageType("REVEAL_ANSWER")

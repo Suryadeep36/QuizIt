@@ -17,11 +17,12 @@ import ResponseStats from "./Components/ResponseStats";
 import { useWS } from "./stores/webSocketStore";
 import {
   createQuizSession,
+  endQuiz,
   getQuestionsByQuizId,
   getQuizSessionBySessionId,
 } from "./services/AuthService";
 import useAuth from "./auth/store";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
@@ -34,7 +35,7 @@ export default function HostLiveQuiz() {
   const [sessionId, setSessionId] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [joinLink, setJoinLink] = useState(null);
-
+  const navigate = useNavigate();
   const connectWS = useWS((s) => s.connect);
   const client = useWS((s) => s.client);
   const isConnected = useWS((s) => s.isConnected);
@@ -155,7 +156,9 @@ export default function HostLiveQuiz() {
               console.log("Reconnected session:", sessionRes);
 
               setSessionId(sessionRes.sessionId);
-              const normalizedParticipants = sessionRes.participants.map(normalizeBackendParticipant);
+              const normalizedParticipants = sessionRes.participants.map(
+                normalizeBackendParticipant
+              );
               setParticipants(normalizedParticipants);
               setStage(
                 sessionRes.status === "STARTED" ? "question" : "waiting"
@@ -269,7 +272,17 @@ export default function HostLiveQuiz() {
 
           case "QUIZ_ENDED":
             setStage("leaderboard");
-            localStorage.removeItem("quizSession");
+            const finish = async () => {
+              try {
+                await endQuiz(quizId);
+                console.log("Quiz ended successfully");
+                localStorage.removeItem("quizSession");
+                navigate(`/quiz/leaderboard/${quizId}`);
+              } catch (err) {
+                console.error("Failed to end quiz:", err);
+              }
+            };
+            finish();
             break;
 
           default:
