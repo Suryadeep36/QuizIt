@@ -2,20 +2,25 @@ package com.example.quizit.services;
 
 
 import com.example.quizit.dtos.QuizDto;
+import com.example.quizit.entities.Participant;
+import com.example.quizit.entities.ParticipantPerformance;
 import com.example.quizit.entities.Quiz;
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.helpers.UserHelper;
-import com.example.quizit.repositories.QuizRepository;
-import com.example.quizit.repositories.UserRepository;
+import com.example.quizit.repositories.*;
 import com.example.quizit.services.interfaces.QuizService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,9 @@ public class QuizServiceImpl implements QuizService {
     private final QuizRepository quizRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final ParticipantRepository participantRepository;
+    private final ParticipantPerformanceRepository participantPerformanceRepository;
+    private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
     private void validateQuizTimeWindow(Instant startTime, Instant endTime) {
 
         if (startTime == null || endTime == null) {
@@ -174,5 +182,48 @@ public class QuizServiceImpl implements QuizService {
 
         quizRepository.delete(existingQuiz);
     }
+
+    @Override
+    @Transactional
+    public void endQuiz(UUID quizId) {
+
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        Map<UUID, Participant> participantMap =
+                participantRepository.findAllByQuiz_QuizId(quizId)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Participant::getParticipantId,
+                                p -> p
+                        ));
+
+        List<Object[]> stats =
+                questionAnalyticsUserRepository.getParticipantStats(quizId);
+
+        List<ParticipantPerformance> performances = new ArrayList<>();
+
+        for (Object[] row : stats) {
+            UUID participantId = (UUID) row[0];
+            Integer score = ((Long) row[1]).intValue();
+            Long totalTime = (Long) row[2];
+
+            performances.add(
+                    ParticipantPerformance.builder()
+                            .participant(participantMap.get(participantId))
+                            .quiz(quiz)
+                            .score(score)
+                            .totalTimeSpent(totalTime)
+                            .build()
+            );
+        }
+
+        // 🔥 BULK INSERT
+        participantPerformanceRepository.saveAll(performances);
+
+        // 🔥 ONE ranking query
+        participantPerformanceRepository.assignRanksByQuizId(quizId);
+    }
+
 }
 

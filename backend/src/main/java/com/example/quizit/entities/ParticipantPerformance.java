@@ -13,7 +13,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "participant_performance")
+@Table(
+        name = "participant_performance",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"participant_id", "quiz_id"})
+        }
+)
 public class ParticipantPerformance {
 
     @Id

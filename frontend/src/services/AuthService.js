@@ -78,3 +78,7 @@ export const getParticipantAnalytics = async (participantId) => {
   return response.data;
 };
 
+export const getLeaderboardByQuizId = async (quizId) => {
+  const response = await apiClient.get(`/quiz/${quizId}/leaderboard`);
+  return response.data;
+};

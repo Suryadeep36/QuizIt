@@ -19,6 +19,7 @@ import JoinQuizPage from './JoinQuizPage.jsx'
 import QuizRoom from './QuizRoom.jsx'
 import HostLiveQuiz from './HostLiveQuiz.jsx'
 import ParticipantLiveQuiz from './ParticipantLiveQuiz.jsx'
+import Analytics from './Analytics.jsx'
 
 
 const router = createBrowserRouter([
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
 {
         path: "/run-quiz-host/:quizId",
         element: <HostLiveQuiz />
+      },
+      {
+        path:"/quiz/:quizid/analytics",
+        element:<Analytics/>
       }
     ],
   },
