@@ -416,7 +416,7 @@ export default function HostLiveQuiz() {
                 </p>
               </div>
 
-              <ParticipantsList participants={participants} maxShow={6} />
+              <ParticipantsList participants={participants} maxShow={10} />
 
               <button
                 onClick={startQuiz}
@@ -440,13 +440,13 @@ export default function HostLiveQuiz() {
                 onReveal={revealAnswer}
               />
 
-              {/* <div className="grid grid-cols-2 gap-6">
-                <ResponseStats
+              <div className="grid grid-cols-2 gap-6">
+                {/* <ResponseStats
                   question={currentQuestion}
                   answeredCount={answeredCount}
                   totalParticipants={participants.length}
                   progressPercent={progressPercent}
-                />
+                /> */}
 
                 <div className="bg-slate-50/90 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-sm">
                   <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -476,7 +476,7 @@ export default function HostLiveQuiz() {
                     </div>
                   </div>
                 </div>
-              </div> */}
+              </div>
             </>
           )}
 
@@ -526,7 +526,7 @@ export default function HostLiveQuiz() {
                   .sort((a, b) => b.score - a.score)
                   .map((p, i) => (
                     <div
-                      key={p.id}
+                      key={p.participantSessionId}
                       className="bg-slate-50/90 border border-white/30 rounded-xl p-4 flex items-center justify-between hover:border-white/50 transition-all shadow-sm"
                     >
                       <div className="flex items-center gap-4">
@@ -535,7 +535,7 @@ export default function HostLiveQuiz() {
                         </div>
                         <div>
                           <p className="font-semibold text-slate-800">
-                            {p.name}
+                            {p.participantName}
                           </p>
                           <p className="text-xs text-slate-600">
                             Position #{i + 1}
@@ -572,7 +572,7 @@ export default function HostLiveQuiz() {
             <div className="space-y-2">
               {participants.map((p) => (
                 <div
-                  key={p.id}
+                  key={p.participantSessionId}
                   className={`p-3 rounded-lg transition-all ${
                     p.answered
                       ? "bg-emerald-100 border border-emerald-300"
@@ -581,7 +581,7 @@ export default function HostLiveQuiz() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-800">
-                      {p.name}
+                      {p.participantName}
                     </span>
                     {p.answered && (
                       <span className="text-xs font-semibold text-emerald-700">

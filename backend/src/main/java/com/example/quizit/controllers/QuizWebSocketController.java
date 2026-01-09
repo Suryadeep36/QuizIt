@@ -71,7 +71,7 @@ public class QuizWebSocketController {
 
     @MessageMapping("/quiz/reveal/{sessionId}")
     public void revealAnswer(@DestinationVariable UUID sessionId) {
-
+        quizTimerService.stopTimer(sessionId);
         Map<String, Object> correctAnswer = quizSessionService.revealAnswer(sessionId);
         WsMessageDto<Map<String, Object>> msg = WsMessageDto.<Map<String, Object>>builder()
                 .messageType("REVEAL_ANSWER")

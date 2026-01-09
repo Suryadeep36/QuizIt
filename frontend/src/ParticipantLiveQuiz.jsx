@@ -315,7 +315,7 @@ export default function ParticipantLiveQuiz() {
   };
 
   const isAnswerCorrect = (question, selectedOption) => {
-    if (!question || !selectedOption) return false;
+    if (!question || !selectedOption) return null;
 
     const { questionType } = question;
     console.log(questionType);
@@ -454,7 +454,7 @@ export default function ParticipantLiveQuiz() {
           if (stage !== "reveal" || !correctAnswer) return null;
 
           const isCorrect = isAnswerCorrect(currentQuestion, selectedOption);
-
+          if(isCorrect == null) return null;
           return (
             <div className="w-full max-w-lg flex flex-col items-center animate-in zoom-in duration-300 mt-10 md:mt-16">
               <div className="bg-white/95 backdrop-blur-lg rounded-[2.5rem] p-8 md:p-12 shadow-2xl w-full text-center border border-white">
