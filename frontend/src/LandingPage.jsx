@@ -14,7 +14,7 @@ import Arrow from "./Components/Arrow";
 import GoogleFormsHeader from "./Components/GoogleFormsHeader";
 import Option from "./Components/Option";
 import Legend from "./Components/Legend";
-import FormOption from "./Components/formOption";
+import FormOption from "./Components/FormOption";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 
