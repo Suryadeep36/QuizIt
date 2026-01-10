@@ -7,7 +7,7 @@ export const useWS = create((set) => ({
   isConnected: false,
 
   connect: () => {
-    const socket = new SockJS("https://localhost:3000/quiz-websocket");
+    const socket = new SockJS("http://localhost:3000/quiz-websocket");
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
