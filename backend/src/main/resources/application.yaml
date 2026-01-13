@@ -22,7 +22,7 @@ spring:
   jvm:
     arguments: --add-opens=java.base/sun.misc=ALL-UNNAMED
 server:
-  port: 3000
+  port: ${PORT:3000}
 
 # JVM args (NOTE: this is usually NOT read from application.yml)
 
