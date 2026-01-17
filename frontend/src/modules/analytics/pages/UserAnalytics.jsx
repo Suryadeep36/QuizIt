@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { useParticipant } from "./auth/store";
-import { getParticipantAnalytics, getQuestionsByQuizId } from "./services/AuthService";
 import {
   Zap, Clock, Target, AlertTriangle,
   ChevronLeft, CheckCircle2, XCircle,
   TrendingUp, BarChart3, Brain, Activity, Loader2, Info
 } from "lucide-react";
 import toast from "react-hot-toast";
-
+import { useParticipant } from "../../../stores/store";
+import { getParticipantAnalytics, getQuestionsByQuizId } from "../../../services/AuthService";
 
 
 export default function UserAnalytics() {

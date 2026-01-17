@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { createParticipant } from "./services/AuthService";
 import toast from "react-hot-toast";
-import useAuth, { useParticipant } from "./auth/store";
+import useAuth, { useParticipant } from "../../../stores/store";
 export default function JoinQuizPage() {
   const { quizId, sessionId } = useParams();
   const navigate = useNavigate();
@@ -57,7 +56,6 @@ export default function JoinQuizPage() {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">

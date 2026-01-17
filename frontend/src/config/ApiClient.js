@@ -1,6 +1,6 @@
 import axios from 'axios';
-import useAuth from '../auth/store';
 import { refreshToken } from '../services/AuthService';
+import useAuth from '../stores/store';
 
 const apiClient = axios.create({
     baseURL: import.meta.env.API_BASE_URL || 'http://localhost:3000/quizit',

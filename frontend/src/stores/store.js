@@ -54,7 +54,7 @@ const useAuth = create(
             authStatus: false,
             authLoading: false,
           });
-                    localStorage.removeItem(LOCAL_KEY);
+          localStorage.removeItem(LOCAL_KEY);
           // window.location.replace("/auth");
         } catch (error) {
           throw error;
@@ -65,14 +65,14 @@ const useAuth = create(
       checkLogin: () => {
         if (get().accessToken && get().authStatus) return true;
         else return false;
-            },
+      },
 
-            setLocalData:(accessToken,user,authStatus)=>{
-                set({
-                    accessToken,
-                    user,
-                    authStatus
-                })
+      setLocalData: (accessToken, user, authStatus) => {
+        set({
+          accessToken,
+          user,
+          authStatus,
+        });
       },
     }),
     {

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import useAuth from "./auth/store";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import { getQuizsByHostId } from "./services/AuthService";
+import { getQuizsByHostId } from "../../../services/AuthService";
+import useAuth from "../../../stores/store";
 import toast from "react-hot-toast";
+
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {

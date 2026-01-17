@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { useParticipant } from "./auth/store";
-import { useWS } from "./stores/webSocketStore";
-import { joinSession } from "./services/stompService";
+import { useParticipant } from "../../../stores/store";
+import { useWS } from "../../../stores/webSocketStore";
+import { joinSession } from "../../../services/stompService";
 
 export default function QuizRoom() {
   const { sessionId } = useParams();

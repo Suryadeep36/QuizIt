@@ -9,12 +9,12 @@ import {
   GraduationCap,
   Building2,
 } from "lucide-react";
-import Card from "./Components/Card";
-import Arrow from "./Components/Arrow";
-import GoogleFormsHeader from "./Components/GoogleFormsHeader";
-import Option from "./Components/Option";
-import Legend from "./Components/Legend";
-import FormOption from "./Components/FormOption";
+import Card from "../components/Card";
+import Arrow from "../components/Arrow";
+import GoogleFormsHeader from "../components/GoogleFormsHeader";
+import Option from "../components/Option";
+import Legend from "../components/Legend";
+import FormOption from "../components/FormOption";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 

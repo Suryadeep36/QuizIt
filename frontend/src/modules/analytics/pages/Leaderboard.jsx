@@ -5,7 +5,7 @@ import {
   Medal, CheckCircle, Timer, BarChart2, ChevronLeft
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getLeaderboardByQuizId } from "./services/AuthService";
+import { getLeaderboardByQuizId } from "../../../services/AuthService";
 
 export default function Leaderboard() {
   const { quizId } = useParams();

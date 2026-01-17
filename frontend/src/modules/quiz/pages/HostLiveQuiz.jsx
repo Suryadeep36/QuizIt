@@ -8,21 +8,20 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
-import ParticipantsList from "./Components/ParticipantsList";
-
-import QuestionDisplay from "./Components/QuestionDisplay";
-import QuestionSidebar from "./Components/QuestionSidebar";
-import LiveIndicator from "./Components/LiveIndicator";
-import ResponseStats from "./Components/ResponseStats";
-import { useWS } from "./stores/webSocketStore";
+import ParticipantsList from "../components/ParticipantsList";
+import QuestionDisplay from "../components/QuestionDisplay";
+import QuestionSidebar from "../components/QuestionSidebar";
+import LiveIndicator from "../components/LiveIndicator";
+import ResponseStats from "../components/ResponseStats";
+import { useWS } from "../../../stores/webSocketStore";
+import useAuth from "../../../stores/store";
+import { useNavigate, useParams } from "react-router";
 import {
   createQuizSession,
   endQuiz,
   getQuestionsByQuizId,
   getQuizSessionBySessionId,
-} from "./services/AuthService";
-import useAuth from "./auth/store";
-import { useNavigate, useParams } from "react-router";
+} from "../../../services/AuthService";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");

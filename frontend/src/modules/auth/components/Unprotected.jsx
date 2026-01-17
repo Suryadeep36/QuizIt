@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import useAuth from "./store";
+import useAuth from "../../../stores/store";
 
 const Unprotected = () => {
   const checkLogin = useAuth(

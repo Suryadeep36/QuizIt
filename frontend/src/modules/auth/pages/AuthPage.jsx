@@ -1,9 +1,9 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { registerUser ,loginUser} from "./services/AuthService";
 import { useNavigate } from "react-router";
 import CircularProgress from "@mui/material/CircularProgress";
-import useAuth from "./auth/store";
+import useAuth from "../../../stores/store";
+import { registerUser ,loginUser} from "../../../services/AuthService";
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();

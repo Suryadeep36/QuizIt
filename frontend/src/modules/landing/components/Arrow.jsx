@@ -3,7 +3,7 @@ import { motion } from "motion/react"
 
 export default function Arrow() {
   return (
-   <motion.dev
+   <motion.div
       animate={{
         x: [0, 6, 0],
         opacity: [0.6, 1, 0.6],
@@ -15,6 +15,6 @@ export default function Arrow() {
       }}
     >
       <ArrowRight className="w-8 h-8 text-white" />
-    </motion.dev>
+    </motion.div>
   );
 }

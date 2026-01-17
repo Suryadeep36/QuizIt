@@ -16,7 +16,14 @@ import {
   Trophy,
 } from "lucide-react";
 import { useParams } from "react-router";
-import { createQuestion, deleteQuestionById, getQuestionsByQuizId, getQuizById, getQuizsByHostId, updateQuestionById } from "./services/AuthService";
+import {
+  createQuestion,
+  deleteQuestionById,
+  getQuestionsByQuizId,
+  getQuizById,
+  getQuizsByHostId,
+  updateQuestionById,
+} from "../../../services/AuthService";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -107,10 +114,10 @@ export default function QuizManagementDashboard() {
   };
   const updateQuestion = useRef(
     debounce(async (questionId, patch) => {
-      await updateQuestionById(questionId, patch)
+      await updateQuestionById(questionId, patch);
     }, 600)
   ).current;
-  
+
   useEffect(() => {
     if (!quizId) return;
 

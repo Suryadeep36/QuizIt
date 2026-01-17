@@ -8,12 +8,11 @@ import {
   UserCheck,
   ShieldCheck,
   Trophy,
-  Settings2,
 } from "lucide-react";
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router";
-import { createQuiz } from "./services/AuthService";
-import useAuth from "./auth/store";
+import { createQuiz } from "../../../services/AuthService";
+import useAuth from "../../../stores/store";
 
 export default function CreateQuiz() {
   const navigate = useNavigate();

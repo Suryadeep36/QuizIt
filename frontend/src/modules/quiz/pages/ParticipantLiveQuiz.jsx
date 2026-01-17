@@ -11,11 +11,11 @@ import {
   WifiOff,
   Loader2,
 } from "lucide-react";
-import { useWS } from "./stores/webSocketStore";
+import { useWS } from "../../../stores/webSocketStore";
 import { useNavigate, useParams } from "react-router";
-import { useParticipant } from "./auth/store";
-import { joinSession } from "./services/stompService";
-import { createQuestionAnalyticsUser } from "./services/AuthService";
+import { joinSession } from "../../../services/stompService";
+import { createQuestionAnalyticsUser } from "../../../services/AuthService";
+import { useParticipant } from "../../../stores/store";
 
 
 const DUMMY_QUESTIONS = [

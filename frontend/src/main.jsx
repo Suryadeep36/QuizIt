@@ -1,23 +1,22 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
-import Dashboard from "./Dashboard.jsx";
-import CreateQuiz from "./CreateQuiz.jsx";
-import RunQuiz from "./RunQuiz.jsx";
-import UserAnalytics from "./UserAnalytics.jsx";
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import LandingPage from './LandingPage.jsx'
-import AuthPage from './AuthPage.jsx'
-import QuizManagementDashboard from './QuizManagementDashboard.jsx'
 import { Toaster } from 'react-hot-toast'
-import ProtectedRoute from './auth/ProtectedRoute.jsx'
-import QuizPlayer from './QuizPlayer.jsx'
-import JoinQuizPage from './JoinQuizPage.jsx'
-import QuizRoom from './QuizRoom.jsx'
-import HostLiveQuiz from './HostLiveQuiz.jsx'
-import ParticipantLiveQuiz from './ParticipantLiveQuiz.jsx'
-import Unprotected from "./auth/Unprotected.jsx";
-import Leaderboard from "./Leaderboard.jsx";
+import "./styles/index.css";
+
+import Dashboard from "./modules/dashboard/pages/Dashboard.jsx"
+import CreateQuiz from "./modules/quiz/pages/CreateQuiz.jsx";
+import UserAnalytics from "./modules/analytics/pages/UserAnalytics.jsx"
+import LandingPage from "./modules/landing/pages/LandingPage.jsx";
+import AuthPage from './modules/auth/pages/AuthPage.jsx'
+import QuizManagementDashboard from './modules/quiz/pages/QuizManagementDashboard.jsx'
+import ProtectedRoute from "./modules/auth/components/ProtectedRoute.jsx"
+import Unprotected from "./modules/auth/components/Unprotected.jsx"
+import JoinQuizPage from './modules/quiz/pages/JoinQuizPage.jsx'
+import QuizRoom from './modules/quiz/pages/QuizRoom.jsx'
+import HostLiveQuiz from './modules/quiz/pages/HostLiveQuiz.jsx'
+import ParticipantLiveQuiz from './modules/quiz/pages/ParticipantLiveQuiz.jsx'
+import Leaderboard from "./modules/analytics/pages/Leaderboard.jsx"
 
 
 const router = createBrowserRouter([
@@ -68,17 +67,8 @@ const router = createBrowserRouter([
         element: <QuizManagementDashboard />,
       },
       {
-        path: "/runQuiz/:quizId",
-        element: <RunQuiz />,
-      },
-      {
         path: "/quizAnalytics/:quizId",
-        //use this quiz id: 729d508f-6a8f-4301-99b0-31be74959bef
         element: <UserAnalytics />,
-      },
-      {
-        path: "/runningQuiz",
-        element: <QuizPlayer />,
       },
       {
         path: "/run-quiz-host/:quizId",
