@@ -5,6 +5,12 @@ spring:
     name: QuizIt
 
   datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 10000
+      max-lifetime: 30000
+      connection-timeout: 20000
     url: ${DB_URL}
     username: postgres
     password: ${DB_PASSWORD}
@@ -24,7 +30,7 @@ spring:
 server:
   port: ${PORT:3000}
 
-# JVM args (NOTE: this is usually NOT read from application.yml)
+# JVM args (NOTE: ths is usually NOT read from application.yml)
 
 # ===============================
 # JWT Security Configuration
