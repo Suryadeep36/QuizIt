@@ -1,7 +1,6 @@
 package com.example.quizit.controllers;//package com.example.quizit.controllers;
 
-import com.example.quizit.repositories.QuizRepository;
-import com.example.quizit.services.interfaces.QuizService;
+import com.example.quizit.features.quiz.QuizService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;

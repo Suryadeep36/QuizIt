@@ -1,6 +1,6 @@
 package com.example.quizit.security;
 
-import com.example.quizit.repositories.UserRepository;
+import com.example.quizit.features.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

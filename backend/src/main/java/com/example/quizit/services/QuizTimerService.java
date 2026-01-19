@@ -2,7 +2,7 @@ package com.example.quizit.services;
 
 import com.example.quizit.dtos.TimerUpdateDto;
 import com.example.quizit.dtos.WsMessageDto;
-import com.example.quizit.services.interfaces.QuizSessionService;
+import com.example.quizit.features.quizSession.QuizSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;

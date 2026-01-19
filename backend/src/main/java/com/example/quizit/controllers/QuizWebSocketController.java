@@ -1,9 +1,8 @@
 package com.example.quizit.controllers;
 
 import com.example.quizit.dtos.*;
-import com.example.quizit.entities.QuizSession;
 import com.example.quizit.services.QuizTimerService;
-import com.example.quizit.services.interfaces.QuizSessionService;
+import com.example.quizit.features.quizSession.QuizSessionService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.messaging.handler.annotation.DestinationVariable;

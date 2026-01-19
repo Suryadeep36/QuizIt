@@ -1,6 +1,5 @@
 package com.example.quizit.dtos;
 
-import com.example.quizit.enums.DifficultyLevel;
 import lombok.*;
 
 import java.util.Map;

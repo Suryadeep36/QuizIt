@@ -1,6 +1,6 @@
 package com.example.quizit.records;
 
-import com.example.quizit.dtos.UserDto;
+import com.example.quizit.features.user.UserDto;
 
 public record TokenResponse(
         String accessToken,

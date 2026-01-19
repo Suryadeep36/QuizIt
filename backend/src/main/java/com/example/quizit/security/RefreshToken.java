@@ -1,6 +1,6 @@
 package com.example.quizit.security;
 
-import com.example.quizit.entities.User;
+import com.example.quizit.features.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 

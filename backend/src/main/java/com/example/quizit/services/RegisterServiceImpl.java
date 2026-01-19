@@ -1,7 +1,7 @@
 package com.example.quizit.services;
 
 
-import com.example.quizit.dtos.UserDto;
+import com.example.quizit.features.user.UserDto;
 import com.example.quizit.services.interfaces.RegisterService;
 import com.example.quizit.services.interfaces.UserService;
 import lombok.AllArgsConstructor;

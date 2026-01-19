@@ -1,7 +1,7 @@
 package com.example.quizit.dtos;
 
-import com.example.quizit.entities.ParticipantSession;
-import com.example.quizit.enums.QuizSessionStatus;
+import com.example.quizit.features.participantSession.ParticipantSession;
+import com.example.quizit.features.quizSession.QuizSessionStatus;
 import lombok.Builder;
 import lombok.Data;
 

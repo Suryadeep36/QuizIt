@@ -1,6 +1,6 @@
 package com.example.quizit.security;
 
-import com.example.quizit.repositories.UserRepository;
+import com.example.quizit.features.user.UserRepository;
 import io.jsonwebtoken.*;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

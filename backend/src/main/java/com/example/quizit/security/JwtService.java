@@ -2,7 +2,7 @@ package com.example.quizit.security;
 
 
 import com.example.quizit.entities.Role;
-import com.example.quizit.entities.User;
+import com.example.quizit.features.user.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
