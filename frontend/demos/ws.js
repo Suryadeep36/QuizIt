@@ -1,7 +1,7 @@
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 
-const socket = new SockJS("http://localhost:3000/quiz-websocket");
+const socket = new SockJS("https://localhost:3000/quiz-websocket");
 
 const client = Stomp.over(socket);
 
