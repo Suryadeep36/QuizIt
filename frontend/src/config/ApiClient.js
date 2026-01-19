@@ -3,7 +3,7 @@ import { refreshToken } from '../services/AuthService';
 import useAuth from '../stores/store';
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/quizit',
+    baseURL: `${import.meta.env.VITE_API_BASE_URL}/quizit` || 'http://localhost:3000/quizit',
     headers: {
         'Content-Type': 'application/json',
     },
