@@ -3,7 +3,7 @@ import { refreshToken } from '../services/AuthService';
 import useAuth from '../stores/store';
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.API_BASE_URL || 'http://localhost:3000/quizit',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/quizit',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -17,6 +17,7 @@ apiClient.interceptors.request.use((config) => {
 
     if (accessToken) {
         // console.log(accessToken)
+        // console.log("backend url: "+  import.meta.env.VITE_API_BASE_URL );
         config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
