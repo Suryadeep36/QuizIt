@@ -227,7 +227,7 @@ export default function HostLiveQuiz() {
 
   useEffect(() => {
     if (!client || !sessionId || !isConnected) return;
-    setJoinLink(`http://localhost:5173/quiz/${quizId}/join/${sessionId}`);
+    setJoinLink(`${import.meta.env.REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`);
     const subscription = client.subscribe(
       `/topic/quiz/${sessionId}`,
       (message) => {
