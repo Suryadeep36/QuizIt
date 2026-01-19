@@ -14,6 +14,9 @@ import {
   ListTodo,
   AlertCircle,
   Trophy,
+  MessageSquare, 
+  ArrowLeftRight, 
+  ImageIcon
 } from "lucide-react";
 import { useParams } from "react-router";
 import {
@@ -109,13 +112,13 @@ export default function QuizManagementDashboard() {
 
   const updateLocalQuestion = (questionId, patch) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.questionId === questionId ? { ...q, ...patch } : q))
+      prev.map((q) => (q.questionId === questionId ? { ...q, ...patch } : q)),
     );
   };
   const updateQuestion = useRef(
     debounce(async (questionId, patch) => {
       await updateQuestionById(questionId, patch);
-    }, 600)
+    }, 600),
   ).current;
 
   useEffect(() => {
@@ -231,7 +234,7 @@ export default function QuizManagementDashboard() {
                     Add Question
                   </button>
 
-                  <div className="absolute right-0 mt-2 w-48 bg-slate-50/95 backdrop-blur-md border border-slate-200 rounded-2xl p-2 shadow-xl hidden group-hover:block z-50">
+                  <div className="absolute right-0 mt-2 w-52 bg-slate-50/95 backdrop-blur-md border border-slate-200 rounded-2xl p-2 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <button
                       onClick={() => addQuestion("MCQ")}
                       className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
@@ -254,6 +257,29 @@ export default function QuizManagementDashboard() {
                     >
                       <Type className="w-4 h-4 text-emerald-500" />
                       True / False
+                    </button>
+                    <button
+                      onClick={() => addQuestion("SHORT_ANSWER")}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
+                    >
+                      <MessageSquare className="w-4 h-4 text-purple-500" />
+                      Short Answer
+                    </button>
+
+                    <button
+                      onClick={() => addQuestion("MATCH_FOLLOWING")}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
+                    >
+                      <ArrowLeftRight className="w-4 h-4 text-pink-500" />
+                      Match the Following
+                    </button>
+
+                    <button
+                      onClick={() => addQuestion("IMAGE_BASED")}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
+                    >
+                      <ImageIcon className="w-4 h-4 text-indigo-500" />
+                      Image Based
                     </button>
                   </div>
                 </div>
