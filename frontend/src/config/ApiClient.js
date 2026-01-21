@@ -3,7 +3,7 @@ import { refreshToken } from '../services/AuthService';
 import useAuth from '../stores/store';
 
 const apiClient = axios.create({
-    baseURL: `${import.meta.env.VITE_API_BASE_URL}/quizit` || 'http://localhost:3000/quizit',
+    baseURL: `${import.meta.env.VITE_API_BASE_URL}/quizit`,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -77,10 +77,10 @@ apiClient.interceptors.response.use(
             const status = refreshError.response?.status;
             const message = refreshError.response?.data?.message;
 
-            if (
-                status === 400 &&
-                message === "Refresh token is revoked"
-            ) {
+            // if (
+            //     status === 400 &&
+            //     message === "Refresh token is revoked" ) 
+            {
                 useAuth.getState().logout();
             }
 

@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import { getQuizsByHostId } from "../../../services/AuthService";
+import { deleteQuiz, getQuizsByHostId } from "../../../services/AuthService";
 import useAuth from "../../../stores/store";
 import toast from "react-hot-toast";
-
+import DeleteConfirmationModal from "../component/DeleteConfirmationModal";
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {
@@ -48,40 +48,74 @@ export default function Dashboard() {
   const user = useAuth((state) => state.user);
 
   const [loading, setLoading] = useState(false);
-  const navigate  = useNavigate();
-  
- const hostId = (user && user.id) ? user.id : null;;
+  const navigate = useNavigate();
+
+  const hostId = (user && user.id) ? user.id : null;;
   const isDraftQuiz = (quiz) => !quiz.mode;
   const isServerQuiz = (quiz) => quiz.mode === "SERVER";
   const isRandomizedQuiz = (quiz) => quiz.mode === "RANDOMIZED";
+  // 1. State to track which quiz is being deleted (null = modal closed)
+  const [quizToDelete, setQuizToDelete] = useState(null);
 
-useEffect(() => {
-  if (!checkLogin()) {
-      navigate("/auth", { replace: true });
-      return;
-    }
+  // 2. The actual function that runs AFTER the user types the name and clicks "Delete" in the modal
+  const handleDeleteQuiz = async () => {
+    if (!quizToDelete) return;
 
+    const { quizId } = quizToDelete; // Get ID from the state object
 
-  if (!user?.id) return;
-
-  const fetchQuizzes = async () => {
     try {
       setLoading(true);
-      const data = await getQuizsByHostId(user.id);
-      setQuizzes(data);
+
+      // Call your API
+      const data = await deleteQuiz(quizId);
+
+      // Update UI
+      setQuizzes((currentQuizzes) =>
+        currentQuizzes.filter((quiz) => quiz.quizId !== quizId)
+      );
+
+      toast.success(data?.message || "Quiz deleted successfully");
+
+      // 3. Close the modal on success
+      setQuizToDelete(null);
+
     } catch (err) {
       toast.error(
         err.response?.data?.message ||
         err.message ||
-        "Quizzes are not loaded!"
+        "Quiz can not be deleted!"
       );
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (!checkLogin()) {
+      navigate("/auth", { replace: true });
+      return;
+    }
 
-  fetchQuizzes();
-}, [user?.id, checkLogin, navigate]);
+
+    if (!user?.id) return;
+
+    const fetchQuizzes = async () => {
+      try {
+        setLoading(true);
+        const data = await getQuizsByHostId(user.id);
+        setQuizzes(data);
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message ||
+          err.message ||
+          "Quizzes are not loaded!"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuizzes();
+  }, [user?.id, checkLogin, navigate]);
 
   if (loading) {
     return (
@@ -91,8 +125,8 @@ useEffect(() => {
     );
   }
 
-  
-  
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-50 px-6 py-10">
       <div className="max-w-6xl mx-auto">
@@ -163,10 +197,10 @@ useEffect(() => {
                   </div>
                   <span
                     className={`px-3 py-1 text-xs rounded-full ${isDraftQuiz(quiz)
-                        ? "bg-gray-100 text-gray-600"
-                        : isServerQuiz(quiz)
-                          ? "bg-green-100 text-green-700"
-                          : "bg-blue-100 text-blue-700"
+                      ? "bg-gray-100 text-gray-600"
+                      : isServerQuiz(quiz)
+                        ? "bg-green-100 text-green-700"
+                        : "bg-blue-100 text-blue-700"
                       }`}
                   >
                     {isDraftQuiz(quiz)
@@ -200,6 +234,14 @@ useEffect(() => {
                     </>
                   )}
 
+                  <button
+                    onClick={() => setQuizToDelete(quiz)}
+                    className="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors ml-auto"
+                    title="Delete Quiz"
+                  >
+                    Delete
+                  </button>
+
                   {/* Randomized quiz actions */}
                   {isRandomizedQuiz(quiz) && (
                     <>
@@ -229,6 +271,13 @@ useEffect(() => {
           </div>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={!!quizToDelete}
+        onClose={() => setQuizToDelete(null)}
+        onConfirm={handleDeleteQuiz}
+        quizName={quizToDelete?.quizName || ""}
+      />
     </div>
   );
 }

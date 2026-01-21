@@ -21,7 +21,7 @@ const PARTICIPANT_KEY = "participant";
 
 const useAuth = create(
   persist(
-    (set, get) => ({
+    (set, get, api) => ({
       accessToken: null,
       user: null,
       authLoading: false,
@@ -54,8 +54,13 @@ const useAuth = create(
             authStatus: false,
             authLoading: false,
           });
+           await api.persist.clearStorage();
+
+          // ✅ force store to reflect cleared storage (optional but helps)
+          api.persist.rehydrate();
+
+          // optional
           localStorage.removeItem(LOCAL_KEY);
-          // window.location.replace("/auth");
         } catch (error) {
           throw error;
         } finally {

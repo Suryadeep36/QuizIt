@@ -99,3 +99,7 @@ export const endQuiz = async (quizId) => {
   const response = await apiClient.post(`/quiz/${quizId}/end`);
   return response.data;
 }
+export const deleteQuiz = async (quizId) => {
+  const response = await apiClient.delete(`/quiz/${quizId}`);
+  return response.data;
+}

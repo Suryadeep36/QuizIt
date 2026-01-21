@@ -7,7 +7,7 @@ export const useWS = create((set) => ({
   isConnected: false,
 
   connect: () => {
-    const socket = new SockJS(`${import.meta.env.VITE_API_BASE_URL}/quiz-websocket`);
+    const socket = new SockJS(`${import.meta.env.VITE_API_BASE_URL}/quiz-websocket` || 'http://localhost:3000/quiz-websocket');
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
