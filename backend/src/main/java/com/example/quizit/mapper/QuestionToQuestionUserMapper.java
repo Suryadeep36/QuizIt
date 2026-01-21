@@ -1,7 +1,7 @@
 package com.example.quizit.mapper;
 
 import com.example.quizit.features.question.QuestionDto;
-import com.example.quizit.dtos.QuestionForUserDto;
+import com.example.quizit.features.question.QuestionForUserDto;
 import org.springframework.stereotype.Component;
 
 @Component

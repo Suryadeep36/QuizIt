@@ -71,6 +71,7 @@ public class QuizServiceImpl implements QuizService {
         }
 
         Quiz quiz = new Quiz();
+        quiz.setStatus(QuizStatus.CREATED);
         quiz.setQuizName(quizDto.getQuizName());
         quiz.setMode(quizDto.getMode());
         quiz.setStartTime(quizDto.getStartTime());
@@ -174,11 +175,13 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     public void deleteQuiz(String quizId) {
-
         UUID quizUUID = UserHelper.parseUUID(quizId);
 
         Quiz existingQuiz = quizRepository.findById(quizUUID)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+        if(existingQuiz.getStatus() != QuizStatus.CREATED){
+            throw new IllegalArgumentException("Completed quiz can not be deleted!");
+        }
 
         quizRepository.delete(existingQuiz);
     }
@@ -189,6 +192,8 @@ public class QuizServiceImpl implements QuizService {
 
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        quiz.setStatus(QuizStatus.ENDED);
 
         Map<UUID, Participant> participantMap =
                 participantRepository.findAllByQuiz_QuizId(quizId)

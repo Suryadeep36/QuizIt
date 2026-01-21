@@ -1,6 +1,5 @@
 package com.example.quizit.features.question;
 
-import com.example.quizit.dtos.QuestionForUserDto;
 import lombok.*;
 
 import java.util.Map;

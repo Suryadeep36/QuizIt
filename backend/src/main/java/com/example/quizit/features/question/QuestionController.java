@@ -1,6 +1,5 @@
 package com.example.quizit.features.question;
 
-import com.example.quizit.dtos.QuestionForUserDto;
 import com.example.quizit.mapper.QuestionToQuestionUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

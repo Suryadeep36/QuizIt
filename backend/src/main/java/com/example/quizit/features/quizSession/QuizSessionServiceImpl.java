@@ -8,6 +8,7 @@ import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.participantSession.ParticipantSession;
 import com.example.quizit.features.participantSession.ParticipantSessionRepository;
 import com.example.quizit.features.question.Question;
+import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.QuestionRepository;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;

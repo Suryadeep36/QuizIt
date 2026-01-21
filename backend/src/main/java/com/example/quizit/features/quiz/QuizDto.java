@@ -15,6 +15,7 @@ public class QuizDto {
     private UUID quizId;
     private String quizName;
     private UUID host;
+    private QuizStatus status;
     private QuizMode mode;
     private Instant startTime;
     private Instant endTime;

@@ -1,4 +1,4 @@
-package com.example.quizit.dtos;
+package com.example.quizit.features.question;
 
 import lombok.*;
 

@@ -1,6 +1,7 @@
 package com.example.quizit.dtos;
 
 import com.example.quizit.features.participantSession.ParticipantSession;
+import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.quizSession.QuizSessionStatus;
 import lombok.Builder;
 import lombok.Data;

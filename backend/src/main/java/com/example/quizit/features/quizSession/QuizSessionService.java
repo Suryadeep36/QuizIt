@@ -2,7 +2,7 @@ package com.example.quizit.features.quizSession;
 
 import com.example.quizit.dtos.HostReconnectResponse;
 import com.example.quizit.dtos.ParticipantJoinedMessageDto;
-import com.example.quizit.dtos.QuestionForUserDto;
+import com.example.quizit.features.question.QuestionForUserDto;
 
 import java.util.Map;
 import java.util.UUID;

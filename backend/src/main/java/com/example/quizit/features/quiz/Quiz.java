@@ -30,6 +30,9 @@ public class Quiz {
     private User host;
 
     @Enumerated(EnumType.STRING)
+    private QuizStatus status;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "mode", nullable = false)
     private QuizMode mode;
 
