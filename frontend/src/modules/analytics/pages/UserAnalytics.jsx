@@ -16,9 +16,10 @@ export default function UserAnalytics() {
   const [loading, setLoading] = useState(true);
 
   const { quizId } = useParams();
-  const participantId = useParticipant((state) => state.participant?.id);
-
-  useEffect(() => {
+  let {participantId} = useParams();
+   participantId =  participantId? participantId:useParticipant((state) => state.participant?.id);
+  console.log(participantId);
+   useEffect(() => {
     if (!quizId || !participantId) return;
 
     const fetchAnalyticsAndQuestions = async () => {

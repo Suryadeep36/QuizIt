@@ -7,6 +7,7 @@ import { deleteQuiz, getQuizsByHostId } from "../../../services/AuthService";
 import useAuth from "../../../stores/store";
 import toast from "react-hot-toast";
 import DeleteConfirmationModal from "../component/DeleteConfirmationModal";
+import AttendedQuizzes from "../component/AttendedQuizzes";
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {
@@ -270,6 +271,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+        <AttendedQuizzes/>
       </div>
 
       <DeleteConfirmationModal

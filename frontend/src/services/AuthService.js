@@ -34,6 +34,10 @@ export const getQuizById = async (quizId) => {
   const response = await apiClient.get(`/quiz/${quizId}`);
   return response.data;
 };
+export const getQuizForParticipantById = async (quizId) => {
+  const response = await apiClient.get(`/quizForParticipant/${quizId}`);
+  return response.data;
+};
 
 export const createQuestion = async (questionData) => {
   const response = await apiClient.post(`/question`, questionData);
@@ -103,3 +107,20 @@ export const deleteQuiz = async (quizId) => {
   const response = await apiClient.delete(`/quiz/${quizId}`);
   return response.data;
 }
+
+export const addUserToParticipant = async (participantId,userId) => {
+  const response = await apiClient.put(`/participant/${participantId}/user/${userId}`);
+  return response.data;
+}
+
+export const getParticipantByUserId = async (userId) => {
+  const response = await apiClient.get(`/participants/user/${userId}`);
+  return response.data;
+}
+
+
+// This fetches the fully projected data in one go
+export const getParticipantHistory = async (userId) => {
+  const response = await apiClient.get(`/participants/history/${userId}`);
+  return response.data;
+};

@@ -251,7 +251,7 @@ export default function ParticipantLiveQuiz() {
 
           case "QUIZ_ENDED":
             setStage("end");
-            navigator(`/quizAnalytics/${msg.payload.quizId}`);
+            navigator(`/afterQuizAnalytics/${msg.payload.quizId}`);
             break;
 
           default:

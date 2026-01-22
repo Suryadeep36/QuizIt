@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import useAuth, { useParticipant } from "../../../stores/store";
+
 export default function JoinQuizPage() {
   const { quizId, sessionId } = useParams();
   const navigate = useNavigate();
@@ -25,10 +26,10 @@ export default function JoinQuizPage() {
       userId = user.id;
     }
 
-    // Already joined? just redirect
+  //  console.log("Isparticipant :" + isParticipant())
     if (isParticipant() && participant?.quizId === quizId) {
       setJoined(true);
-      console.log(sessionId);
+      // console.log("SessioId: " + sessionId);
       navigate(`/play/quiz/${sessionId}`);
       return;
     }
@@ -42,6 +43,7 @@ export default function JoinQuizPage() {
         userId,
       });
 
+      console.log(newParticipant);
       useParticipant.getState().setParticipant(newParticipant);
 
       setJoined(true);

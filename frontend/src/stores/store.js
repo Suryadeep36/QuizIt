@@ -102,7 +102,7 @@ export const useParticipant = create(
 
       isParticipant: () => {
         const p = get().participant;
-        return !!p.id && !!p.name && !!p.quizId && !!p.sessionId;
+        return !!p.id && !!p.name && !!p.quizId ;
       },
 
       setParticipant: (data) => {

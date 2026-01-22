@@ -17,6 +17,7 @@ import QuizRoom from './modules/quiz/pages/QuizRoom.jsx'
 import HostLiveQuiz from './modules/quiz/pages/HostLiveQuiz.jsx'
 import ParticipantLiveQuiz from './modules/quiz/pages/ParticipantLiveQuiz.jsx'
 import Leaderboard from "./modules/analytics/pages/Leaderboard.jsx"
+import AfterQuizAnalytics from "./modules/dashboard/component/AfterQuizAnalytics.jsx";
 
 
 const router = createBrowserRouter([
@@ -50,6 +51,14 @@ const router = createBrowserRouter([
     path: "/quiz/leaderboard/:quizId",
     element: <Leaderboard />
   },
+  {
+  path: "/afterQuizAnalytics/:quizId",
+  element:<AfterQuizAnalytics/>,
+},
+  {
+        path: "/quizAnalytics/:quizId/participant/:participantId",
+        element: <UserAnalytics />,
+      },
   // 🔒 PROTECTED ROUTES
   {
     element: <ProtectedRoute />,
@@ -65,10 +74,6 @@ const router = createBrowserRouter([
       {
         path: "/quiz/:quizId",
         element: <QuizManagementDashboard />,
-      },
-      {
-        path: "/quizAnalytics/:quizId",
-        element: <UserAnalytics />,
       },
       {
         path: "/run-quiz-host/:quizId",

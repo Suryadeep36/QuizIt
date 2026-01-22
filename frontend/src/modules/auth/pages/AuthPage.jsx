@@ -2,13 +2,16 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import CircularProgress from "@mui/material/CircularProgress";
-import useAuth from "../../../stores/store";
-import { registerUser ,loginUser} from "../../../services/AuthService";
+import { registerUser, loginUser, addUserToParticipant } from "../../../services/AuthService";
+import useAuth, { useParticipant } from "../../../stores/store";
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
-  const login = useAuth(state=>state.login);
-  
+  const login = useAuth(state => state.login);
+
+  const isParticipant = useParticipant((state) => state.isParticipant);
+  const participant = useParticipant((state) => state.participant);
+  const setParticipant = useParticipant((state) => state.setParticipant);
   const [signupData, setSignupData] = useState({
     username: "",
     email: "",
@@ -53,7 +56,7 @@ export default function AuthPage() {
     }
 
     try {
-      await registerUser({
+      const userdata = await registerUser({
         email: signupData.email,
         username: signupData.username,
         password: signupData.password,
@@ -92,15 +95,34 @@ export default function AuthPage() {
     }
 
     try {
-    //   const userData  =   await loginUser({
-    //     email: loginData.email,
-    //     password: loginData.password,
-    //   });
-    const userData = await login(loginData)
-    
-     console.log(userData)
-    
+      //   const userData  =   await loginUser({
+      //     email: loginData.email,
+      //     password: loginData.password,
+      //   });
+      const userData = await login(loginData)
+
+      console.log(userData)
+
       toast.success("Login successful!");
+
+      // console.log("AuthPage: " + participant.id + "," + userData.user.id)
+
+      try {
+        if (isParticipant()) {
+          const participantData = await addUserToParticipant(participant.id, userData.user.id);
+
+          setParticipant({
+            id: participantData.participantId,
+            name: participantData.participantName,
+            quizId: participantData.quizId,
+            status: participantData.status,
+            userId: participantData.userId,
+            sessionId: null,
+          });
+        }
+      } catch (err) {
+          toast.error(err.response?.data?.message || err.message || "Participant not linked!")
+      }
 
       setLoginData({
         email: "",
@@ -154,7 +176,7 @@ export default function AuthPage() {
               disabled={loginLoading}
               className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
             >
-              {loginLoading ? <CircularProgress size={24} color="inherit" />: "Login"}
+              {loginLoading ? <CircularProgress size={24} color="inherit" /> : "Login"}
             </button>
           </div>
 
