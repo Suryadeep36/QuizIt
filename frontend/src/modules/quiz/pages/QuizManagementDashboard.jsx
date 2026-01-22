@@ -14,9 +14,10 @@ import {
   ListTodo,
   AlertCircle,
   Trophy,
-  MessageSquare, 
-  ArrowLeftRight, 
-  ImageIcon
+  MessageSquare,
+  ArrowLeftRight,
+  ImageIcon,
+  ListChecks,
 } from "lucide-react";
 import { useParams } from "react-router";
 import {
@@ -33,33 +34,56 @@ export default function QuizManagementDashboard() {
   const [quiz, setQuiz] = useState(null);
   const [activeTab, setActiveTab] = useState("questions");
   const [loading, setLoading] = useState(true);
-  const [questions, setQuestions] = useState([
-    {
-      id: "1",
-      type: "MCQ",
-      text: "What is the derivative of sin(x)?",
-      points: 5,
-      timeLimit: 60,
-      correctAnswer: "cos(x)",
-      options: ["cos(x)", "-cos(x)", "sin(x)", "tan(x)"],
-    },
-  ]);
+  const [questions, setQuestions] = useState([]);
 
-  const normalizeQuestionFromApi = (q) => ({
-    questionId: q.questionId,
-    quizId: q.quizId,
-    content: q.content ?? "",
-    questionType: q.questionType,
-    duration: q.duration ?? 30,
-    points: q.points ?? 1,
-    difficultyLevel: q.difficultyLevel,
+  const normalizeQuestionFromApi = (q) => {
+    const baseQuestion = {
+      questionId: q.questionId,
+      quizId: q.quizId,
+      content: q.content ?? "",
+      questionType: q.questionType,
+      duration: q.duration ?? 30,
+      points: q.points ?? 1,
+      difficultyLevel: q.difficultyLevel,
+      correctAnswer: q.correctAnswer,
+      imageUrl: q.imageUrl ?? null,
+      caseSensitive: q.caseSensitive ?? false,
+      acceptableAnswers: q.acceptableAnswers ?? [],
+      maxAnswerLength: q.maxAnswerLength ?? 200,
+      allowMultipleAnswers: q.allowMultipleAnswers ?? false,
+    };
 
-    options: q.options
-      ? ["A", "B", "C", "D"].map((key) => q.options[key] ?? "")
-      : undefined,
+    // Normalize options based on question type
+    switch (q.questionType) {
+      case "MCQ":
+      case "IMAGE_BASED":
+        baseQuestion.options = q.options
+          ? ["A", "B", "C", "D"].map((key) => q.options[key] ?? "")
+          : ["", "", "", ""];
+        break;
 
-    correctAnswer: q.correctAnswer,
-  });
+      case "TRUE_FALSE":
+        baseQuestion.options = q.options ?? { TRUE: "True", FALSE: "False" };
+        break;
+
+      case "MATCH_FOLLOWING":
+        baseQuestion.options = {
+          left: q.options?.left ?? ["", "", ""],
+          right: q.options?.right ?? ["", "", ""],
+        };
+        break;
+
+      case "NUMERICAL":
+      case "SHORT_ANSWER":
+        baseQuestion.options = q.options ?? {};
+        break;
+
+      default:
+        baseQuestion.options = q.options ?? {};
+    }
+
+    return baseQuestion;
+  };
 
   const mapOptionsToApi = (optionsArray) => ({
     A: optionsArray[0],
@@ -85,17 +109,78 @@ export default function QuizManagementDashboard() {
       questionType: type,
       duration: 30,
       difficultyLevel: "NORMAL",
-      options:
-        type === "MCQ"
-          ? {
-              A: "",
-              B: "",
-              C: "",
-              D: "",
-            }
-          : {},
-      correctAnswer: type === "MCQ" ? { key: "A" } : {},
+      options: {},
+      correctAnswer: [],
+      imageUrl: null,
+      caseSensitive: false,
+      exactMatch: true,
+      acceptableAnswers: [],
+      maxAnswerLength: null,
+      allowMultipleAnswers: false,
     };
+
+    switch (type) {
+      case "MCQ":
+        newQuestion.options = {
+          A: "",
+          B: "",
+          C: "",
+          D: "",
+        };
+        newQuestion.correctAnswer = [{ key: "A" }];
+        break;
+
+      case "NUMERICAL":
+        newQuestion.correctAnswer = [{ key: 0 }];
+        break;
+
+      case "TRUE_FALSE":
+        newQuestion.options = {
+          TRUE: "True",
+          FALSE: "False",
+        };
+        newQuestion.correctAnswer = [{ key: "TRUE" }];
+        break;
+
+      case "SHORT_ANSWER":
+        newQuestion.correctAnswer = [{ key: "" }];
+        newQuestion.acceptableAnswers = [""];
+        newQuestion.caseSensitive = false;
+        newQuestion.exactMatch = true;
+        newQuestion.maxAnswerLength = 200;
+        break;
+
+      case "MATCH_FOLLOWING":
+        newQuestion.options = {
+          left: ["", "", ""],
+          right: ["", "", ""],
+        };
+        newQuestion.correctAnswer = [
+          {
+            key: {
+              0: "0",
+              1: "1",
+              2: "2",
+            },
+          },
+        ];
+        break;
+
+      case "IMAGE_BASED":
+        newQuestion.imageUrl = "";
+        newQuestion.options = {
+          A: "",
+          B: "",
+          C: "",
+          D: "",
+        };
+        newQuestion.correctAnswer = [{ key: "A" }];
+        break;
+
+      default:
+        break;
+    }
+
     const savedQuestion = await createQuestion(newQuestion);
     setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
   };
@@ -300,7 +385,7 @@ export default function QuizManagementDashboard() {
                           </span>
                           <span className="text-slate-300">•</span>
                           <span className="text-slate-600 text-xs font-medium uppercase tracking-widest">
-                            {q.questionType}
+                            {q.questionType.replace(/_/g, " ")}
                           </span>
                         </div>
 
@@ -318,16 +403,79 @@ export default function QuizManagementDashboard() {
                           }}
                         />
 
-                        {q.questionType === "MCQ" && (
+                        {/* IMAGE UPLOAD FOR IMAGE_BASED */}
+                        {q.questionType === "IMAGE_BASED" && (
+                          <div className="mt-4">
+                            <label className="text-sm font-bold text-slate-600 mb-2 block">
+                              Question Image
+                            </label>
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-4">
+                                <input
+                                  type="text"
+                                  placeholder="Enter image URL"
+                                  className="flex-1 bg-white/80 border border-slate-200 rounded-2xl p-3 outline-none text-slate-700 focus:border-[#4a9cb0]"
+                                  value={q.imageUrl || ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    updateLocalQuestion(q.questionId, {
+                                      imageUrl: value,
+                                    });
+                                    updateQuestion(q.questionId, {
+                                      imageUrl: value,
+                                    });
+                                  }}
+                                />
+                              </div>
+
+                              {q.imageUrl && (
+                                <div className="w-full flex justify-center">
+                                  <div className="w-full max-w-md">
+                                    <img
+                                      src={q.imageUrl}
+                                      alt="Question"
+                                      className="w-full h-auto object-contain rounded-2xl border-2 border-slate-200 bg-white/50 p-2"
+                                      onError={(e) => {
+                                        e.target.style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MCQ */}
+                        {(q.questionType === "MCQ" ||
+                          q.questionType === "IMAGE_BASED") && (
                           <div className="grid md:grid-cols-2 gap-4 mt-6">
                             {q.options.map((value, i) => {
                               const key = String.fromCharCode(65 + i);
-                              const isCorrect = q.correctAnswer?.key === key;
+                              const isCorrect = q.correctAnswer?.some(
+                                (ans) => ans.key === key,
+                              );
                               const selectCorrectAnswer = () => {
-                                const newCorrect = { key };
+                                let newCorrect;
+
+                                if (q.allowMultipleAnswers) {
+                                  const exists = q.correctAnswer.some(
+                                    (ans) => ans.key === key,
+                                  );
+
+                                  newCorrect = exists
+                                    ? q.correctAnswer.filter(
+                                        (ans) => ans.key !== key,
+                                      )
+                                    : [...q.correctAnswer, { key }];
+                                } else {
+                                  newCorrect = [{ key }];
+                                }
+
                                 updateLocalQuestion(q.questionId, {
                                   correctAnswer: newCorrect,
                                 });
+
                                 updateQuestion(q.questionId, {
                                   correctAnswer: newCorrect,
                                 });
@@ -335,17 +483,19 @@ export default function QuizManagementDashboard() {
                               return (
                                 <div
                                   key={key}
-                                  className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white`}
+                                  className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white cursor-pointer`}
                                   onClick={selectCorrectAnswer}
                                 >
                                   <div
-                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${
-                                      isCorrect
-                                        ? "border-[#f5a65b] text-[#f5a65b] bg-[#f5a65b]/10"
-                                        : "border-slate-300 text-slate-400"
-                                    }`}
+                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
+    ${
+      isCorrect
+        ? "border-[#f5a65b] bg-[#f5a65b] text-white"
+        : "border-slate-300 text-slate-400"
+    }
+  `}
                                   >
-                                    {key}
+                                    {isCorrect ? "✓" : key}
                                   </div>
 
                                   <input
@@ -353,6 +503,7 @@ export default function QuizManagementDashboard() {
                                     placeholder={`Option ${key}`}
                                     className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
                                     value={value}
+                                    onClick={(e) => e.stopPropagation()}
                                     onChange={(e) => {
                                       const updatedOptions = [...q.options];
                                       updatedOptions[i] = e.target.value;
@@ -377,6 +528,7 @@ export default function QuizManagementDashboard() {
                           </div>
                         )}
 
+                        {/* NUMERICAL */}
                         {q.questionType === "NUMERICAL" && (
                           <div className="mt-4">
                             <label className="text-sm font-bold text-slate-600 mb-2 block">
@@ -385,11 +537,12 @@ export default function QuizManagementDashboard() {
                             <input
                               type="number"
                               className="w-48 bg-white/80 border border-slate-200 rounded-2xl p-3 outline-none text-slate-800 focus:border-[#4a9cb0]"
-                              value={q.correctAnswer?.value || ""}
+                              value={q.correctAnswer[0]?.key || ""}
                               placeholder="Enter correct answer"
                               onChange={(e) => {
                                 const value = e.target.value;
-                                const newCorrect = { value };
+                                console.log(e.target.value)
+                                const newCorrect = [{ key :value }];
                                 updateLocalQuestion(q.questionId, {
                                   correctAnswer: newCorrect,
                                 });
@@ -401,20 +554,21 @@ export default function QuizManagementDashboard() {
                           </div>
                         )}
 
+                        {/* TRUE/FALSE */}
                         {q.questionType === "TRUE_FALSE" && (
                           <div className="flex items-center gap-4 mt-4">
                             {["TRUE", "FALSE"].map((val) => {
-                              const isSelected = q.correctAnswer?.value === val;
+                              const isSelected = q.correctAnswer[0]?.key === val;
                               return (
                                 <button
                                   key={val}
-                                  className={`px-4 py-2 rounded-xl font-bold transition-colors ${
+                                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
                                     isSelected
-                                      ? "bg-[#4a9cb0] text-white"
-                                      : "bg-white/80 text-slate-800 border border-slate-200"
+                                      ? "bg-[#4a9cb0] text-white shadow-lg"
+                                      : "bg-white/80 text-slate-800 border border-slate-200 hover:border-[#4a9cb0]"
                                   }`}
                                   onClick={() => {
-                                    const newCorrect = { value: val };
+                                    const newCorrect = [{ key: val }];
                                     updateLocalQuestion(q.questionId, {
                                       correctAnswer: newCorrect,
                                     });
@@ -429,25 +583,535 @@ export default function QuizManagementDashboard() {
                             })}
                           </div>
                         )}
+
+                        {/* SHORT ANSWER */}
+                        {q.questionType === "SHORT_ANSWER" && (
+                          <div className="space-y-4 mt-4">
+                            <div>
+                              <label className="text-sm font-bold text-slate-600 mb-2 block">
+                                Correct Answer
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full bg-white/80 border border-slate-200 rounded-2xl p-3 outline-none text-slate-800 focus:border-[#4a9cb0]"
+                                value={q.correctAnswer[0]?.key || ""}
+                                placeholder="Enter the correct answer"
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  const newCorrect = { answer: value };
+                                  updateLocalQuestion(q.questionId, {
+                                    correctAnswer: newCorrect,
+                                  });
+                                  updateQuestion(q.questionId, {
+                                    correctAnswer: newCorrect,
+                                  });
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-bold text-slate-600 mb-2 block">
+                                Acceptable Answers
+                              </label>
+                              <div className="space-y-2">
+                                {(q.acceptableAnswers || [""]).map(
+                                  (answer, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <input
+                                        type="text"
+                                        placeholder={`Answer ${idx + 1}`}
+                                        className="flex-1 bg-white/80 border border-slate-200 rounded-xl p-2 text-sm outline-none text-slate-700 focus:border-[#4a9cb0]"
+                                        value={answer}
+                                        onChange={(e) => {
+                                          const newAnswers = [
+                                            ...(q.acceptableAnswers || []),
+                                          ];
+                                          newAnswers[idx] = e.target.value;
+                                          updateLocalQuestion(q.questionId, {
+                                            acceptableAnswers: newAnswers,
+                                          });
+                                          updateQuestion(q.questionId, {
+                                            acceptableAnswers: newAnswers,
+                                          });
+                                        }}
+                                      />
+                                      {idx > 0 && (
+                                        <button
+                                          onClick={() => {
+                                            const newAnswers = (
+                                              q.acceptableAnswers || []
+                                            ).filter((_, i) => i !== idx);
+                                            updateLocalQuestion(q.questionId, {
+                                              acceptableAnswers:
+                                                newAnswers.length > 0
+                                                  ? newAnswers
+                                                  : [""],
+                                            });
+                                            updateQuestion(q.questionId, {
+                                              acceptableAnswers:
+                                                newAnswers.length > 0
+                                                  ? newAnswers
+                                                  : [""],
+                                            });
+                                          }}
+                                          className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  ),
+                                )}
+
+                                <button
+                                  onClick={() => {
+                                    const newAnswers = [
+                                      ...(q.acceptableAnswers || [""]),
+                                      "",
+                                    ];
+                                    updateLocalQuestion(q.questionId, {
+                                      acceptableAnswers: newAnswers,
+                                    });
+                                    updateQuestion(q.questionId, {
+                                      acceptableAnswers: newAnswers,
+                                    });
+                                  }}
+                                  className="flex items-center gap-2 text-sm text-[#4a9cb0] hover:text-[#3a8c9f] font-medium transition-colors"
+                                >
+                                  <PlusCircle className="w-4 h-4" />
+                                  Add Another Answer
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-6">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded border-slate-300 text-[#4a9cb0] focus:ring-[#4a9cb0]"
+                                  checked={q.caseSensitive || false}
+                                  onChange={(e) => {
+                                    const value = e.target.checked;
+                                    updateLocalQuestion(q.questionId, {
+                                      caseSensitive: value,
+                                    });
+                                    updateQuestion(q.questionId, {
+                                      caseSensitive: value,
+                                    });
+                                  }}
+                                />
+                                <span className="text-sm text-slate-700">
+                                  Case Sensitive
+                                </span>
+                              </label>
+
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm text-slate-700">
+                                  Max Length:
+                                </label>
+                                <input
+                                  type="number"
+                                  className="w-20 bg-white/80 border border-slate-200 rounded-xl p-2 outline-none text-sm text-slate-800 focus:border-[#4a9cb0]"
+                                  value={q.maxAnswerLength || 200}
+                                  onChange={(e) => {
+                                    const value = Number(e.target.value);
+                                    updateLocalQuestion(q.questionId, {
+                                      maxAnswerLength: value,
+                                    });
+                                    updateQuestion(q.questionId, {
+                                      maxAnswerLength: value,
+                                    });
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MATCH THE FOLLOWING */}
+                        {q.questionType === "MATCH_FOLLOWING" && (
+                          <div className="mt-6">
+                            <div className="grid md:grid-cols-2 gap-8 relative">
+                              {/* SVG Canvas for drawing lines */}
+                              <svg
+                                className="absolute inset-0 pointer-events-none"
+                                style={{ width: "100%", height: "100%" }}
+                              >
+                                {Object.entries(q.correctAnswer || {}).map(
+                                  ([rightIdx, leftIdx]) => {
+                                    const leftDot = document.getElementById(
+                                      `left-${q.questionId}-${leftIdx}`,
+                                    );
+                                    const rightDot = document.getElementById(
+                                      `right-${q.questionId}-${rightIdx}`,
+                                    );
+
+                                    if (leftDot && rightDot) {
+                                      const leftRect =
+                                        leftDot.getBoundingClientRect();
+                                      const rightRect =
+                                        rightDot.getBoundingClientRect();
+                                      const containerRect = leftDot
+                                        .closest(".grid")
+                                        ?.getBoundingClientRect();
+
+                                      if (containerRect) {
+                                        const x1 =
+                                          leftRect.left +
+                                          leftRect.width / 2 -
+                                          containerRect.left;
+                                        const y1 =
+                                          leftRect.top +
+                                          leftRect.height / 2 -
+                                          containerRect.top;
+                                        const x2 =
+                                          rightRect.left +
+                                          rightRect.width / 2 -
+                                          containerRect.left;
+                                        const y2 =
+                                          rightRect.top +
+                                          rightRect.height / 2 -
+                                          containerRect.top;
+
+                                        return (
+                                          <line
+                                            key={`${leftIdx}-${rightIdx}`}
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke="#4a9cb0"
+                                            strokeWidth="2"
+                                            strokeDasharray="4,4"
+                                          />
+                                        );
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                )}
+                              </svg>
+
+                              {/* Left Column */}
+                              <div>
+                                <label className="text-sm font-bold text-slate-600 mb-3 block">
+                                  Left Column
+                                </label>
+                                <div className="space-y-3">
+                                  {(q.options?.left || []).map((item, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <input
+                                        type="text"
+                                        placeholder={`Item ${i + 1}`}
+                                        className="flex-1 bg-white/80 border border-slate-200 rounded-xl p-3 outline-none text-sm text-slate-700 focus:border-[#4a9cb0]"
+                                        value={item}
+                                        onChange={(e) => {
+                                          const newLeft = [
+                                            ...(q.options?.left || []),
+                                          ];
+                                          newLeft[i] = e.target.value;
+                                          const newOptions = {
+                                            ...q.options,
+                                            left: newLeft,
+                                          };
+                                          updateLocalQuestion(q.questionId, {
+                                            options: newOptions,
+                                          });
+                                          updateQuestion(q.questionId, {
+                                            options: newOptions,
+                                          });
+                                        }}
+                                      />
+                                      <div
+                                        id={`left-${q.questionId}-${i}`}
+                                        className="w-4 h-4 rounded-full bg-[#4a9cb0] cursor-pointer hover:scale-125 transition-transform flex-shrink-0 relative z-10"
+                                        onMouseDown={(e) => {
+                                          const svg = e.currentTarget
+                                            .closest(".grid")
+                                            .querySelector("svg");
+                                          const tempLine =
+                                            document.createElementNS(
+                                              "http://www.w3.org/2000/svg",
+                                              "line",
+                                            );
+                                          tempLine.setAttribute(
+                                            "stroke",
+                                            "#4a9cb0",
+                                          );
+                                          tempLine.setAttribute(
+                                            "stroke-width",
+                                            "2",
+                                          );
+                                          tempLine.setAttribute(
+                                            "stroke-dasharray",
+                                            "4,4",
+                                          );
+                                          tempLine.setAttribute(
+                                            "id",
+                                            `temp-line-${q.questionId}`,
+                                          );
+
+                                          const containerRect = e.currentTarget
+                                            .closest(".grid")
+                                            .getBoundingClientRect();
+                                          const dotRect =
+                                            e.currentTarget.getBoundingClientRect();
+                                          const startX =
+                                            dotRect.left +
+                                            dotRect.width / 2 -
+                                            containerRect.left;
+                                          const startY =
+                                            dotRect.top +
+                                            dotRect.height / 2 -
+                                            containerRect.top;
+
+                                          tempLine.setAttribute("x1", startX);
+                                          tempLine.setAttribute("y1", startY);
+                                          tempLine.setAttribute("x2", startX);
+                                          tempLine.setAttribute("y2", startY);
+                                          tempLine.dataset.leftIndex = i;
+
+                                          svg.appendChild(tempLine);
+
+                                          const handleMouseMove = (moveE) => {
+                                            const currentX =
+                                              moveE.clientX -
+                                              containerRect.left;
+                                            const currentY =
+                                              moveE.clientY - containerRect.top;
+                                            tempLine.setAttribute(
+                                              "x2",
+                                              currentX,
+                                            );
+                                            tempLine.setAttribute(
+                                              "y2",
+                                              currentY,
+                                            );
+                                          };
+
+                                          const handleMouseUp = () => {
+                                            document.removeEventListener(
+                                              "mousemove",
+                                              handleMouseMove,
+                                            );
+                                            document.removeEventListener(
+                                              "mouseup",
+                                              handleMouseUp,
+                                            );
+                                            tempLine.remove();
+                                          };
+
+                                          document.addEventListener(
+                                            "mousemove",
+                                            handleMouseMove,
+                                          );
+                                          document.addEventListener(
+                                            "mouseup",
+                                            handleMouseUp,
+                                          );
+                                        }}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Right Column */}
+                              <div>
+                                <label className="text-sm font-bold text-slate-600 mb-3 block">
+                                  Right Column
+                                </label>
+                                <div className="space-y-3">
+                                  {(q.options?.right || []).map((item, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <div
+                                        id={`right-${q.questionId}-${i}`}
+                                        className="w-4 h-4 rounded-full bg-[#f5a65b] cursor-pointer hover:scale-125 transition-transform flex-shrink-0 relative z-10"
+                                        onMouseUp={(e) => {
+                                          const tempLine =
+                                            document.getElementById(
+                                              `temp-line-${q.questionId}`,
+                                            );
+                                          if (
+                                            tempLine &&
+                                            tempLine.dataset.leftIndex !==
+                                              undefined
+                                          ) {
+                                            const leftIdx =
+                                              tempLine.dataset.leftIndex;
+                                            const newCorrect = {
+                                              ...q.correctAnswer,
+                                              [i]: leftIdx,
+                                            };
+                                            updateLocalQuestion(q.questionId, {
+                                              correctAnswer: newCorrect,
+                                            });
+                                            updateQuestion(q.questionId, {
+                                              correctAnswer: newCorrect,
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder={`Match ${i + 1}`}
+                                        className="flex-1 bg-white/80 border border-slate-200 rounded-xl p-3 outline-none text-sm text-slate-700 focus:border-[#4a9cb0]"
+                                        value={item}
+                                        onChange={(e) => {
+                                          const newRight = [
+                                            ...(q.options?.right || []),
+                                          ];
+                                          newRight[i] = e.target.value;
+                                          const newOptions = {
+                                            ...q.options,
+                                            right: newRight,
+                                          };
+                                          updateLocalQuestion(q.questionId, {
+                                            options: newOptions,
+                                          });
+                                          updateQuestion(q.questionId, {
+                                            options: newOptions,
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Display Current Matches */}
+                            <div className="mt-4 p-4 bg-white/60 rounded-xl border border-slate-200">
+                              <p className="text-xs font-bold text-slate-600 mb-2">
+                                Current Matches:
+                              </p>
+                              <div className="space-y-1 text-sm text-slate-700">
+                                {Object.entries(q.correctAnswer || {}).map(
+                                  ([rightIdx, leftIdx]) => (
+                                    <div
+                                      key={rightIdx}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <span className="text-[#4a9cb0] font-medium">
+                                        {q.options?.left?.[leftIdx] ||
+                                          `Item ${parseInt(leftIdx) + 1}`}
+                                      </span>
+                                      <span className="text-slate-400">→</span>
+                                      <span className="text-[#f5a65b] font-medium">
+                                        {q.options?.right?.[rightIdx] ||
+                                          `Match ${parseInt(rightIdx) + 1}`}
+                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          const newCorrect = {
+                                            ...q.correctAnswer,
+                                          };
+                                          delete newCorrect[rightIdx];
+                                          updateLocalQuestion(q.questionId, {
+                                            correctAnswer: newCorrect,
+                                          });
+                                          updateQuestion(q.questionId, {
+                                            correctAnswer: newCorrect,
+                                          });
+                                        }}
+                                        className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ),
+                                )}
+                                {Object.keys(q.correctAnswer || {}).length ===
+                                  0 && (
+                                  <p className="text-slate-400 italic">
+                                    No matches set. Drag from blue dot to orange
+                                    dot.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-slate-500 mt-3 italic">
+                              💡 Drag from a blue dot on the left to an orange
+                              dot on the right to create a match
+                            </p>
+                          </div>
+                        )}
                         <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-200 mt-8">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-slate-500" />
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                              Time Limit
-                            </span>
-                            <select
-                              className="bg-transparent text-sm font-bold text-[#4a9cb0] border-none focus:ring-0 cursor-pointer"
-                              defaultValue={q.duration}
-                              onChange={(e) => {
-                                const duration = Number(e.target.value);
-                                updateLocalQuestion(q.questionId, { duration });
-                                updateQuestion(q.questionId, { duration });
-                              }}
-                            >
-                              <option value={30}>30s</option>
-                              <option value={60}>60s</option>
-                              <option value={120}>2m</option>
-                            </select>
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-slate-500" />
+                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                Time Limit
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 flex-1 max-w-xs">
+                              <input
+                                type="range"
+                                min="10"
+                                max="120"
+                                step="5"
+                                value={q.duration}
+                                onChange={(e) => {
+                                  const duration = Number(e.target.value);
+                                  updateLocalQuestion(q.questionId, {
+                                    duration,
+                                  });
+                                  updateQuestion(q.questionId, { duration });
+                                }}
+                                className="flex-1 h-2 bg-slate-200 rounded-full appearance-none cursor-pointer
+        [&::-webkit-slider-thumb]:appearance-none
+        [&::-webkit-slider-thumb]:w-4
+        [&::-webkit-slider-thumb]:h-4
+        [&::-webkit-slider-thumb]:rounded-full
+        [&::-webkit-slider-thumb]:bg-[#4a9cb0]
+        [&::-webkit-slider-thumb]:cursor-pointer
+        [&::-webkit-slider-thumb]:shadow-md
+        [&::-webkit-slider-thumb]:hover:scale-110
+        [&::-webkit-slider-thumb]:transition-transform
+        [&::-moz-range-thumb]:w-4
+        [&::-moz-range-thumb]:h-4
+        [&::-moz-range-thumb]:rounded-full
+        [&::-moz-range-thumb]:bg-[#4a9cb0]
+        [&::-moz-range-thumb]:border-0
+        [&::-moz-range-thumb]:cursor-pointer
+        [&::-moz-range-thumb]:shadow-md
+        [&::-moz-range-thumb]:hover:scale-110
+        [&::-moz-range-thumb]:transition-transform"
+                              />
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="10"
+                                  max="120"
+                                  value={q.duration}
+                                  onChange={(e) => {
+                                    let duration = Number(e.target.value);
+                                    // Clamp between 10 and 120
+                                    if (duration < 10) duration = 10;
+                                    if (duration > 120) duration = 120;
+                                    updateLocalQuestion(q.questionId, {
+                                      duration,
+                                    });
+                                    updateQuestion(q.questionId, { duration });
+                                  }}
+                                  className="w-14 bg-white/80 border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold text-[#4a9cb0] text-center outline-none focus:border-[#4a9cb0]"
+                                />
+                                <span className="text-xs font-medium text-slate-500">
+                                  s
+                                </span>
+                              </div>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Trophy className="w-4 h-4 text-slate-500" />
@@ -457,7 +1121,7 @@ export default function QuizManagementDashboard() {
                             <input
                               type="number"
                               className="w-12 bg-transparent text-sm font-bold text-[#4a9cb0] border-none focus:ring-0 p-0"
-                              defaultValue={q.points}
+                              value={q.points || 0}
                               onChange={(e) => {
                                 const points = Number(e.target.value);
                                 updateLocalQuestion(q.questionId, { points });
@@ -465,6 +1129,60 @@ export default function QuizManagementDashboard() {
                               }}
                             />
                           </div>
+                          {(q.questionType === "MCQ" ||
+                            q.questionType === "IMAGE_BASED") && (
+                            <div className="flex items-center gap-4">
+                              {/* Label */}
+                              <div className="flex items-center gap-2">
+                                <ListChecks className="w-4 h-4 text-slate-500" />
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                  Multiple Answers
+                                </span>
+                              </div>
+
+                              {/* Toggle */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const allowMultiple = !q.allowMultipleAnswers;
+
+                                  updateLocalQuestion(q.questionId, {
+                                    allowMultipleAnswers: allowMultiple,
+                                    correctAnswer: allowMultiple
+                                      ? q.correctAnswer
+                                      : q.correctAnswer?.slice(0, 1),
+                                  });
+
+                                  updateQuestion(q.questionId, {
+                                    allowMultipleAnswers: allowMultiple,
+                                    correctAnswer: allowMultiple
+                                      ? q.correctAnswer
+                                      : q.correctAnswer?.slice(0, 1),
+                                  });
+                                }}
+                                className={`relative w-11 h-6 rounded-full transition-colors
+      ${q.allowMultipleAnswers ? "bg-[#4a9cb0]" : "bg-slate-300"}
+    `}
+                              >
+                                <span
+                                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform
+        ${q.allowMultipleAnswers ? "translate-x-5" : ""}
+      `}
+                                />
+                              </button>
+
+                              {/* Status */}
+                              <span
+                                className={`text-xs font-semibold ${
+                                  q.allowMultipleAnswers
+                                    ? "text-[#4a9cb0]"
+                                    : "text-slate-400"
+                                }`}
+                              >
+                                {q.allowMultipleAnswers ? "ON" : "OFF"}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 

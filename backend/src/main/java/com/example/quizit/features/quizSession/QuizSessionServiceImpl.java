@@ -7,6 +7,7 @@ import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.participantSession.ParticipantSession;
 import com.example.quizit.features.participantSession.ParticipantSessionRepository;
+import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.QuestionRepository;
@@ -235,7 +236,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     }
 
     @Override
-    public Map<String, Object> revealAnswer(UUID sessionId) {
+    public List<AnswerKey> revealAnswer(UUID sessionId) {
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 

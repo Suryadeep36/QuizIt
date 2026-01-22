@@ -1,7 +1,9 @@
 package com.example.quizit.features.question;
 
+import com.example.quizit.features.question.QuestionType;
 import lombok.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,6 +19,9 @@ public class QuestionForUserDto {
     private String content;
     private Map<String, Object> options;
     private Integer duration;
-    private String questionType;
-
+    private QuestionType questionType;
+    private String imageUrl;
+    private Boolean caseSensitive;
+    private Integer maxAnswerLength;
+    private Boolean allowMultipleAnswers;
 }

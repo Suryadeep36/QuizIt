@@ -39,7 +39,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     public QuestionDto createQuestion(QuestionDto questionDto) {
-
         if (questionDto.getQuizId() == null) {
             throw new IllegalArgumentException("Quiz ID is required");
         }
@@ -50,6 +49,12 @@ public class QuestionServiceImpl implements QuestionService {
 
         if (questionDto.getDuration() == null) {
             throw new IllegalArgumentException("Duration is required");
+        }
+        if (!questionDto.getAllowMultipleAnswers() &&
+                questionDto.getCorrectAnswer().size() > 1) {
+            throw new IllegalArgumentException(
+                    "Multiple correct answers not allowed"
+            );
         }
 
         Quiz quiz = quizRepository.findById(questionDto.getQuizId())
@@ -78,9 +83,28 @@ public class QuestionServiceImpl implements QuestionService {
                     .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
             existingQuestion.setQuiz(quiz);
         }
-        if (questionDto.getCorrectAnswer() != null) {
-            existingQuestion.setCorrectAnswer(questionDto.getCorrectAnswer());
+
+        if (questionDto.getAllowMultipleAnswers() != null) {
+            existingQuestion.setAllowMultipleAnswers(
+                    questionDto.getAllowMultipleAnswers()
+            );
         }
+
+        if (questionDto.getCorrectAnswer() != null) {
+            existingQuestion.setCorrectAnswer(
+                    questionDto.getCorrectAnswer()
+            );
+        }
+
+        if (Boolean.FALSE.equals(existingQuestion.getAllowMultipleAnswers())
+                && existingQuestion.getCorrectAnswer() != null
+                && existingQuestion.getCorrectAnswer().size() > 1) {
+
+            throw new IllegalArgumentException(
+                    "Multiple correct answers not allowed"
+            );
+        }
+
         if (questionDto.getDuration() != null) {
             existingQuestion.setDuration(questionDto.getDuration());
         }
@@ -96,11 +120,22 @@ public class QuestionServiceImpl implements QuestionService {
         if (questionDto.getOptions() != null) {
             existingQuestion.setOptions(questionDto.getOptions());
         }
+        if (questionDto.getCaseSensitive() != null) {
+            existingQuestion.setCaseSensitive(questionDto.getCaseSensitive());
+        }
+        if (questionDto.getImageUrl() != null) {
+            existingQuestion.setImageUrl(questionDto.getImageUrl());
+        }
+        if (questionDto.getAcceptableAnswers() != null) {
+            existingQuestion.setAcceptableAnswers(questionDto.getAcceptableAnswers());
+        }
+        if (questionDto.getMaxAnswerLength() != null) {
+            existingQuestion.setMaxAnswerLength(questionDto.getMaxAnswerLength());
+        }
 
         Question savedQuestion = questionRepository.save(existingQuestion);
         return modelMapper.map(savedQuestion, QuestionDto.class);
     }
-
 
     @Override
     public void DeleteQuestion(String uuid) {

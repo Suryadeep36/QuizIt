@@ -55,14 +55,14 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
         analytics.setParticipant(participant);
         analytics.setQuestion(question);
         boolean isCorrect = false;
-        if(analytics.getSelectedAnswer() != null && question.getCorrectAnswer() != null){
-            Object selectedKey = dto.getSelectedAnswer().get("key");
-            Object correctKey = question.getCorrectAnswer().get("key");
-
-            if (selectedKey != null && correctKey != null) {
-                isCorrect = selectedKey.toString().equals(correctKey.toString());
-            }
-        }
+//        if(analytics.getSelectedAnswer() != null && question.getCorrectAnswer() != null){
+//            Object selectedKey = dto.getSelectedAnswer().get("key");
+//            Object correctKey = question.getCorrectAnswer().get("key");
+//
+//            if (selectedKey != null && correctKey != null) {
+//                isCorrect = selectedKey.toString().equals(correctKey.toString());
+//            }
+//        }
         analytics.setIsCorrect(isCorrect);
         if (analytics.getTabSwitchCount() == null) {
             analytics.setTabSwitchCount(0);

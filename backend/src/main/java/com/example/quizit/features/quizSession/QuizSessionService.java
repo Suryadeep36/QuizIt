@@ -3,7 +3,9 @@ package com.example.quizit.features.quizSession;
 import com.example.quizit.dtos.HostReconnectResponse;
 import com.example.quizit.dtos.ParticipantJoinedMessageDto;
 import com.example.quizit.features.question.QuestionForUserDto;
+import com.example.quizit.features.question.AnswerKey;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -14,6 +16,6 @@ public interface QuizSessionService {
     QuizSessionDto endQuiz(UUID sessionId);
     ParticipantJoinedMessageDto joinSession(UUID sessionId, UUID userId);
     HostReconnectResponse getHostReconnectState(UUID sessionId);
-    Map<String, Object> revealAnswer(UUID sessionId);
+    List<AnswerKey> revealAnswer(UUID sessionId);
     UUID getQuizIdBySessionId(UUID sessionId);
 }

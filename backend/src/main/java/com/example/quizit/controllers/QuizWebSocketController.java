@@ -2,6 +2,7 @@ package com.example.quizit.controllers;
 
 import com.example.quizit.dtos.*;
 import com.example.quizit.features.question.QuestionForUserDto;
+import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.services.QuizTimerService;
 import com.example.quizit.features.quizSession.QuizSessionService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -72,8 +74,8 @@ public class QuizWebSocketController {
     @MessageMapping("/quiz/reveal/{sessionId}")
     public void revealAnswer(@DestinationVariable UUID sessionId) {
         quizTimerService.stopTimer(sessionId);
-        Map<String, Object> correctAnswer = quizSessionService.revealAnswer(sessionId);
-        WsMessageDto<Map<String, Object>> msg = WsMessageDto.<Map<String, Object>>builder()
+        List<AnswerKey> correctAnswer = quizSessionService.revealAnswer(sessionId);
+        WsMessageDto<List<AnswerKey>> msg = WsMessageDto.<List<AnswerKey>>builder()
                 .messageType("REVEAL_ANSWER")
                 .payload(correctAnswer)
                 .build();

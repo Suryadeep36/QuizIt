@@ -2,6 +2,7 @@ package com.example.quizit.features.question;
 
 import lombok.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -16,20 +17,15 @@ public class QuestionDto {
     private UUID questionId;
     private UUID quizId;
     private String content;
-    private Map<String, Object> correctAnswer;
+    private List<AnswerKey> correctAnswer;
     private Map<String, Object> options;
     private Integer duration;
-    private String questionType;
+    private QuestionType questionType;
     private DifficultyLevel difficultyLevel;
+    private String imageUrl;
+    private Boolean caseSensitive;
+    private List<String> acceptableAnswers;
+    private Integer maxAnswerLength;
+    private Boolean allowMultipleAnswers;
 
-    private QuestionForUserDto toQuestionForUserDto(QuestionDto dto) {
-        QuestionForUserDto userDto = new QuestionForUserDto();
-        userDto.setQuestionId(dto.getQuestionId());
-        userDto.setQuizId(dto.getQuizId());
-        userDto.setContent(dto.getContent());
-        userDto.setOptions(dto.getOptions());
-        userDto.setDuration(dto.getDuration());
-        userDto.setQuestionType(dto.getQuestionType());
-        return userDto;
-    }
 }
