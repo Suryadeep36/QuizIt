@@ -8,6 +8,7 @@ public interface QuizService {
     QuizDto createQuiz(QuizDto quizDto);
     QuizDto updateQuiz(String quizId, QuizDto quizDto);
     QuizDto getQuizById(String quizId);
+    QuizDtoForParticipant getQuizForParticipantById(String quizId);
     List<QuizDto> getQuizzesByHost(String hostId);
     List<QuizDto> getAllQuizzes();
     void deleteQuiz(String quizId);

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -151,6 +152,20 @@ public class QuizServiceImpl implements QuizService {
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
         return modelMapper.map(existingQuiz, QuizDto.class);
+    }
+
+    @Override
+    public QuizDtoForParticipant getQuizForParticipantById(String quizId) {
+        if (quizId == null) {
+            throw new IllegalArgumentException("Quiz id is null");
+        }
+
+        UUID quizUUID = UserHelper.parseUUID(quizId);
+
+        Quiz existingQuiz = quizRepository.findById(quizUUID)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
+        return modelMapper.map(existingQuiz,  QuizDtoForParticipant.class);
     }
 
     @Override

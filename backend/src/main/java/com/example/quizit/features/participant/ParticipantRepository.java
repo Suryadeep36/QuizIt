@@ -12,4 +12,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, UUID> 
     List<Participant> findAllByUser_Id(UUID userId);
     
     List<Participant> findParticipantByQuiz_QuizIdAndUser_Id(UUID quizQuizId, UUID userId);
+
+
 }

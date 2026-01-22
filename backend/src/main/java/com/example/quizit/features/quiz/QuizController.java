@@ -23,6 +23,11 @@ public class QuizController {
         return ResponseEntity.status(200).body(quizService.getQuizById(quizId));
     }
 
+    @GetMapping("/quizForParticipant/{quizId}")
+    public ResponseEntity<QuizDto> getQuizForParticipantById(@PathVariable String quizId){
+        return ResponseEntity.status(200).body(quizService.getQuizById(quizId));
+    }
+
     @GetMapping("/quiz/host/{hostId}")
     public ResponseEntity<List<QuizDto>> getQuizsByHostId(@PathVariable String hostId){
         return ResponseEntity.status(200).body(quizService.getQuizzesByHost(hostId));

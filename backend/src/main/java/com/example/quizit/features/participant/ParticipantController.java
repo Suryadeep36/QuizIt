@@ -1,5 +1,6 @@
 package com.example.quizit.features.participant;
 
+import com.example.quizit.dtos.ParticipantResultDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,12 @@ public class ParticipantController {
         return ResponseEntity.ok(participantService.getParticipantByQuizId(quizId));
     }
 
+    @GetMapping("/participants/history/{userId}")
+    public ResponseEntity<List<ParticipantResultDTO>> getUserHistory(@PathVariable String userId) {
+        List<ParticipantResultDTO> history = participantService.getParticipantHistory(userId);
+        return ResponseEntity.ok(history);
+    }
+
     @GetMapping("/participants/user/{userId}")
     public ResponseEntity<List<ParticipantDto>> getParticipantsByUserId(@PathVariable String userId) {
         return ResponseEntity.ok(participantService.getParticipantByUserId(userId));
@@ -42,6 +49,13 @@ public class ParticipantController {
             @RequestBody ParticipantDto participantDto) {
 
         return ResponseEntity.ok(participantService.updateParticipant(id, participantDto));
+    }
+
+    @PutMapping("/participant/{pid}/user/{uid}")
+    public ResponseEntity<ParticipantDto> updateParticipantUserId(
+            @PathVariable String pid, @PathVariable String uid) {
+
+        return ResponseEntity.ok(participantService.addUser(pid, uid));
     }
 
     @DeleteMapping("/participant/{id}")
