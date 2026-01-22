@@ -56,7 +56,6 @@ export default function QuizManagementDashboard() {
     // Normalize options based on question type
     switch (q.questionType) {
       case "MCQ":
-      case "IMAGE_BASED":
         baseQuestion.options = q.options
           ? ["A", "B", "C", "D"].map((key) => q.options[key] ?? "")
           : ["", "", "", ""];
@@ -164,17 +163,6 @@ export default function QuizManagementDashboard() {
             },
           },
         ];
-        break;
-
-      case "IMAGE_BASED":
-        newQuestion.imageUrl = "";
-        newQuestion.options = {
-          A: "",
-          B: "",
-          C: "",
-          D: "",
-        };
-        newQuestion.correctAnswer = [{ key: "A" }];
         break;
 
       default:
@@ -358,14 +346,6 @@ export default function QuizManagementDashboard() {
                       <ArrowLeftRight className="w-4 h-4 text-pink-500" />
                       Match the Following
                     </button>
-
-                    <button
-                      onClick={() => addQuestion("IMAGE_BASED")}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
-                    >
-                      <ImageIcon className="w-4 h-4 text-indigo-500" />
-                      Image Based
-                    </button>
                   </div>
                 </div>
               </div>
@@ -404,29 +384,47 @@ export default function QuizManagementDashboard() {
                         />
 
                         {/* IMAGE UPLOAD FOR IMAGE_BASED */}
-                        {q.questionType === "IMAGE_BASED" && (
+                        {(q.showImageInput || q.imageUrl) && (
                           <div className="mt-4">
-                            <label className="text-sm font-bold text-slate-600 mb-2 block">
-                              Question Image
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-sm font-bold text-slate-600">
+                                Question Image
+                              </label>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  updateLocalQuestion(q.questionId, {
+                                    showImageInput: false,
+                                    imageUrl: "",
+                                  });
+                                  updateQuestion(q.questionId, {
+                                    imageUrl: "",
+                                  });
+                                }}
+                                className="text-xs font-bold text-red-500 hover:underline"
+                              >
+                                Remove Image
+                              </button>
+                            </div>
+
                             <div className="space-y-4">
-                              <div className="flex items-center gap-4">
-                                <input
-                                  type="text"
-                                  placeholder="Enter image URL"
-                                  className="flex-1 bg-white/80 border border-slate-200 rounded-2xl p-3 outline-none text-slate-700 focus:border-[#4a9cb0]"
-                                  value={q.imageUrl || ""}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    updateLocalQuestion(q.questionId, {
-                                      imageUrl: value,
-                                    });
-                                    updateQuestion(q.questionId, {
-                                      imageUrl: value,
-                                    });
-                                  }}
-                                />
-                              </div>
+                              <input
+                                type="text"
+                                placeholder="Paste image URL"
+                                className="w-full bg-white/80 border border-slate-200 rounded-2xl p-3 outline-none 
+                   text-slate-700 focus:border-[#4a9cb0]"
+                                value={q.imageUrl || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  updateLocalQuestion(q.questionId, {
+                                    imageUrl: value,
+                                  });
+                                  updateQuestion(q.questionId, {
+                                    imageUrl: value,
+                                  });
+                                }}
+                              />
 
                               {q.imageUrl && (
                                 <div className="w-full flex justify-center">
@@ -434,9 +432,10 @@ export default function QuizManagementDashboard() {
                                     <img
                                       src={q.imageUrl}
                                       alt="Question"
-                                      className="w-full h-auto object-contain rounded-2xl border-2 border-slate-200 bg-white/50 p-2"
+                                      className="w-full h-auto object-contain rounded-2xl border-2 
+                         border-slate-200 bg-white/50 p-2"
                                       onError={(e) => {
-                                        e.target.style.display = "none";
+                                        e.currentTarget.style.display = "none";
                                       }}
                                     />
                                   </div>
@@ -447,8 +446,7 @@ export default function QuizManagementDashboard() {
                         )}
 
                         {/* MCQ */}
-                        {(q.questionType === "MCQ" ||
-                          q.questionType === "IMAGE_BASED") && (
+                        {q.questionType === "MCQ" && (
                           <div className="grid md:grid-cols-2 gap-4 mt-6">
                             {q.options.map((value, i) => {
                               const key = String.fromCharCode(65 + i);
@@ -541,8 +539,7 @@ export default function QuizManagementDashboard() {
                               placeholder="Enter correct answer"
                               onChange={(e) => {
                                 const value = e.target.value;
-                                console.log(e.target.value)
-                                const newCorrect = [{ key :value }];
+                                const newCorrect = [{ key: value }];
                                 updateLocalQuestion(q.questionId, {
                                   correctAnswer: newCorrect,
                                 });
@@ -558,7 +555,8 @@ export default function QuizManagementDashboard() {
                         {q.questionType === "TRUE_FALSE" && (
                           <div className="flex items-center gap-4 mt-4">
                             {["TRUE", "FALSE"].map((val) => {
-                              const isSelected = q.correctAnswer[0]?.key === val;
+                              const isSelected =
+                                q.correctAnswer[0]?.key === val;
                               return (
                                 <button
                                   key={val}
@@ -1128,6 +1126,19 @@ export default function QuizManagementDashboard() {
                                 updateQuestion(q.questionId, { points });
                               }}
                             />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLocalQuestion(q.questionId, {
+                                  showImageInput: !q.showImageInput,
+                                });
+                              }}
+                              className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest rounded-xl  bg-white/80 border border-[#4a9cb0]/30 text-[#4a9cb0] shadow-sm hover:bg-[#4a9cb0]/10 hover:border-[#4a9cb0] transition-all active:scale-95"
+                            >
+                              Add Image
+                            </button>
                           </div>
                           {(q.questionType === "MCQ" ||
                             q.questionType === "IMAGE_BASED") && (

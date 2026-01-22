@@ -5,6 +5,5 @@ public enum QuestionType {
     NUMERICAL,
     TRUE_FALSE,
     SHORT_ANSWER,
-    MATCH_FOLLOWING,
-    IMAGE_BASED
+    MATCH_FOLLOWING
 }

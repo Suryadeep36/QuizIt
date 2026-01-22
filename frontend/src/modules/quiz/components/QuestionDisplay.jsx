@@ -21,15 +21,15 @@ export default function QuestionDisplay({
     timer > 10
       ? "text-emerald-400"
       : timer > 5
-      ? "text-yellow-400"
-      : "text-red-400";
+        ? "text-yellow-400"
+        : "text-red-400";
 
   const timerBg =
     timer > 10
       ? "bg-emerald-500/20"
       : timer > 5
-      ? "bg-yellow-500/20"
-      : "bg-red-500/20";
+        ? "bg-yellow-500/20"
+        : "bg-red-500/20";
 
   const renderOptionsUI = (type, options, correctAnswer) => {
     switch (type) {
@@ -60,7 +60,7 @@ export default function QuestionDisplay({
                 key={value}
                 className={`bg-gradient-to-br from-gray-50 to-gray-100 border rounded-xl p-6 text-center transition-all group cursor-pointer
                 ${
-                  correctAnswer?.value === value
+                  correctAnswer[0]?.key === value
                     ? "border-teal-500 shadow-lg"
                     : "border-gray-300"
                 }
@@ -74,13 +74,14 @@ export default function QuestionDisplay({
           </div>
         );
 
+      case "SHORT_ANSWER":
       case "NUMERICAL":
         return (
           <div className="flex justify-center">
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 rounded-xl p-6 w-full max-w-sm text-center">
               <p className="text-sm text-gray-600">Correct Answer</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
-                {correctAnswer?.value}
+                {correctAnswer[0]?.key}
               </p>
             </div>
           </div>

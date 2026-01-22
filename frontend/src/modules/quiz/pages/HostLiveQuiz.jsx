@@ -68,45 +68,36 @@ export default function HostLiveQuiz() {
 
   const renderCorrectAnswer = (question) => {
     if (!question) return;
-    const { type, correctAnswer, options } = question;
-
-    switch (type) {
-      case "MCQ": {
-        const key = correctAnswer?.key;
-        const value = options?.[key];
-
-        return (
-          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
-            <p className="text-3xl font-bold text-[#4a9cb0]">
-              {key ? `${key}: ${value}` : "—"}
-            </p>
-          </div>
-        );
-      }
-
-      case "TRUE_FALSE": {
-        return (
-          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
-            <p className="text-3xl font-bold text-[#4a9cb0]">
-              {correctAnswer?.value}
-            </p>
-          </div>
-        );
-      }
-
-      case "NUMERICAL": {
-        return (
-          <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
-            <p className="text-3xl font-bold text-[#4a9cb0]">
-              {correctAnswer?.value}
-            </p>
-          </div>
-        );
-      }
-
-      default:
-        return null;
+    const { correctAnswer, options } = question;
+    if (!correctAnswer || correctAnswer.length === 0) {
+      return null;
     }
+
+    return (
+      <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+        <div className="flex flex-wrap gap-3 justify-center">
+          {correctAnswer.map((ans, idx) => {
+            const value = options?.[ans.key];
+            const display = value ? `${ans.key}: ${value}` : ans.key;
+            return (
+              <span
+                key={idx}
+                className="
+              px-4 py-2
+              text-2xl font-bold
+              text-[#4a9cb0]
+              bg-[#4a9cb0]/10
+              border border-[#4a9cb0]/30
+              rounded-xl
+            "
+              >
+                {display}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -148,19 +139,18 @@ export default function HostLiveQuiz() {
 
           if (storedQuizId === quizId) {
             try {
-              const sessionRes = await getQuizSessionBySessionId(
-                storedSessionId
-              );
+              const sessionRes =
+                await getQuizSessionBySessionId(storedSessionId);
 
               console.log("Reconnected session:", sessionRes);
 
               setSessionId(sessionRes.sessionId);
               const normalizedParticipants = sessionRes.participants.map(
-                normalizeBackendParticipant
+                normalizeBackendParticipant,
               );
               setParticipants(normalizedParticipants);
               setStage(
-                sessionRes.status === "STARTED" ? "question" : "waiting"
+                sessionRes.status === "STARTED" ? "question" : "waiting",
               );
 
               if (
@@ -169,7 +159,7 @@ export default function HostLiveQuiz() {
               ) {
                 const q = sessionRes.currentQuestionState;
                 const fullQ = questions.find(
-                  (x) => x.questionId === q.questionId
+                  (x) => x.questionId === q.questionId,
                 );
                 setCurrentQuestion({
                   questionId: q.questionId,
@@ -211,7 +201,7 @@ export default function HostLiveQuiz() {
             JSON.stringify({
               sessionId: sessionRes.sessionId,
               quizId,
-            })
+            }),
           );
         }
       } catch (err) {
@@ -227,7 +217,9 @@ export default function HostLiveQuiz() {
 
   useEffect(() => {
     if (!client || !sessionId || !isConnected) return;
-    setJoinLink(`${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`);
+    setJoinLink(
+      `${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`,
+    );
     const subscription = client.subscribe(
       `/topic/quiz/${sessionId}`,
       (message) => {
@@ -260,7 +252,7 @@ export default function HostLiveQuiz() {
             setTimer(q.duration);
             setStage("question");
             setParticipants((prev) =>
-              prev.map((p) => ({ ...p, answered: false, correct: false }))
+              prev.map((p) => ({ ...p, answered: false, correct: false })),
             );
             break;
           }
@@ -287,7 +279,7 @@ export default function HostLiveQuiz() {
           default:
             console.log("Unknown WS message:", msg);
         }
-      }
+      },
     );
 
     return () => subscription.unsubscribe();
