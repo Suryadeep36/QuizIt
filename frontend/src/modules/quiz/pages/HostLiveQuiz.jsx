@@ -6,7 +6,7 @@ import {
   Play,
   Settings,
   ChevronRight,
-  X,
+  X, QrCode, Download
 } from "lucide-react";
 import ParticipantsList from "../components/ParticipantsList";
 import QuestionDisplay from "../components/QuestionDisplay";
@@ -22,6 +22,8 @@ import {
   getQuestionsByQuizId,
   getQuizSessionBySessionId,
 } from "../../../services/AuthService";
+import { QRCodeCanvas } from "qrcode.react";
+import QrSharePopover from "../components/QrSharePopover";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
@@ -32,7 +34,6 @@ export default function HostLiveQuiz() {
   const { quizId } = useParams();
   const hostId = useAuth((state) => state.user.id);
   const [sessionId, setSessionId] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [joinLink, setJoinLink] = useState(null);
   const navigate = useNavigate();
   const connectWS = useWS((s) => s.connect);
@@ -108,6 +109,56 @@ export default function HostLiveQuiz() {
         return null;
     }
   };
+
+  const [isQrOpen, setIsQrOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState(""); // 👈 status text
+  const qrRef = useRef(null);
+
+  const showStatus = (msg) => {
+    setCopyStatus(msg);
+    setTimeout(() => setCopyStatus(""), 1500);
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(joinLink);
+    showStatus("Link copied");
+  };
+
+  const copyQrImage = async () => {
+    const canvas = qrRef.current?.querySelector("canvas");
+    if (!canvas) return;
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      if (navigator.clipboard?.write) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+          showStatus("QR copied");
+          return;
+        } catch {
+          // fallback download if copy not supported
+        }
+      }
+
+      await downloadQr(); // fallback
+    }, "image/png");
+  };
+
+  const downloadQr = async () => {
+    const canvas = qrRef.current?.querySelector("canvas");
+    if (!canvas) return;
+
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `quiz-qr.png`;
+    a.click();
+    showStatus("QR downloaded");
+  };
+
 
   useEffect(() => {
     if (stage !== "question" || isPaused) return;
@@ -350,43 +401,9 @@ export default function HostLiveQuiz() {
               isLive={stage === "question"}
               participantCount={participants.length}
             />
-            <button
-              onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium hover:shadow-md"
-            >
-              <Share2 className="w-4 h-4" />
-              Share Link
-            </button>
+            
+            <QrSharePopover joinLink={joinLink} />
 
-            {isOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-white text-slate-700 p-4 rounded-xl shadow-xl border border-slate-200 z-20">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-sm">Share Quiz</h4>
-                  <button onClick={() => setIsOpen(false)}>
-                    <X className="w-4 h-4 text-slate-500 hover:text-slate-700" />
-                  </button>
-                </div>
-
-                <p className="text-xs text-slate-500 mb-2">
-                  Participants can join using this link:
-                </p>
-
-                <div className="flex items-center gap-2 bg-slate-100 border border-slate-300 rounded-lg px-2 py-2">
-                  <input
-                    className="flex-1 bg-transparent text-sm text-slate-700 outline-none"
-                    type="text"
-                    readOnly
-                    value={joinLink}
-                  />
-                  <button
-                    onClick={() => navigator.clipboard.writeText(joinLink)}
-                    className="text-blue-600 hover:text-blue-700 font-medium text-xs"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            )}
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
               <Settings className="w-5 h-5 text-white/80" />
             </button>
@@ -572,11 +589,10 @@ export default function HostLiveQuiz() {
               {participants.map((p) => (
                 <div
                   key={p.participantSessionId}
-                  className={`p-3 rounded-lg transition-all ${
-                    p.answered
-                      ? "bg-emerald-100 border border-emerald-300"
-                      : "bg-gray-100 border border-slate-200"
-                  }`}
+                  className={`p-3 rounded-lg transition-all ${p.answered
+                    ? "bg-emerald-100 border border-emerald-300"
+                    : "bg-gray-100 border border-slate-200"
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-800">

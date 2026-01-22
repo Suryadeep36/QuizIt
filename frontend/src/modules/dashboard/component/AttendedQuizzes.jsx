@@ -26,8 +26,10 @@ const handleRefresh = async () => {
     //   toast.success("History refreshed ✅");
     } catch (err) {
       console.error(err);
+      
       toast.error("Failed to refresh history.");
     }
+    
   };
 
   if (loading && attendedQuizzes.length === 0) {
