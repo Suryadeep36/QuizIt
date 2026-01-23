@@ -54,13 +54,10 @@ const useAuth = create(
             authStatus: false,
             authLoading: false,
           });
-           await api.persist.clearStorage();
+           api.persist.clearStorage();
 
-          // ✅ force store to reflect cleared storage (optional but helps)
-          api.persist.rehydrate();
-
-          // optional
-          localStorage.removeItem(LOCAL_KEY);
+          localStorage.removeItem("participant_history_cache");
+          localStorage.removeItem("quizit_auth");
         } catch (error) {
           throw error;
         } finally {
