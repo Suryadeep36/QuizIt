@@ -597,7 +597,7 @@ export default function QuizManagementDashboard() {
                                 placeholder="Enter the correct answer"
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  const newCorrect = { answer: value };
+                                  const newCorrect = [{ key: value }];
                                   updateLocalQuestion(q.questionId, {
                                     correctAnswer: newCorrect,
                                   });
