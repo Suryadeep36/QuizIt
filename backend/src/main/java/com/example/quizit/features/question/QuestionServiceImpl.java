@@ -72,7 +72,7 @@ public class QuestionServiceImpl implements QuestionService {
         if (questionDto == null) {
             throw new ResourceNotFoundException();
         }
-
+        System.out.println(questionDto.getCorrectAnswer());
         UUID uuid = UserHelper.parseUUID(id);
 
         Question existingQuestion = questionRepository.findById(uuid)

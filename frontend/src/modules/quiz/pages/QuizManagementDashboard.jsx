@@ -156,7 +156,8 @@ export default function QuizManagementDashboard() {
         };
         newQuestion.correctAnswer = [
           {
-            key: {
+            key: null,
+            matchPairs: {
               0: "0",
               1: "1",
               2: "2",
@@ -738,59 +739,59 @@ export default function QuizManagementDashboard() {
                                 className="absolute inset-0 pointer-events-none"
                                 style={{ width: "100%", height: "100%" }}
                               >
-                                {Object.entries(q.correctAnswer || {}).map(
-                                  ([rightIdx, leftIdx]) => {
-                                    const leftDot = document.getElementById(
-                                      `left-${q.questionId}-${leftIdx}`,
-                                    );
-                                    const rightDot = document.getElementById(
-                                      `right-${q.questionId}-${rightIdx}`,
-                                    );
+                                {Object.entries(
+                                  q.correctAnswer[0]?.matchPairs || {},
+                                ).map(([rightIdx, leftIdx]) => {
+                                  const leftDot = document.getElementById(
+                                    `left-${q.questionId}-${leftIdx}`,
+                                  );
+                                  const rightDot = document.getElementById(
+                                    `right-${q.questionId}-${rightIdx}`,
+                                  );
 
-                                    if (leftDot && rightDot) {
-                                      const leftRect =
-                                        leftDot.getBoundingClientRect();
-                                      const rightRect =
-                                        rightDot.getBoundingClientRect();
-                                      const containerRect = leftDot
-                                        .closest(".grid")
-                                        ?.getBoundingClientRect();
+                                  if (leftDot && rightDot) {
+                                    const leftRect =
+                                      leftDot.getBoundingClientRect();
+                                    const rightRect =
+                                      rightDot.getBoundingClientRect();
+                                    const containerRect = leftDot
+                                      .closest(".grid")
+                                      ?.getBoundingClientRect();
 
-                                      if (containerRect) {
-                                        const x1 =
-                                          leftRect.left +
-                                          leftRect.width / 2 -
-                                          containerRect.left;
-                                        const y1 =
-                                          leftRect.top +
-                                          leftRect.height / 2 -
-                                          containerRect.top;
-                                        const x2 =
-                                          rightRect.left +
-                                          rightRect.width / 2 -
-                                          containerRect.left;
-                                        const y2 =
-                                          rightRect.top +
-                                          rightRect.height / 2 -
-                                          containerRect.top;
+                                    if (containerRect) {
+                                      const x1 =
+                                        leftRect.left +
+                                        leftRect.width / 2 -
+                                        containerRect.left;
+                                      const y1 =
+                                        leftRect.top +
+                                        leftRect.height / 2 -
+                                        containerRect.top;
+                                      const x2 =
+                                        rightRect.left +
+                                        rightRect.width / 2 -
+                                        containerRect.left;
+                                      const y2 =
+                                        rightRect.top +
+                                        rightRect.height / 2 -
+                                        containerRect.top;
 
-                                        return (
-                                          <line
-                                            key={`${leftIdx}-${rightIdx}`}
-                                            x1={x1}
-                                            y1={y1}
-                                            x2={x2}
-                                            y2={y2}
-                                            stroke="#4a9cb0"
-                                            strokeWidth="2"
-                                            strokeDasharray="4,4"
-                                          />
-                                        );
-                                      }
+                                      return (
+                                        <line
+                                          key={`${leftIdx}-${rightIdx}`}
+                                          x1={x1}
+                                          y1={y1}
+                                          x2={x2}
+                                          y2={y2}
+                                          stroke="#4a9cb0"
+                                          strokeWidth="2"
+                                          strokeDasharray="4,4"
+                                        />
+                                      );
                                     }
-                                    return null;
-                                  },
-                                )}
+                                  }
+                                  return null;
+                                })}
                               </svg>
 
                               {/* Left Column */}
@@ -946,13 +947,26 @@ export default function QuizManagementDashboard() {
                                           ) {
                                             const leftIdx =
                                               tempLine.dataset.leftIndex;
-                                            const newCorrect = {
-                                              ...q.correctAnswer,
-                                              [i]: leftIdx,
+                                            const existing = q
+                                              .correctAnswer?.[0] || {
+                                              key: null,
+                                              matchPairs: {},
                                             };
+                                            const newCorrect = [
+                                              {
+                                                ...existing,
+                                                matchPairs: {
+                                                  ...(existing.matchPairs ||
+                                                    {}),
+                                                  [String(i)]: String(leftIdx),
+                                                },
+                                              },
+                                            ];
+
                                             updateLocalQuestion(q.questionId, {
                                               correctAnswer: newCorrect,
                                             });
+
                                             updateQuestion(q.questionId, {
                                               correctAnswer: newCorrect,
                                             });
@@ -993,41 +1007,56 @@ export default function QuizManagementDashboard() {
                                 Current Matches:
                               </p>
                               <div className="space-y-1 text-sm text-slate-700">
-                                {Object.entries(q.correctAnswer || {}).map(
-                                  ([rightIdx, leftIdx]) => (
-                                    <div
-                                      key={rightIdx}
-                                      className="flex items-center gap-2"
+                                {Object.entries(
+                                  q.correctAnswer?.[0]?.matchPairs || {},
+                                ).map(({ rightIdx, leftIdx }) => (
+                                  <div
+                                    key={rightIdx}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <span className="text-[#4a9cb0] font-medium">
+                                      {q.options?.left?.[parseInt(leftIdx)] ||
+                                        `Item ${parseInt(leftIdx) + 1}`}
+                                    </span>
+                                    <span className="text-slate-400">→</span>
+                                    <span className="text-[#f5a65b] font-medium">
+                                      {q.options?.right?.[parseInt(rightIdx)] ||
+                                        `Match ${parseInt(rightIdx) + 1}`}
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        const existing = q
+                                          .correctAnswer?.[0] || {
+                                          key: null,
+                                          matchPairs: {},
+                                        };
+
+                                        const newMatchPairs = {
+                                          ...(existing.matchPairs || {}),
+                                        };
+                                        delete newMatchPairs[rightIdx];
+
+                                        const newCorrect = [
+                                          {
+                                            ...existing,
+                                            matchPairs: newMatchPairs,
+                                          },
+                                        ];
+
+                                        updateLocalQuestion(q.questionId, {
+                                          correctAnswer: newCorrect,
+                                        });
+
+                                        updateQuestion(q.questionId, {
+                                          correctAnswer: newCorrect,
+                                        });
+                                      }}
+                                      className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
                                     >
-                                      <span className="text-[#4a9cb0] font-medium">
-                                        {q.options?.left?.[leftIdx] ||
-                                          `Item ${parseInt(leftIdx) + 1}`}
-                                      </span>
-                                      <span className="text-slate-400">→</span>
-                                      <span className="text-[#f5a65b] font-medium">
-                                        {q.options?.right?.[rightIdx] ||
-                                          `Match ${parseInt(rightIdx) + 1}`}
-                                      </span>
-                                      <button
-                                        onClick={() => {
-                                          const newCorrect = {
-                                            ...q.correctAnswer,
-                                          };
-                                          delete newCorrect[rightIdx];
-                                          updateLocalQuestion(q.questionId, {
-                                            correctAnswer: newCorrect,
-                                          });
-                                          updateQuestion(q.questionId, {
-                                            correctAnswer: newCorrect,
-                                          });
-                                        }}
-                                        className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                  ),
-                                )}
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
                                 {Object.keys(q.correctAnswer || {}).length ===
                                   0 && (
                                   <p className="text-slate-400 italic">
