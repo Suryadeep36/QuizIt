@@ -72,16 +72,13 @@ export default function HostLiveQuiz() {
     if (!correctAnswer || correctAnswer.length === 0) {
       return null;
     }
-
-    return (
+    if (question.questionType == "MATCH_FOLLOWING") {
       <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
         <div className="flex flex-wrap gap-3 justify-center">
-          {correctAnswer.map((ans, idx) => {
-            const value = options?.[ans.key];
-            const display = value ? `${ans.key}: ${value}` : ans.key;
-            return (
+          {Object.entries(correctAnswer?.[0]?.matchPairs || {}).map(
+            ([rightIdx, leftIdx], index) => (
               <span
-                key={idx}
+                key={index}
                 className="
               px-4 py-2
               text-2xl font-bold
@@ -91,13 +88,40 @@ export default function HostLiveQuiz() {
               rounded-xl
             "
               >
-                {display}
+                {options.left?.[parseInt(leftIdx)]} -{" "}
+                {options.right?.[parseInt(rightIdx)]}
               </span>
-            );
-          })}
+            ),
+          )}
         </div>
-      </div>
-    );
+      </div>;
+    } else {
+      return (
+        <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
+          <div className="flex flex-wrap gap-3 justify-center">
+            {correctAnswer.map((ans, idx) => {
+              const value = options?.[ans.key];
+              const display = value ? `${ans.key}: ${value}` : ans.key;
+              return (
+                <span
+                  key={idx}
+                  className="
+              px-4 py-2
+              text-2xl font-bold
+              text-[#4a9cb0]
+              bg-[#4a9cb0]/10
+              border border-[#4a9cb0]/30
+              rounded-xl
+            "
+                >
+                  {display}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
   };
 
   useEffect(() => {
