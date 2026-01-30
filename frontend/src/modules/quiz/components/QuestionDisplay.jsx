@@ -87,7 +87,6 @@ export default function QuestionDisplay({
           </div>
         );
 
-      // ✅ NEW: MATCH FOLLOWING SUPPORT
       case "MATCH_FOLLOWING": {
         const matchPairs = correctAnswer?.[0]?.matchPairs || {};
 

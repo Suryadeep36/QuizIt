@@ -10,13 +10,13 @@ import {
   Wifi,
   WifiOff,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { useWS } from "../../../stores/webSocketStore";
 import { useNavigate, useParams } from "react-router";
 import { joinSession } from "../../../services/stompService";
 import { createQuestionAnalyticsUser } from "../../../services/AuthService";
 import { useParticipant } from "../../../stores/store";
-
 
 const DUMMY_QUESTIONS = [
   {
@@ -41,7 +41,7 @@ export default function ParticipantLiveQuiz() {
   const [connected, setConnected] = useState(true);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [timer, setTimer] = useState(15);
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedOption, setSelectedOption] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(1250);
 
@@ -51,29 +51,35 @@ export default function ParticipantLiveQuiz() {
 
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState(null);
   const participant = useParticipant((s) => s.participant);
   const [hasJoined, setHasJoined] = useState(false);
+
+  const [userMatchPairs, setUserMatchPairs] = useState([]);
+  const [zoomedImage, setZoomedImage] = useState(null);
+
   const navigator = useNavigate();
 
   const TOTAL_TIME = 15;
+
   const renderPlayableOptions = (
     type,
     options,
     selectedOption,
-    handleOptionClick
+    handleOptionClick,
   ) => {
     switch (type) {
       case "MCQ":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
-            {Object.entries(options).map(([key, value], index) => (
+            {Object.entries(options).map(([key, value]) => (
               <button
                 key={key}
                 onClick={() => handleOptionClick(key)}
                 className={`
                 w-full p-5 md:p-6 rounded-2xl text-left transition-all duration-200 border-2 flex justify-between items-center active:scale-95
                 ${
-                  selectedOption === key
+                  Array.isArray(selectedOption) && selectedOption.includes(key)
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
                 }
@@ -82,7 +88,8 @@ export default function ParticipantLiveQuiz() {
                 <div className="flex items-center gap-4">
                   <div
                     className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
-                      selectedOption === key
+                      Array.isArray(selectedOption) &&
+                      selectedOption.includes(key)
                         ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
                         : "border-white/30"
                     }`}
@@ -91,9 +98,10 @@ export default function ParticipantLiveQuiz() {
                   </div>
                   <span className="text-lg font-bold">{value}</span>
                 </div>
-                {selectedOption === key && (
-                  <CheckCircle2 className="w-6 h-6 text-[#4a9cb0]" />
-                )}
+                {Array.isArray(selectedOption) &&
+                  selectedOption.includes(key) && (
+                    <CheckCircle2 className="w-6 h-6 text-[#4a9cb0]" />
+                  )}
               </button>
             ))}
           </div>
@@ -129,6 +137,264 @@ export default function ParticipantLiveQuiz() {
               onChange={(e) => handleOptionClick(e.target.value)}
               className="w-full max-w-sm p-4 rounded-xl bg-white/10 border border-white/20 text-white text-center text-xl focus:outline-none focus:ring-2 focus:ring-teal-400"
               placeholder="Enter your answer..."
+            />
+          </div>
+        );
+
+      case "MATCH_FOLLOWING": {
+        return (
+          <div className="w-full mt-2">
+            <div className="grid md:grid-cols-2 gap-12 relative">
+              <svg
+                className="absolute inset-0 pointer-events-none z-0"
+                style={{ width: "100%", height: "100%", overflow: "visible" }}
+              >
+                {userMatchPairs.map((pair, idx) => {
+                  const leftDot = document.getElementById(
+                    `left-${currentQuestion.questionId}-${pair.left}`,
+                  );
+                  const rightDot = document.getElementById(
+                    `right-${currentQuestion.questionId}-${pair.right}`,
+                  );
+
+                  if (leftDot && rightDot) {
+                    const leftRect = leftDot.getBoundingClientRect();
+                    const rightRect = rightDot.getBoundingClientRect();
+                    const containerRect = leftDot
+                      .closest(".grid")
+                      ?.getBoundingClientRect();
+
+                    if (containerRect) {
+                      const x1 =
+                        leftRect.left + leftRect.width / 2 - containerRect.left;
+                      const y1 =
+                        leftRect.top + leftRect.height / 2 - containerRect.top;
+                      const x2 =
+                        rightRect.left +
+                        rightRect.width / 2 -
+                        containerRect.left;
+                      const y2 =
+                        rightRect.top +
+                        rightRect.height / 2 -
+                        containerRect.top;
+
+                      return (
+                        <line
+                          key={`line-${idx}`}
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke="#4a9cb0"
+                          strokeWidth="3"
+                          strokeDasharray="6,4"
+                        />
+                      );
+                    }
+                  }
+                  return null;
+                })}
+              </svg>
+
+              <div>
+                <p className="text-sm font-semibold text-white/80 mb-3 text-center">
+                  Left Column
+                </p>
+                <div className="space-y-4">
+                  {(options?.left || []).map((item, i) => (
+                    <div
+                      key={`left-${i}`}
+                      className="relative bg-white/10 border border-white/20 rounded-xl flex items-center p-4 transition-all hover:bg-white/20 min-h-[64px]"
+                    >
+                      <span className="text-white font-bold text-lg">
+                        {item}
+                      </span>
+                      <div
+                        id={`left-${currentQuestion.questionId}-${i}`}
+                        className="w-5 h-5 rounded-full bg-[#4a9cb0] border-2 border-white cursor-grab hover:scale-125 transition-transform absolute -right-2.5 z-10 shadow-lg"
+                        onMouseDown={(e) => {
+                          const svg = e.currentTarget
+                            .closest(".grid")
+                            .querySelector("svg");
+                          const tempLine = document.createElementNS(
+                            "http://www.w3.org/2000/svg",
+                            "line",
+                          );
+
+                          tempLine.setAttribute("stroke", "#4a9cb0");
+                          tempLine.setAttribute("stroke-width", "3");
+                          tempLine.setAttribute("stroke-dasharray", "6,4");
+                          tempLine.setAttribute("id", `temp-line`);
+
+                          const containerRect = e.currentTarget
+                            .closest(".grid")
+                            .getBoundingClientRect();
+                          const dotRect =
+                            e.currentTarget.getBoundingClientRect();
+                          const startX =
+                            dotRect.left +
+                            dotRect.width / 2 -
+                            containerRect.left;
+                          const startY =
+                            dotRect.top +
+                            dotRect.height / 2 -
+                            containerRect.top;
+
+                          tempLine.setAttribute("x1", startX);
+                          tempLine.setAttribute("y1", startY);
+                          tempLine.setAttribute("x2", startX);
+                          tempLine.setAttribute("y2", startY);
+                          tempLine.dataset.leftIndex = i;
+
+                          svg.appendChild(tempLine);
+
+                          const handleMouseMove = (moveE) => {
+                            const currentX = moveE.clientX - containerRect.left;
+                            const currentY = moveE.clientY - containerRect.top;
+                            tempLine.setAttribute("x2", currentX);
+                            tempLine.setAttribute("y2", currentY);
+                          };
+
+                          const handleMouseUp = () => {
+                            document.removeEventListener(
+                              "mousemove",
+                              handleMouseMove,
+                            );
+                            document.removeEventListener(
+                              "mouseup",
+                              handleMouseUp,
+                            );
+                            tempLine.remove();
+                          };
+
+                          document.addEventListener(
+                            "mousemove",
+                            handleMouseMove,
+                          );
+                          document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-white/80 mb-3 text-center">
+                  Right Column
+                </p>
+                <div className="space-y-4">
+                  {(options?.right || []).map((item, i) => (
+                    <div
+                      key={`right-${i}`}
+                      className="relative bg-white/10 border border-white/20 rounded-xl flex items-center justify-end p-4 transition-all hover:bg-white/20 min-h-[64px]"
+                    >
+                      {/* Connection Dot (Left Edge) */}
+                      <div
+                        id={`right-${currentQuestion.questionId}-${i}`}
+                        className="w-5 h-5 rounded-full bg-[#f5a65b] border-2 border-white cursor-pointer hover:scale-125 transition-transform absolute -left-2.5 z-10 shadow-lg"
+                        onMouseUp={(e) => {
+                          const tempLine = document.getElementById(`temp-line`);
+                          if (
+                            tempLine &&
+                            tempLine.dataset.leftIndex !== undefined
+                          ) {
+                            const leftIdx = parseInt(
+                              tempLine.dataset.leftIndex,
+                            );
+                            const rightIdx = i;
+                            setUserMatchPairs((prev) => {
+                              const filtered = prev.filter(
+                                (p) =>
+                                  p.left !== leftIdx && p.right !== rightIdx,
+                              );
+                              return [
+                                ...filtered,
+                                { left: leftIdx, right: rightIdx },
+                              ];
+                            });
+                          }
+                        }}
+                      />
+                      <span className="text-white font-bold text-lg text-right">
+                        {item}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col items-center">
+              <p className="text-xs text-white/50 italic mb-4">
+                💡 Drag from Blue to Orange to connect
+              </p>
+
+              {userMatchPairs.length > 0 && (
+                <div className="w-full bg-black/20 p-4 rounded-xl border border-white/10">
+                  <p className="text-xs font-bold text-white/70 mb-2 uppercase tracking-wider">
+                    Your Connections
+                  </p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {userMatchPairs.map((pair, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-sm bg-white/5 p-2 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#4a9cb0] font-bold">
+                            {options.left[pair.left]}
+                          </span>
+                          <span className="text-white/30">→</span>
+                          <span className="text-[#f5a65b] font-bold">
+                            {options.right[pair.right]}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setUserMatchPairs((prev) =>
+                              prev.filter((_, i) => i !== idx),
+                            );
+                          }}
+                          className="text-white/40 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case "SHORT_ANSWER":
+        return (
+          <div className="flex justify-center w-full">
+            <input
+              type="text"
+              value={selectedOption || ""}
+              onChange={(e) => handleOptionClick(e.target.value)}
+              disabled={isSubmitted}
+              className="
+              w-full max-w-lg
+              p-4 md:p-5
+              rounded-2xl
+              bg-white/10
+              border-2 border-white/20
+              text-white text-lg
+              text-center font-bold
+              placeholder-white/50
+              focus:outline-none
+              focus:ring-2
+              focus:ring-teal-400
+              transition-all
+              disabled:opacity-60
+              disabled:cursor-not-allowed
+              "
+              placeholder="Enter your answer"
             />
           </div>
         );
@@ -226,6 +492,7 @@ export default function ParticipantLiveQuiz() {
             setTimer(q.duration);
             setStage("question");
             setSelectedOption(null);
+            setUserMatchPairs([]);
             setIsSubmitted(false);
             break;
           }
@@ -236,7 +503,10 @@ export default function ParticipantLiveQuiz() {
             setTimer(q.duration);
             setStage("question");
             setSelectedOption(null);
+            setUserMatchPairs([]);
             setIsSubmitted(false);
+            setCorrectAnswer(null)
+            setIsAnswerCorrect(null);
             break;
           }
 
@@ -257,18 +527,47 @@ export default function ParticipantLiveQuiz() {
           default:
             console.warn("Unknown WS event:", msg);
         }
-      }
+      },
     );
 
     return () => subscription.unsubscribe();
   }, [isConnected, client?.connected, hasJoined]);
 
-  const handleOptionClick = (index) => {
-    if (stage === "question" && timer > 0) {
-      setSelectedOption(index);
-      submitAnswer(index);
-      setIsSubmitted(true);
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setZoomedImage(null);
+      }
+    };
+
+    if (zoomedImage) {
+      document.addEventListener("keydown", handleEsc);
     }
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [zoomedImage]);
+
+  const handleOptionClick = (index) => {
+    if (stage !== "question" || timer <= 0) return;
+    if (currentQuestion.questionType === "MCQ") {
+      if (currentQuestion.allowMultipleAnswers) {
+        setSelectedOption((prev) => {
+          const safePrev = prev || [];
+          const exists = safePrev.includes(index);
+          const updated = exists
+            ? safePrev.filter((v) => v !== index)
+            : [...safePrev, index];
+          return updated;
+        });
+      } else {
+        const updated = [index];
+        setSelectedOption(updated);
+      }
+      return;
+    }
+    setSelectedOption(index);
   };
 
   const submitAnswer = async (selectedValue) => {
@@ -281,13 +580,25 @@ export default function ParticipantLiveQuiz() {
     switch (currentQuestion.questionType) {
       case "MCQ":
         selectedAnswer = {
-          key: selectedValue,
+          keys: Array.isArray(selectedValue) ? selectedValue : [selectedValue],
+        };
+        break;
+
+      case "MATCH_FOLLOWING":
+        const matchMap = {};
+        if (Array.isArray(selectedValue)) {
+          selectedValue.forEach((pair) => {
+            matchMap[pair.right] = pair.left;
+          });
+        }
+        selectedAnswer = {
+          matchPairs: matchMap,
         };
         break;
 
       case "TRUE_FALSE":
         selectedAnswer = {
-          value: selectedValue,
+          value: Boolean(selectedValue),
         };
         break;
 
@@ -296,6 +607,10 @@ export default function ParticipantLiveQuiz() {
           value: Number(selectedValue),
         };
         break;
+      default:
+        selectedAnswer = {
+          value: selectedValue,
+        };
     }
 
     const payload = {
@@ -307,56 +622,70 @@ export default function ParticipantLiveQuiz() {
     };
 
     try {
-      await createQuestionAnalyticsUser(payload);
+      const response = await createQuestionAnalyticsUser(payload);
+      setIsAnswerCorrect(response.isCorrect);
       console.log("Analytics saved:", payload);
     } catch (err) {
       console.error("Failed to save analytics", err);
     }
   };
 
-  const isAnswerCorrect = (question, selectedOption) => {
-    if (!question || !selectedOption) return null;
-
-    const { questionType } = question;
-    console.log(questionType);
-    console.log(selectedOption);
-    console.log(correctAnswer);
-    switch (questionType) {
-      case "MCQ":
-        return selectedOption === correctAnswer.key;
-
-      case "TRUE_FALSE":
-        return selectedOption === correctAnswer.value;
-
-      case "NUMERICAL":
-        return Number(selectedOption) === Number(correctAnswer.value);
-
-      default:
-        return false;
-    }
-  };
-
   const renderCorrectText = (question) => {
-    if (!question) return "—";
+    if (
+      !question ||
+      !question.correctAnswer ||
+      question.correctAnswer.length === 0
+    ) {
+      return "—";
+    }
 
-    const { questionType, options } = question;
-    console.log(questionType);
-    console.log(options);
-    console.log(correctAnswer);
+    const { questionType, options, correctAnswer } = question;
+
     switch (questionType) {
       case "MCQ":
-        return `${correctAnswer.key}: ${options[correctAnswer.key]}`;
+        return correctAnswer
+          .map((ans) => {
+            const optionText = options[ans.key];
+            return optionText;
+          })
+          .join(", ");
 
       case "TRUE_FALSE":
-        return correctAnswer.value;
+        return String(correctAnswer[0].key).toUpperCase();
 
       case "NUMERICAL":
-        return correctAnswer.value;
+        return correctAnswer[0].key;
+
+      case "SHORT_ANSWER":
+        return correctAnswer[0].key;
+
+      case "MATCH_FOLLOWING":
+        const pairs = correctAnswer[0].matchPairs || {};
+        return Object.entries(pairs)
+          .map(([rightIdx, leftIdx]) => {
+            const leftText = options.left?.[leftIdx] || "Left";
+            const rightText = options.right?.[rightIdx] || "Right";
+            return `${leftText} → ${rightText}`;
+          })
+          .join(" | ");
 
       default:
         return "—";
     }
   };
+
+  const handleFinalSubmit = () => {
+    if (isSubmitted) return;
+
+    if (currentQuestion.questionType === "MATCH_FOLLOWING") {
+      submitAnswer(userMatchPairs);
+    } else {
+      submitAnswer(selectedOption);
+    }
+
+    setIsSubmitted(true);
+  };
+
   /* ================= CONDITIONAL SCREENS ================= */
   if (!connected) return <DisconnectedScreen />;
   if (stage === "waiting" || !hasJoined)
@@ -424,23 +753,64 @@ export default function ParticipantLiveQuiz() {
                 {timer}s
               </div>
             </div>
-
             <div className="bg-white/10 backdrop-blur-md border border-white/30 rounded-[2rem] p-6 md:p-10 mb-8 shadow-xl text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
                 {currentQuestion.content}
               </h2>
+              {currentQuestion.imageUrl && (
+                <div className="flex justify-center">
+                  <img
+                    src={currentQuestion.imageUrl}
+                    alt="Question visual"
+                    className="
+                    max-h-[320px]
+                    max-w-full
+                    rounded-2xl
+                    border border-white/20
+                    shadow-lg
+                    object-contain
+                    bg-white/5
+                    cursor-zoom-in
+                    hover:scale-[1.02]
+                    transition-transform
+                    w-auto
+                  "
+                    loading="lazy"
+                    onClick={() => setZoomedImage(currentQuestion.imageUrl)}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
+            <div className="grid grid-cols-1 w-full">
               {renderPlayableOptions(
                 currentQuestion.questionType,
                 currentQuestion.options,
                 selectedOption,
-                handleOptionClick
+                handleOptionClick,
               )}
             </div>
 
             <div className="mt-8 text-center min-h-[24px]">
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={handleFinalSubmit}
+                  disabled={isSubmitted}
+                  className={`
+                      px-8 py-3 rounded-2xl font-black tracking-wide
+                      transition-all duration-200 active:scale-95
+                      ${
+                        isSubmitted
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
+                      }
+                    `}
+                >
+                  {isSubmitted ? "Answer Locked" : "Final Submit"}
+                </button>
+              </div>
               {isSubmitted && timer > 0 && (
                 <p className="text-white font-bold text-sm animate-pulse">
                   ✔ Response recorded! You can still change it.
@@ -453,12 +823,11 @@ export default function ParticipantLiveQuiz() {
         {(() => {
           if (stage !== "reveal" || !correctAnswer) return null;
 
-          const isCorrect = isAnswerCorrect(currentQuestion, selectedOption);
-          if(isCorrect == null) return null;
+          if (isAnswerCorrect == null) return null;
           return (
             <div className="w-full max-w-lg flex flex-col items-center animate-in zoom-in duration-300 mt-10 md:mt-16">
               <div className="bg-white/95 backdrop-blur-lg rounded-[2.5rem] p-8 md:p-12 shadow-2xl w-full text-center border border-white">
-                {isCorrect ? (
+                {isAnswerCorrect ? (
                   <>
                     <div className="bg-emerald-100 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12">
                       <Trophy className="w-12 h-12 text-emerald-600" />
@@ -494,6 +863,38 @@ export default function ParticipantLiveQuiz() {
             </div>
           );
         })()}
+        {zoomedImage && (
+          <div
+            className="
+            fixed inset-0 z-50
+            bg-black/80 backdrop-blur-sm
+            flex items-center justify-center
+            p-4
+            animate-in fade-in duration-200
+            "
+            onClick={() => setZoomedImage(null)}
+          >
+            <img
+              src={zoomedImage}
+              alt="Zoomed question visual"
+              className="
+              max-w-[90vw]
+              max-h-[90vh]
+              object-contain
+              rounded-2xl
+              shadow-2xl
+              cursor-zoom-out
+              animate-in zoom-in-95 duration-200
+              "
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Close hint */}
+            <div className="absolute top-4 right-4 text-white/80 text-xs md:text-sm">
+              Click outside or press ESC to close
+            </div>
+          </div>
+        )}
       </main>
 
       {/* FOOTER STATS */}

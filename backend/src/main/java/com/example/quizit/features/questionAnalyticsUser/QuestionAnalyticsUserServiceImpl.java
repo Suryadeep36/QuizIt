@@ -1,17 +1,22 @@
 package com.example.quizit.features.questionAnalyticsUser;
 
 import com.example.quizit.features.participant.Participant;
+import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.exceptions.ResourceNotFoundException;
+import com.example.quizit.features.question.QuestionType;
 import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.question.QuestionRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserService {
@@ -54,15 +59,7 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
 
         analytics.setParticipant(participant);
         analytics.setQuestion(question);
-        boolean isCorrect = false;
-//        if(analytics.getSelectedAnswer() != null && question.getCorrectAnswer() != null){
-//            Object selectedKey = dto.getSelectedAnswer().get("key");
-//            Object correctKey = question.getCorrectAnswer().get("key");
-//
-//            if (selectedKey != null && correctKey != null) {
-//                isCorrect = selectedKey.toString().equals(correctKey.toString());
-//            }
-//        }
+        boolean isCorrect = validateAnswer(question ,analytics.getSelectedAnswer(), question.getCorrectAnswer());
         analytics.setIsCorrect(isCorrect);
         if (analytics.getTabSwitchCount() == null) {
             analytics.setTabSwitchCount(0);
@@ -72,6 +69,84 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
         return modelMapper.map(saved, QuestionAnalyticsUserDto.class);
     }
 
+    private boolean validateAnswer(Question question, Map<String, Object> selectedAnswer, List<AnswerKey> correctAnswer){
+        if (selectedAnswer == null || selectedAnswer.isEmpty()) {
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        switch (question.getQuestionType()){
+            case MCQ:
+                Object givenRawKeys = selectedAnswer.get("keys");
+                if (givenRawKeys == null) return false;
+                List<String> givenKeys = mapper.convertValue(givenRawKeys, new TypeReference<List<String>>() {});
+                List<String> correctKeys = correctAnswer.stream()
+                        .map(AnswerKey::getKey)
+                        .sorted()
+                        .toList();
+                Collections.sort(givenKeys);
+                return correctKeys.equals(givenKeys);
+            case SHORT_ANSWER: {
+                if (correctAnswer.isEmpty()) return false;
+                Object valObj = selectedAnswer.get("value");
+                if (valObj == null) return false;
+
+                String givenVal = valObj.toString().trim();
+                String correctVal = correctAnswer.getFirst().getKey().trim();
+
+                if (question.getCaseSensitive() != null && !question.getCaseSensitive()) {
+                    if (correctVal.equalsIgnoreCase(givenVal)) return true;
+                } else {
+                    if (correctVal.equals(givenVal)) return true;
+                }
+
+                if (question.getAcceptableAnswers() != null) {
+                    for (String acc : question.getAcceptableAnswers()) {
+                        if (question.getCaseSensitive() != null && !question.getCaseSensitive()) {
+                            if (acc.trim().equalsIgnoreCase(givenVal)) return true;
+                        } else {
+                            if (acc.trim().equals(givenVal)) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            case NUMERICAL: {
+                if (correctAnswer.isEmpty()) return false;
+                Object valObj = selectedAnswer.get("value");
+                if (valObj == null) return false;
+
+                try {
+                    double correctNum = Double.parseDouble(correctAnswer.getFirst().getKey());
+                    double givenNum = Double.parseDouble(valObj.toString());
+                    return Math.abs(correctNum - givenNum) < 0.0001;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+            case TRUE_FALSE: {
+                if (correctAnswer.isEmpty()) return false;
+                Object valObj = selectedAnswer.get("value");
+                if (valObj == null) return false;
+
+                String correctVal = correctAnswer.getFirst().getKey();
+                String givenVal = valObj.toString();
+                return correctVal.equalsIgnoreCase(givenVal);
+            }
+            case MATCH_FOLLOWING:
+                if (correctAnswer.isEmpty()) return false;
+                Map<String, String> correctMap = correctAnswer.getFirst().getMatchPairs();
+                Object rawUserPairs = selectedAnswer.get("matchPairs");
+                List<Map<String, String>> userPairsList = mapper.convertValue(
+                        rawUserPairs,
+                        new TypeReference<List<Map<String, String>>>() {}
+                );
+                if(userPairsList == null)
+                    return false;
+                return userPairsList.equals(correctMap);
+            default:
+                return false;
+        }
+    }
     @Override
     public List<QuestionAnalyticsUserDto> getQuestionAnalyticsUsersByParticipantId(String participantId) {
 

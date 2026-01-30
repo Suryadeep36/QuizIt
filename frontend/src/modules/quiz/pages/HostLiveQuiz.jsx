@@ -209,7 +209,6 @@ export default function HostLiveQuiz() {
           }
         }
 
-        // Only create new session if we don't have sessionId yet
         if (!sessionId) {
           const sessionRes = await createQuizSession({
             quizId,
