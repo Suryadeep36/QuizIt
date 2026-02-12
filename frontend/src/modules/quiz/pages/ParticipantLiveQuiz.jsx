@@ -585,12 +585,15 @@ export default function ParticipantLiveQuiz() {
         break;
 
       case "MATCH_FOLLOWING":
-        const matchMap = {};
+        const matchMap = [];
         if (Array.isArray(selectedValue)) {
           selectedValue.forEach((pair) => {
-            matchMap[pair.right] = pair.left;
+            matchMap.push({
+              [pair.right] : pair.left
+            })
           });
         }
+        console.log(matchMap)
         selectedAnswer = {
           matchPairs: matchMap,
         };

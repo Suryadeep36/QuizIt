@@ -60,6 +60,8 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
         analytics.setParticipant(participant);
         analytics.setQuestion(question);
         boolean isCorrect = validateAnswer(question ,analytics.getSelectedAnswer(), question.getCorrectAnswer());
+        System.out.println("Validate for " + question.getContent());
+        System.out.println(isCorrect);
         analytics.setIsCorrect(isCorrect);
         if (analytics.getTabSwitchCount() == null) {
             analytics.setTabSwitchCount(0);

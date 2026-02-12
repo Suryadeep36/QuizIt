@@ -72,6 +72,8 @@ export default function HostLiveQuiz() {
     if (!correctAnswer || correctAnswer.length === 0) {
       return null;
     }
+    console.log("Reveal correct answer : ")
+    console.log(question);
     if (question.questionType == "MATCH_FOLLOWING") {
       <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
         <div className="flex flex-wrap gap-3 justify-center">
@@ -219,6 +221,7 @@ export default function HostLiveQuiz() {
 
           setSessionId(sessionRes.sessionId);
 
+
           localStorage.setItem(
             "quizSession",
             JSON.stringify({
@@ -271,7 +274,6 @@ export default function HostLiveQuiz() {
               type: q.questionType,
               correctAnswer: fullQ?.correctAnswer || null, // host-only
             });
-
             setTimer(q.duration);
             setStage("question");
             setParticipants((prev) =>
