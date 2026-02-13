@@ -1,10 +1,7 @@
-package com.example.quizit.entities;
+package com.example.quizit.features.role;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -13,11 +10,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder
 @Table(name = "user_role")
 public class Role {
     @Id
-    @GeneratedValue
-    private UUID id =  UUID.randomUUID();
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     @Column(unique = true,nullable = false)
     private String name;
 }

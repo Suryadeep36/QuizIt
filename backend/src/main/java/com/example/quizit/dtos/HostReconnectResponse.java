@@ -18,7 +18,7 @@ public class HostReconnectResponse {
     private Integer currentQuestionIndex;
     private Integer totalQuestions;
     private QuestionForUserDto currentQuestionState;
-
+    private String joinCode;
     // Participant info
     private List<ParticipantSession> participants;
     private Integer participantCount;

@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,8 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         QuizSession session = QuizSession.builder()
                 .quiz(quiz)
+                //joincode
+                .joinCode(generateUniqueJoinCode())
                 .host(quiz.getHost())
                 .status(QuizSessionStatus.CREATED)
                 .currentQuestionIndex(0)
@@ -61,7 +64,37 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         quizSessionRepository.save(session);
 
+
+
         return modelMapper.map(session, QuizSessionDto.class);
+    }
+
+    //joincode
+    private String generateUniqueJoinCode() {
+        String code;
+        int attempts = 0;
+
+        do {
+            code = randomCode();
+            attempts++;
+        } while (quizSessionRepository.existsByJoinCode(code) && attempts < 5);
+
+        if (attempts == 5) {
+            throw new IllegalStateException("Unable to generate unique join code");
+        }
+
+        return code;
+    }
+    //joincode
+    private String randomCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+
+        StringBuilder sb = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @Override
@@ -69,6 +102,16 @@ public class QuizSessionServiceImpl implements QuizSessionService {
        QuizSession session = quizSessionRepository.findQuizSessionBySessionId(sessionId);
        return session.getQuiz().getQuizId();
     }
+
+    @Override
+    public JoinQuizDto getQuizIdSessionIdByJoinCode(String joinCode)
+    {
+        QuizSession session = quizSessionRepository.findByJoinCode(joinCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Join code not found!"));
+
+        return modelMapper.map(session, JoinQuizDto.class);
+    }
+
 
     @Override
     public HostReconnectResponse getHostReconnectState(UUID sessionId) {
@@ -85,6 +128,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .sessionId(session.getSessionId())
                 .quizId(session.getQuiz().getQuizId())
                 .status(session.getStatus())
+                .joinCode(session.getJoinCode())
                 .totalQuestions(questions.size())
                 .participants(participantSessionList)
                 .participantCount(participantSessionList.size());

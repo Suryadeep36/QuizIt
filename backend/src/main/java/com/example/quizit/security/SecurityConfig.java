@@ -2,40 +2,39 @@ package com.example.quizit.security;
 
 
 import com.example.quizit.records.ApiError;
-import com.example.quizit.security.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.View;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.HashMap;
-import java.util.Map;
+
+
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
+    @Autowired
+    private AuthenticationSuccessHandler successHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, View error) throws Exception {
@@ -43,28 +42,27 @@ public class SecurityConfig {
         http.csrf(e-> e.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeHttpRequest  -> authorizeHttpRequest
-                        .requestMatchers(HttpMethod.POST, "/quizit/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/quizit/logout").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/quizit/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/quizit/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/quizit/participant").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/quizit/participants/quiz/*").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/quizit/question-analytics-user").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/quizit/question-analytics-user/participant/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/quizit/questions/{quizid}").permitAll()
-                        .requestMatchers(HttpMethod.PUT,"/quizit/participant/{pid}/user/{uid}").permitAll() // add user to participant
-                        .requestMatchers("/quiz-websocket/**").permitAll()
-                        .requestMatchers("/quiz-websocket").permitAll()
-                        .requestMatchers("/quizit/quiz-session").permitAll()
-                        .requestMatchers("/quizit/quiz-session/**").permitAll()
-                        .requestMatchers("/quizit/question").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/quizit/quiz/{quizId}/end").permitAll()
+                        .requestMatchers(AppConstraint.AUTH_PUBLIC_URLS).permitAll()
+                        .requestMatchers(AppConstraint.QUIZIT_PUBLIC_URLS).permitAll()
+                        //CHECKING PURPOSE, ALSO CHECK AT @GetMapping("/quiz/host/{hostId}") TO SEE EXAMPLE OF PreAuthorize
+                        //.requestMatchers("/quizit/quiz/host/{hostId}").hasRole(AppConstraint.ADMIN_ROLE)
+                        .requestMatchers("/quizit/users").hasRole(AppConstraint.ADMIN_ROLE)
                         .anyRequest().authenticated()
                 )
+
 //                .authorizeHttpRequests(auth -> auth
 //                        .anyRequest().permitAll()
 //                )
-                .exceptionHandling(ex->ex.authenticationEntryPoint((request, response, e) -> {
+
+                //Google Login
+                .oauth2Login(oauth2 ->
+                        oauth2.successHandler(successHandler)
+                                .failureHandler(null)
+                        )
+                .logout(AbstractHttpConfigurer::disable)
+
+                .exceptionHandling(ex->
+                                ex.authenticationEntryPoint((request, response, e) -> {
 //                                    e.printStackTrace();
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());
                     response.setContentType("application/json");
@@ -75,16 +73,25 @@ public class SecurityConfig {
                     if(err!=null){
                         message = err;
                     }
-                    Map<String, Object> errorMap = Map.of(
-                            "message", message,
-                            "status", HttpStatus.UNAUTHORIZED.name(),
-                            "statusCode",401
-                    );
+
                     ApiError apiError = ApiError.of(401,HttpStatus.UNAUTHORIZED.name(),message,request.getRequestURI());
                     var objectMapper = new ObjectMapper();
                     response.getWriter().write(objectMapper.writeValueAsString(apiError));
 
-                }))
+                }).accessDeniedHandler((request, response, e) -> {
+                    response.setStatus(HttpStatus.FORBIDDEN.value());
+                    response.setContentType("application/json");
+
+                    String message = "Forbidden user! "+e.getMessage();
+                    String err=(String) request.getAttribute("errException");
+                    if(err!=null){
+                        message = err;
+                    }
+
+                    ApiError apiError = ApiError.of(403,HttpStatus.FORBIDDEN.name(),message,request.getRequestURI());
+                    var objectMapper = new ObjectMapper();response.getWriter().write(objectMapper.writeValueAsString(apiError));
+                })
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

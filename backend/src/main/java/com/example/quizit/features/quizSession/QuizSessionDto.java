@@ -12,6 +12,7 @@ import java.util.UUID;
 public class QuizSessionDto {
     private UUID sessionId;
     private UUID quizId;
+    private String joinCode;
     private QuizSessionStatus status;
     private Integer currentQuestionIndex;
     private Integer totalQuestions;

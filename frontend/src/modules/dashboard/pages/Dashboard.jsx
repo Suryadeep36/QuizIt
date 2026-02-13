@@ -7,7 +7,7 @@ import { deleteQuiz, getQuizsByHostId } from "../../../services/AuthService";
 import useAuth from "../../../stores/store";
 import toast from "react-hot-toast";
 import DeleteConfirmationModal from "../component/DeleteConfirmationModal";
-import AttendedQuizzes from "../component/AttendedQuizzes";
+import AttendedQuizzes from "../../profile/components/AttendedQuizzes";
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {
@@ -103,8 +103,10 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const data = await getQuizsByHostId(user.id);
-        setQuizzes(data);
+        const activeQuizzes = data.filter(quiz => quiz.status !== "ENDED");
+        setQuizzes(activeQuizzes);
       } catch (err) {
+        console.log(err)
         toast.error(
           err.response?.data?.message ||
           err.message ||
@@ -271,7 +273,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-        <AttendedQuizzes/>
+
       </div>
 
       <DeleteConfirmationModal

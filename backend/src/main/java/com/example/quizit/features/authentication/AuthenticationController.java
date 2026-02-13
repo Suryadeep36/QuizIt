@@ -50,7 +50,7 @@ public class AuthenticationController {
    public ResponseEntity<TokenResponse> login(@RequestBody LoginReuest loginReuest, HttpServletResponse response)
    {
         Authentication authentication=  authenticate(loginReuest);
-        User user = userRepository.findByemail(loginReuest.email())
+        User user = userRepository.findByEmail(loginReuest.email())
                 .orElseThrow(()->new BadCredentialsException("Invalid email or password"));
         if(!user.isEnabled())
         {

@@ -21,7 +21,7 @@ export default function Leaderboard() {
     try {
       setLoading(true);
       const data = await getLeaderboardByQuizId(quizId);
-      console.log(data)
+      // console.log(data)
       setParticipants(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch leaderboard", err);
@@ -49,7 +49,8 @@ export default function Leaderboard() {
   const filteredParticipants = participants.filter(p => 
     p.participantName.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  console.log(filteredParticipants);
+  
   if (loading) return (
     <div className="min-h-screen bg-[#4a9cb0] flex items-center justify-center">
       <div className="text-white font-bold animate-pulse uppercase tracking-widest">Loading Rankings...</div>
@@ -130,7 +131,7 @@ export default function Leaderboard() {
                   </td>
                   <td className="p-5 text-center">
                     <button 
-                      onClick={() => navigate(`/analytics/${quizId}/${p.participantName}`)}
+                      onClick={() => navigate(`/quizAnalytics/${quizId}/participant/${p.participantId}`)}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#4a9cb0] text-[#4a9cb0] hover:bg-[#4a9cb0] hover:text-white rounded-xl font-bold text-xs transition-all active:scale-95"
                     >
                       <BarChart2 className="w-4 h-4" />

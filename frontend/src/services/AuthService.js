@@ -26,7 +26,7 @@ export const createQuiz = async (quizData) => {
 };
 
 export const getQuizsByHostId = async (hostId) => {
-  const response = await apiClient.get(`/quiz/host/${hostId}`);
+  const response = await apiClient.get(`/quiz/host`);
   return response.data;
 };
 
@@ -122,5 +122,16 @@ export const getParticipantByUserId = async (userId) => {
 // This fetches the fully projected data in one go
 export const getParticipantHistory = async (userId) => {
   const response = await apiClient.get(`/participants/history/${userId}`);
+  return response.data;
+};
+
+export const updateProfile = async (newUserProfile) => {
+  console.log(newUserProfile)
+  const response = await apiClient.put(`users/${newUserProfile.id}`,newUserProfile);
+  return response.data;
+}
+
+export const getQuizIdSessionIdByCode = async (joinCode) => {
+  const response = await apiClient.get(`quiz-session/${joinCode}`);
   return response.data;
 };

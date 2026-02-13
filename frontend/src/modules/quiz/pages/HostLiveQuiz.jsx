@@ -6,7 +6,7 @@ import {
   Play,
   Settings,
   ChevronRight,
-  X,
+  X, QrCode, Download
 } from "lucide-react";
 import ParticipantsList from "../components/ParticipantsList";
 import QuestionDisplay from "../components/QuestionDisplay";
@@ -22,17 +22,20 @@ import {
   getQuestionsByQuizId,
   getQuizSessionBySessionId,
 } from "../../../services/AuthService";
+import { QRCodeCanvas } from "qrcode.react";
+import QrSharePopover from "../components/QrSharePopover";
+import toast from "react-hot-toast";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [joinCode,setJoinCode] = useState();
   const [participants, setParticipants] = useState([]);
   const { quizId } = useParams();
   const hostId = useAuth((state) => state.user.id);
   const [sessionId, setSessionId] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [joinLink, setJoinLink] = useState(null);
   const navigate = useNavigate();
   const connectWS = useWS((s) => s.connect);
@@ -66,7 +69,7 @@ export default function HostLiveQuiz() {
     };
   }
 
-  const renderCorrectAnswer = (question) => {
+ const renderCorrectAnswer = (question) => {
     if (!question) return;
     const { correctAnswer, options } = question;
     if (!correctAnswer || correctAnswer.length === 0) {
@@ -125,7 +128,7 @@ export default function HostLiveQuiz() {
       );
     }
   };
-
+  
   useEffect(() => {
     if (stage !== "question" || isPaused) return;
 
@@ -149,6 +152,7 @@ export default function HostLiveQuiz() {
     connectWS();
   }, [connectWS]);
 
+
   useEffect(() => {
     async function init() {
       try {
@@ -169,8 +173,10 @@ export default function HostLiveQuiz() {
                 await getQuizSessionBySessionId(storedSessionId);
 
               console.log("Reconnected session:", sessionRes);
-
+              
               setSessionId(sessionRes.sessionId);
+              // console.log("joincode",sessionRes.joinCode);
+              setJoinCode(sessionRes.joinCode);
               const normalizedParticipants = sessionRes.participants.map(
                 normalizeBackendParticipant,
               );
@@ -220,8 +226,7 @@ export default function HostLiveQuiz() {
           console.log("New Session Created:", sessionRes);
 
           setSessionId(sessionRes.sessionId);
-
-
+           setJoinCode(sessionRes.joinCode);
           localStorage.setItem(
             "quizSession",
             JSON.stringify({
@@ -232,7 +237,7 @@ export default function HostLiveQuiz() {
         }
       } catch (err) {
         console.error("Initialization error:", err);
-        setError("Failed to initialize quiz session");
+        toast.error(err.message);
       } finally {
         setLoading(false);
       }
@@ -243,9 +248,8 @@ export default function HostLiveQuiz() {
 
   useEffect(() => {
     if (!client || !sessionId || !isConnected) return;
-    setJoinLink(
-      `${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`,
-    );
+    setJoinLink(`${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`);
+   
     const subscription = client.subscribe(
       `/topic/quiz/${sessionId}`,
       (message) => {
@@ -367,43 +371,9 @@ export default function HostLiveQuiz() {
               isLive={stage === "question"}
               participantCount={participants.length}
             />
-            <button
-              onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg transition-all text-sm font-medium hover:shadow-md"
-            >
-              <Share2 className="w-4 h-4" />
-              Share Link
-            </button>
+            
+            <QrSharePopover joinLink={joinLink} joinCode={joinCode} />
 
-            {isOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-white text-slate-700 p-4 rounded-xl shadow-xl border border-slate-200 z-20">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-sm">Share Quiz</h4>
-                  <button onClick={() => setIsOpen(false)}>
-                    <X className="w-4 h-4 text-slate-500 hover:text-slate-700" />
-                  </button>
-                </div>
-
-                <p className="text-xs text-slate-500 mb-2">
-                  Participants can join using this link:
-                </p>
-
-                <div className="flex items-center gap-2 bg-slate-100 border border-slate-300 rounded-lg px-2 py-2">
-                  <input
-                    className="flex-1 bg-transparent text-sm text-slate-700 outline-none"
-                    type="text"
-                    readOnly
-                    value={joinLink}
-                  />
-                  <button
-                    onClick={() => navigator.clipboard.writeText(joinLink)}
-                    className="text-blue-600 hover:text-blue-700 font-medium text-xs"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            )}
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
               <Settings className="w-5 h-5 text-white/80" />
             </button>
@@ -589,11 +559,10 @@ export default function HostLiveQuiz() {
               {participants.map((p) => (
                 <div
                   key={p.participantSessionId}
-                  className={`p-3 rounded-lg transition-all ${
-                    p.answered
-                      ? "bg-emerald-100 border border-emerald-300"
-                      : "bg-gray-100 border border-slate-200"
-                  }`}
+                  className={`p-3 rounded-lg transition-all ${p.answered
+                    ? "bg-emerald-100 border border-emerald-300"
+                    : "bg-gray-100 border border-slate-200"
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-800">

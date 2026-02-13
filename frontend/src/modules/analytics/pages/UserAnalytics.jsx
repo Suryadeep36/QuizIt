@@ -67,7 +67,7 @@ export default function UserAnalytics() {
     <div className="min-h-screen bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] pb-10 md:pb-20">
 
       {/* RESPONSIVE HEADER */}
-      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-xl">
+      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 sticky top-0 z-1 shadow-xl">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">

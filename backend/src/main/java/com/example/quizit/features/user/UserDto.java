@@ -1,8 +1,7 @@
 package com.example.quizit.features.user;
 
 
-import com.example.quizit.entities.Role;
-
+import com.example.quizit.features.role.Role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -37,6 +36,6 @@ public class UserDto {
 
     private Provider provider;
 
-    private Set<Role> roles;
+    private Set<String> roles;
 
 }

@@ -1,14 +1,51 @@
 package com.example.quizit;
 
+import com.example.quizit.features.role.Role;
+import com.example.quizit.features.role.RoleRepository;
+import com.example.quizit.security.AppConstraint;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class QuizItApplication {
+public class QuizItApplication implements CommandLineRunner {
+
+    @Autowired
+    private  RoleRepository roleRepository;
 
     public static void main(String[] args) {
-
-
         SpringApplication.run(QuizItApplication.class, args);
     }
+
+
+    @Override
+    public void run(String... args) throws Exception {
+
+        //UNCOMMENT THIS PART TO ADD ROLE IN DATABASE
+//        roleRepository.findByName("ROLE_" + AppConstraint.ADMIN_ROLE).ifPresentOrElse(role -> {
+//
+//        },()->{
+//            Role roleOb = Role
+//                    .builder()
+//                    .name("ROLE_" + AppConstraint.ADMIN_ROLE)
+//                    .build();
+//
+//            roleRepository.save(roleOb);
+//        });
+//
+//        roleRepository.findByName("ROLE_" + AppConstraint.USER_ROLE).ifPresentOrElse(role -> {
+//
+//        },()->{
+//            Role roleOb = Role
+//                    .builder()
+//                    .name("ROLE_" + AppConstraint.USER_ROLE)
+//                    .build();
+//
+//            roleRepository.save(roleOb);
+//        });
+    }
+
+
 }

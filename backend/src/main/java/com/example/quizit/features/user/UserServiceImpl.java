@@ -1,15 +1,21 @@
 package com.example.quizit.features.user;
 
 import com.example.quizit.exceptions.ResourceNotFoundException;
+import com.example.quizit.features.role.Role;
+import com.example.quizit.features.role.RoleRepository;
 import com.example.quizit.helpers.UserHelper;
+import com.example.quizit.security.AppConstraint;
 import com.example.quizit.services.interfaces.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 
 import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -18,7 +24,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-
+    private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
     @Transactional
     @Override
     public UserDto createUser(UserDto userDto) {
@@ -39,8 +46,13 @@ public class UserServiceImpl implements UserService {
         User user = modelMapper.map(userDto, User.class);
         user.setProvider(userDto.getProvider()!=null?userDto.getProvider():null);
 
-        User savedUser = userRepository.save(user);
+        Set<Role> roleEntities = new HashSet<>();
+        Role defaultRole = roleRepository.findByName("ROLE_" + AppConstraint.USER_ROLE)
+                .orElseThrow(() -> new RuntimeException("USER role is not found"));
+        roleEntities.add(defaultRole);
+        user.setRoles(roleEntities);
 
+        User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDto.class);
     }
 
@@ -51,7 +63,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserByEmail(String email) {
-        User user = userRepository.findByemail(email).orElseThrow(()->new ResourceNotFoundException("User not found with given email id!"));
+        User user = userRepository.findByEmail(email).orElseThrow(()->new ResourceNotFoundException("User not found with given email id!"));
 
         return modelMapper.map(user, UserDto.class);
     }
@@ -91,7 +103,7 @@ public class UserServiceImpl implements UserService {
 
 //        TODO: change password update logic
 
-        if(userDto.getPassword()!=null) existingUser.setPassword(userDto.getPassword());
+        if(userDto.getPassword() != null && !userDto.getPassword().isBlank()) existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
         User user = userRepository.save(existingUser);
         return modelMapper.map(user, UserDto.class);

@@ -1,9 +1,35 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import CircularProgress from "@mui/material/CircularProgress";
 import { registerUser, loginUser, addUserToParticipant } from "../../../services/AuthService";
 import useAuth, { useParticipant } from "../../../stores/store";
+
+
+
+const GoogleButton = () => (
+  <NavLink
+    to={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/oauth2/authorization/google`}
+    className="block w-full "
+  >
+    <button
+      type="button"
+      className="w-full flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-4 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition mb-4 shadow-sm"
+    >
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+      Continue with Google
+    </button>
+  </NavLink>
+);
+
+const Divider = () => (
+  <div className="flex p-2 items-center gap-4 m-2 ">
+    <div className="h-[1px] bg-gray-300 flex-1 min-w-[40px] block"></div>
+    <span className="text-[10px] text-white-400 font-bold uppercase">Or</span>
+    <div className="h-[1px] bg-gray-300 flex-1 min-w-[40px] block"></div>
+  </div>
+);
+
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
@@ -54,6 +80,8 @@ export default function AuthPage() {
       setSignupLoading(false);
       return;
     }
+
+
 
     try {
       const userdata = await registerUser({
@@ -121,7 +149,7 @@ export default function AuthPage() {
           });
         }
       } catch (err) {
-          toast.error(err.response?.data?.message || err.message || "Participant not linked!")
+        toast.error(err.response?.data?.message || err.message || "Participant not linked!")
       }
 
       setLoginData({
@@ -243,6 +271,8 @@ export default function AuthPage() {
             >
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
+            <Divider />
+            <GoogleButton />
           </div>
         </div>
       </div>

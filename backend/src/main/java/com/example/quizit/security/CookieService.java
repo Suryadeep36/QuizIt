@@ -36,7 +36,7 @@ public class CookieService {
         var responseCookieBuilder = ResponseCookie.from(refreshTokenCookieName, value)
                 .httpOnly(cookieHttpOnly)
                 .secure(cookieSecure)
-                .path("")
+                .path("/")
                 .maxAge(maxAge)
                 .sameSite(cookieSameSite);
 

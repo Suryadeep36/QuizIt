@@ -5,9 +5,16 @@ import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuizDt
 import com.example.quizit.features.quiz.QuizDto;
 import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuiz;
 import com.example.quizit.features.quiz.Quiz;
+import com.example.quizit.features.role.Role;
+import com.example.quizit.features.user.User;
+import com.example.quizit.features.user.UserDto;
+import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 //@Configuration
@@ -46,6 +53,19 @@ public class ProjectConfig {
 //                    m.map(src -> src.getWinnerUser().getId(),
 //                            QuizAnalyticsDto::setWinnerUserId);
 //                });
+
+        Converter<Set<Role>, Set<String>> roleToStringConverter =
+                ctx -> ctx.getSource()
+                        .stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet());
+
+        modelMapper.typeMap(User.class, UserDto.class)
+                .addMappings(mapper ->
+                        mapper.using(roleToStringConverter)
+                                .map(User::getRoles, UserDto::setRoles)
+                );
+
         return modelMapper;
     }
 }

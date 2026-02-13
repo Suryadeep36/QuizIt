@@ -58,14 +58,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                         user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
 
                                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                        user.getEmail(),
+                                        user,
                                         null,
                                         authorities
                                 );
                                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                                if(SecurityContextHolder.getContext().getAuthentication() == null)
-                                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
                             }
                         });
 

@@ -18,4 +18,6 @@ public interface QuizSessionService {
     HostReconnectResponse getHostReconnectState(UUID sessionId);
     List<AnswerKey> revealAnswer(UUID sessionId);
     UUID getQuizIdBySessionId(UUID sessionId);
+    public JoinQuizDto getQuizIdSessionIdByJoinCode(String joinCode);
+
 }
