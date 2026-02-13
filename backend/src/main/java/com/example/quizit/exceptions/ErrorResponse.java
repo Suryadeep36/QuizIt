@@ -1,4 +1,4 @@
-package com.example.quizit.dtos;
+package com.example.quizit.exceptions;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -4,6 +4,7 @@ import {
   createParticipant,
   loginUser,
   logoutUser,
+  updateProfile,
 } from "../services/AuthService";
 // import { useNavigate } from "react-router";
 const LOCAL_KEY = "quizit_auth";
@@ -54,10 +55,27 @@ const useAuth = create(
             authStatus: false,
             authLoading: false,
           });
-           api.persist.clearStorage();
+          api.persist.clearStorage();
 
           localStorage.removeItem("participant_history_cache");
           localStorage.removeItem("quizit_auth");
+        } catch (error) {
+          throw error;
+        } finally {
+          set({ authLoading: false });
+        }
+      },
+      updateUser: async (newUserProfile) => {
+        set({ authLoading: true });
+        try {
+          const updatedUser = await updateProfile(newUserProfile);
+          // console.log(loginResponseData)
+          set({
+            user: updatedUser,
+            authStatus: true,
+          });
+          // console.log(get().user);
+          return updatedUser;
         } catch (error) {
           throw error;
         } finally {
@@ -99,7 +117,7 @@ export const useParticipant = create(
 
       isParticipant: () => {
         const p = get().participant;
-        return !!p.id && !!p.name && !!p.quizId ;
+        return !!p.id && !!p.name && !!p.quizId;
       },
 
       setParticipant: (data) => {

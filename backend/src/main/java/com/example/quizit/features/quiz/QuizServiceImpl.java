@@ -11,10 +11,11 @@ import com.example.quizit.features.user.UserRepository;
 import com.example.quizit.helpers.UserHelper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -55,9 +56,9 @@ public class QuizServiceImpl implements QuizService {
 
 
     @Override
-    public QuizDto createQuiz(QuizDto quizDto) {
+    public QuizDto createQuiz(QuizDto quizDto,UUID userId) {
 
-        if (quizDto == null || quizDto.getQuizName() == null || quizDto.getHost() == null) {
+        if (quizDto == null || quizDto.getQuizName() == null || userId == null) {
             throw new IllegalArgumentException("Quiz name and host are required");
         }
 
@@ -67,7 +68,7 @@ public class QuizServiceImpl implements QuizService {
         );
 
         if (quizRepository.existsByQuizNameAndHostId(
-                quizDto.getQuizName(), quizDto.getHost())) {
+                quizDto.getQuizName(), userId)) {
             throw new IllegalArgumentException("Quiz already exists");
         }
 
@@ -83,7 +84,7 @@ public class QuizServiceImpl implements QuizService {
         quiz.setShowLeaderboard(quizDto.isShowLeaderboard());
 
         quiz.setHost(
-                userRepository.getReferenceById(quizDto.getHost())
+                userRepository.getReferenceById(userId)
         );
 
         Quiz savedQuiz = quizRepository.save(quiz);
@@ -92,18 +93,19 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
-    public QuizDto updateQuiz(String quizId, QuizDto quizDto) {
+    public QuizDto updateQuiz(String quizId, QuizDto quizDto,UUID userId) {
 
         if (quizDto == null) {
             throw new IllegalArgumentException("Quiz data is required");
         }
 
-
-
         UUID quizUUID = UserHelper.parseUUID(quizId);
 
-        Quiz existingQuiz = quizRepository.findById(quizUUID)
-                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+        Quiz existingQuiz = quizRepository
+                .findByQuizIdAndHostId(quizUUID, userId)
+                .orElseThrow(() ->
+                        new AccessDeniedException("Quiz Not Found!")
+                );
 
 
         Instant start = quizDto.getStartTime() != null
@@ -140,7 +142,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
-    public QuizDto getQuizById(String quizId) {
+    public QuizDto getQuizById(String quizId, UUID userId) {
 
         if (quizId == null) {
             throw new IllegalArgumentException("Quiz id is null");
@@ -148,11 +150,13 @@ public class QuizServiceImpl implements QuizService {
 
         UUID quizUUID = UserHelper.parseUUID(quizId);
 
-        Quiz existingQuiz = quizRepository.findById(quizUUID)
+        Quiz existingQuiz = quizRepository.findByQuizIdAndHostId(quizUUID,userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
         return modelMapper.map(existingQuiz, QuizDto.class);
     }
+
+
 
     @Override
     public QuizDtoForParticipant getQuizForParticipantById(String quizId) {
@@ -172,7 +176,6 @@ public class QuizServiceImpl implements QuizService {
     public List<QuizDto> getQuizzesByHost(String hostId) {
 
         UUID hostUUID = UserHelper.parseUUID(hostId);
-
         return quizRepository.findQuizByHost_Id(hostUUID)
                 .stream()
                 .map(quiz -> modelMapper.map(quiz, QuizDto.class))
@@ -189,11 +192,11 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
-    public void deleteQuiz(String quizId) {
+    public void deleteQuiz(String quizId, UUID userId) {
         UUID quizUUID = UserHelper.parseUUID(quizId);
 
-        Quiz existingQuiz = quizRepository.findById(quizUUID)
-                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+        Quiz existingQuiz = quizRepository.findByQuizIdAndHostId(quizUUID,userId)
+                .orElseThrow(() -> new AccessDeniedException("Quiz Not Found!"));
         if(existingQuiz.getStatus() != QuizStatus.CREATED){
             throw new IllegalArgumentException("Completed quiz can not be deleted!");
         }

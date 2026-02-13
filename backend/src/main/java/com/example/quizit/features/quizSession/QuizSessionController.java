@@ -14,6 +14,7 @@ import java.util.UUID;
 public class QuizSessionController {
 
     private final QuizSessionService quizSessionService;
+    private final QuizSessionRepository quizSessionRepository;
 
     @PostMapping("/create")
     public ResponseEntity<QuizSessionDto> createQuizSession(
@@ -22,6 +23,11 @@ public class QuizSessionController {
     ) {
         QuizSessionDto dto = quizSessionService.createQuizSession(quizId, hostId);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{joincode}")
+    public ResponseEntity<JoinQuizDto> getQuizidSessionid(@PathVariable String joincode){
+        return ResponseEntity.ok(quizSessionService.getQuizIdSessionIdByJoinCode(joincode));
     }
 
     @PostMapping("/{sessionId}/end")

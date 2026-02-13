@@ -1,10 +1,15 @@
 package com.example.quizit.features.quiz;
 
+import com.example.quizit.features.user.User;
+import com.example.quizit.security.AppConstraint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RequestMapping("/quizit")
@@ -14,38 +19,51 @@ public class QuizController {
     private final QuizService quizService;
 
     @GetMapping("/quiz")
-    public ResponseEntity<List<QuizDto>> getAllQuizs(){
+    @PreAuthorize( "hasRole('" + AppConstraint.ADMIN_ROLE+ "')" )
+    public ResponseEntity<List<QuizDto>> getAllQuizs(Authentication  authentication){
         return ResponseEntity.status(200).body(quizService.getAllQuizzes());
     }
 
     @GetMapping("/quiz/{quizId}")
-    public ResponseEntity<QuizDto> getQuizById(@PathVariable String quizId){
-        return ResponseEntity.status(200).body(quizService.getQuizById(quizId));
+    public ResponseEntity<QuizDto> getQuizById(@PathVariable String quizId ,Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        return ResponseEntity.status(200).body(quizService.getQuizById(quizId,userId));
     }
 
     @GetMapping("/quizForParticipant/{quizId}")
-    public ResponseEntity<QuizDto> getQuizForParticipantById(@PathVariable String quizId){
-        return ResponseEntity.status(200).body(quizService.getQuizById(quizId));
+    public ResponseEntity<QuizDtoForParticipant> getQuizForParticipantById(@PathVariable String quizId){
+        return ResponseEntity.status(200).body(quizService.getQuizForParticipantById(quizId));
     }
 
-    @GetMapping("/quiz/host/{hostId}")
-    public ResponseEntity<List<QuizDto>> getQuizsByHostId(@PathVariable String hostId){
+//    @PreAuthorize( "hasRole('" + AppConstraint.ADMIN_ROLE+ "')" )
+    @GetMapping("/quiz/host")
+    public ResponseEntity<List<QuizDto>> getQuizsByHostId( Authentication  authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        String hostId = String.valueOf(userId);
         return ResponseEntity.status(200).body(quizService.getQuizzesByHost(hostId));
     }
 
     @PostMapping("/quiz")
-    public ResponseEntity<QuizDto> createQuiz(@RequestBody QuizDto quizDto){
-        return ResponseEntity.status(200).body(quizService.createQuiz(quizDto));
+    public ResponseEntity<QuizDto> createQuiz(@RequestBody QuizDto quizDto, Authentication  authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        return ResponseEntity.status(200).body(quizService.createQuiz(quizDto,userId));
     }
 
     @PutMapping("/quiz/{quizId}")
-    public ResponseEntity<QuizDto> updateQuiz(@PathVariable String quizId, @RequestBody QuizDto quizDto){
-        return ResponseEntity.status(200).body(quizService.updateQuiz(quizId, quizDto));
+    public ResponseEntity<QuizDto> updateQuiz(@PathVariable String quizId, @RequestBody QuizDto quizDto, Authentication  authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        return ResponseEntity.status(200).body(quizService.updateQuiz(quizId, quizDto,userId));
     }
 
     @DeleteMapping("/quiz/{quizId}")
-    public ResponseEntity<Void> deleteQuiz(@PathVariable String quizId){
-        quizService.deleteQuiz(quizId);
+    public ResponseEntity<Void> deleteQuiz(@PathVariable String quizId, Authentication  authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        quizService.deleteQuiz(quizId, userId);
         return ResponseEntity.noContent().build();
     }
 

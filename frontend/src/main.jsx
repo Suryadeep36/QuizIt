@@ -19,13 +19,20 @@ import ParticipantLiveQuiz from './modules/quiz/pages/ParticipantLiveQuiz.jsx'
 import Leaderboard from "./modules/analytics/pages/Leaderboard.jsx"
 import AfterQuizAnalytics from "./modules/dashboard/component/AfterQuizAnalytics.jsx";
 import MainLayout from "./MainLayout.jsx";
+import UserProfile from "./modules/profile/pages/UserProfile.jsx";
+import OAuth2Success from "./modules/auth/pages/OAuth2Success.jsx";
 
 
 const router = createBrowserRouter([
   // 1. NO NAVBAR ROUTES (Landing, Auth, Live Quiz Taking)
+  
   {
     path: "/",
     element: <LandingPage />, // Landing page has its own internal nav
+  },
+  {
+    path: "/oauth2/login/success",
+    element: <OAuth2Success />,
   },
   {
     element: <Unprotected />,
@@ -46,38 +53,42 @@ const router = createBrowserRouter([
     element: <ParticipantLiveQuiz />,
   },
   {
-        path: "quiz/:quizId/join/:sessionId",
-        element: <JoinQuizPage />,
-      },
-      {
-        path: "/afterQuizAnalytics/:quizId",
-        element: <AfterQuizAnalytics />,
-      },
+    path: "quiz/:quizId/join/:sessionId",
+    element: <JoinQuizPage />,
+  },
+  {
+    path: "/afterQuizAnalytics/:quizId",
+    element: <AfterQuizAnalytics />,
+  },
 
 
   // 2. ROUTES WITH NAVBAR (Dashboard, Management, Analytics)
   {
-    element: <MainLayout/>, // Wraps everything below with Navbar
+    element: <MainLayout />, // Wraps everything below with Navbar
     children: [
-      
+
       {
         path: "/quiz/leaderboard/:quizId",
         element: <Leaderboard />
       },
-      
+
       {
         path: "/quizAnalytics/:quizId/participant/:participantId",
         element: <UserAnalytics />,
       },
-      
+
       // Protected Routes (Require Login + Have Navbar)
       {
         element: <ProtectedRoute />,
         children: [
-            {
-     path: "/run-quiz-host/:quizId",
-     element: <HostLiveQuiz />
-  },
+          {
+            path: "/profile/:username",
+            element: <UserProfile/>
+          },
+          {
+            path: "/run-quiz-host/:quizId",
+            element: <HostLiveQuiz />
+          },
           {
             path: "/dashboard",
             element: <Dashboard />,

@@ -24,12 +24,14 @@ import {
 } from "../../../services/AuthService";
 import { QRCodeCanvas } from "qrcode.react";
 import QrSharePopover from "../components/QrSharePopover";
+import toast from "react-hot-toast";
 
 export default function HostLiveQuiz() {
   const [stage, setStage] = useState("waiting");
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [joinCode,setJoinCode] = useState();
   const [participants, setParticipants] = useState([]);
   const { quizId } = useParams();
   const hostId = useAuth((state) => state.user.id);
@@ -183,6 +185,7 @@ export default function HostLiveQuiz() {
     connectWS();
   }, [connectWS]);
 
+
   useEffect(() => {
     async function init() {
       try {
@@ -204,8 +207,10 @@ export default function HostLiveQuiz() {
               );
 
               console.log("Reconnected session:", sessionRes);
-
+              
               setSessionId(sessionRes.sessionId);
+              // console.log("joincode",sessionRes.joinCode);
+              setJoinCode(sessionRes.joinCode);
               const normalizedParticipants = sessionRes.participants.map(
                 normalizeBackendParticipant
               );
@@ -256,7 +261,7 @@ export default function HostLiveQuiz() {
           console.log("New Session Created:", sessionRes);
 
           setSessionId(sessionRes.sessionId);
-
+           setJoinCode(sessionRes.joinCode);
           localStorage.setItem(
             "quizSession",
             JSON.stringify({
@@ -267,7 +272,7 @@ export default function HostLiveQuiz() {
         }
       } catch (err) {
         console.error("Initialization error:", err);
-        setError("Failed to initialize quiz session");
+        toast.error(err.message);
       } finally {
         setLoading(false);
       }
@@ -279,6 +284,7 @@ export default function HostLiveQuiz() {
   useEffect(() => {
     if (!client || !sessionId || !isConnected) return;
     setJoinLink(`${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`);
+   
     const subscription = client.subscribe(
       `/topic/quiz/${sessionId}`,
       (message) => {
@@ -402,7 +408,7 @@ export default function HostLiveQuiz() {
               participantCount={participants.length}
             />
             
-            <QrSharePopover joinLink={joinLink} />
+            <QrSharePopover joinLink={joinLink} joinCode={joinCode} />
 
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
               <Settings className="w-5 h-5 text-white/80" />

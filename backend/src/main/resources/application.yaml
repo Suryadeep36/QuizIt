@@ -3,6 +3,18 @@ spring:
     import: optional:file:.env[.properties]
   application:
     name: QuizIt
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:test-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:test-client-server}
+            scope:
+              - email
+              - profile
+              - openid
+
 
   datasource:
     hikari:
@@ -55,3 +67,14 @@ security:
     cookie-http-only: ${JWT_COOKIE_HTTP_ONLY}
     cookie-domain: ${JWT_COOKIE_DOMAIN}
     cookie-same-site: ${JWT_COOKIE_SAME_SITE}
+
+# ===============================
+# OAuth
+# ===============================
+
+app:
+  auth:
+    frontend:
+      base-url: ${VITE_REACT_BASE_URL:http://localhost:5173}
+      success-path: /oauth2/login/success
+

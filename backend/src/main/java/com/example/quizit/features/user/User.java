@@ -1,6 +1,6 @@
 package com.example.quizit.features.user;
 
-import com.example.quizit.entities.Role;
+import com.example.quizit.features.role.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   CheckCircle,
   Zap,
@@ -17,8 +17,11 @@ import Legend from "../components/Legend";
 import FormOption from "../components/FormOption";
 import { Link } from "react-router";
 import { motion } from "motion/react";
+import JoinQuizPopover from "../components/JoinQuizPopover";
 
 export default function LandingPage() {
+
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const container = {
     hidden: {},
     show: {
@@ -41,6 +44,25 @@ export default function LandingPage() {
       <nav className="flex items-center justify-between px-8 py-4 bg-transparent">
         <div className="text-2xl font-bold text-white">QuizIt</div>
         <div className="flex items-center gap-8">
+       {/* Replace the current Join Quiz button block with this */}
+<div className="relative"> 
+  <button
+    onClick={() => setIsJoinOpen(!isJoinOpen)}
+    className="px-5 py-2 rounded-lg bg-white border border-cyan-200
+    text-cyan-700 hover:bg-cyan-50 transition font-medium"
+  >
+    Join Quiz
+  </button>
+
+  {isJoinOpen && (
+    <div className="absolute top-full right-0 mt-2 z-50">
+      <JoinQuizPopover 
+        onClose={() => setIsJoinOpen(false)} 
+        // onJoin={handleJoin} 
+      />
+    </div>
+  )}
+</div>
           <Link to="/auth">
             <button className="px-6 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500 transition">
               Get Started

@@ -17,6 +17,7 @@ public class ParticipantPerformanceServiceImpl implements ParticipantPerformance
         return performanceRepository.findLeaderboard(quizId)
                 .stream()
                 .map(p -> new LeaderboardResponse(
+                        p.getParticipant().getParticipantId(),
                         p.getParticipant().getParticipantName(),
                         p.getScore(),
                         p.getRank(),

@@ -316,17 +316,31 @@ export default function Navbar() {
             )}
           </Box>
 
-          {/* --- RIGHT SIDE (Profile / Auth) --- */}
+      
+         {/* --- RIGHT SIDE (Profile / Auth) --- */}
           <Box sx={{ flexGrow: 0 }}>
             {user ? (
               <>
                 <Tooltip title="Open settings">
-                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0, ml: 2, border: '2px solid white', boxShadow: '0 0 0 2px #ecfeff' }}>
-                    <Avatar alt={user.username} src="/static/images/avatar/2.jpg" sx={{ bgcolor: colors.cyanText }}>
-                        {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+                  <IconButton 
+                    onClick={handleOpenUserMenu} 
+                    sx={{ 
+                      p: 0, 
+                      ml: 2, 
+                      border: '2px solid white', 
+                      boxShadow: '0 0 0 2px #ecfeff' 
+                    }}
+                  >
+                    <Avatar 
+                      alt={user.username} 
+                      src={ user.image ||"/static/images/avatar/2.jpg" }
+                      sx={{ bgcolor: colors.cyanText }}
+                    >
+                      {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
                     </Avatar>
                   </IconButton>
                 </Tooltip>
+
                 <Menu
                   sx={{ mt: '45px' }}
                   id="menu-appbar"
@@ -337,30 +351,67 @@ export default function Navbar() {
                   open={Boolean(anchorElUser)}
                   onClose={handleCloseUserMenu}
                   PaperProps={{
-                      elevation: 3,
-                      sx: { borderRadius: 3, minWidth: 180, mt: 1 }
+                    elevation: 3,
+                    sx: { borderRadius: 3, minWidth: 200, mt: 1 }
                   }}
                 >
-                  <Box sx={{ px: 2, py: 1.5 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{user.username}</Typography>
-                    <Typography variant="caption" color="text.secondary">Active User</Typography>
+                  {/* Clickable Username Header */}
+                  <Box 
+                    onClick={() => {
+                      handleCloseUserMenu();
+                      navigate(`/profile/${user.username}`);
+                    }}
+                    sx={{ 
+                      px: 2, 
+                      py: 1.5, 
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                    }}
+                  >
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        fontWeight: 700, 
+                        color: colors.cyanText,
+                        display: 'block'
+                      }}
+                    >
+                      {user.username}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      View Profile
+                    </Typography>
                   </Box>
+
                   <Divider />
+
                   <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/dashboard'); }}>
                     <ListItemIcon><LayoutDashboard size={16} /></ListItemIcon>
                     Dashboard
                   </MenuItem>
+
+                  {/* Added explicit Profile Link for better UX */}
+                  <MenuItem onClick={() => { handleCloseUserMenu(); navigate(`/profile/${user.username}`); }}>
+                    <ListItemIcon><PlusCircle size={16} style={{ transform: 'rotate(45deg)' }} /></ListItemIcon>
+                    My Profile
+                  </MenuItem>
+
                   <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                     <ListItemIcon><LogOut size={16} color="#ef4444" /></ListItemIcon>
+                    <ListItemIcon><LogOut size={16} color="#ef4444" /></ListItemIcon>
                     Logout
                   </MenuItem>
                 </Menu>
               </>
             ) : (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                     <Button component={Link} to="/auth" sx={{ color: 'text.secondary', textTransform: 'none', display: { xs: 'none', md: 'block' } }}>
+                     <Button 
+                        component={Link} 
+                        to="/auth" 
+                        sx={{ color: 'text.secondary', textTransform: 'none', display: { xs: 'none', md: 'block' } }}
+                      >
                         Log In
-                     </Button>
+                      </Button>
                      <Button 
                         component={Link} 
                         to="/auth" 

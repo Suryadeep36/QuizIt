@@ -1,7 +1,7 @@
 package com.example.quizit.security;
 
 
-import com.example.quizit.entities.Role;
+import com.example.quizit.features.role.Role;
 import com.example.quizit.features.user.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -13,10 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Getter
@@ -49,10 +46,15 @@ public class JwtService {
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
 
-        List<String> roles = user.getRoles()
-                .stream()
-                .map(Role::getName)
-                .toList(); // ChatGPT
+
+        List<String> roles = new ArrayList<>();
+        if (user.getRoles() != null) {
+            roles = user.getRoles()
+                    .stream()
+                    .map(Role::getName)
+                    .toList();
+        }
+
 
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())

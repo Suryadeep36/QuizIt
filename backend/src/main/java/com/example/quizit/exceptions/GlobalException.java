@@ -1,6 +1,5 @@
 package com.example.quizit.exceptions;
 
-import com.example.quizit.dtos.ErrorResponse;
 import com.example.quizit.records.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -22,7 +21,6 @@ public class GlobalException {
     @ExceptionHandler({
             UsernameNotFoundException.class,
             BadCredentialsException.class,
-            CredentialsExpiredException.class,
             DisabledException.class
     })
     public ResponseEntity<ApiError> handleException(Exception e, HttpServletRequest request) {
@@ -31,6 +29,7 @@ public class GlobalException {
         ApiError apiError = ApiError.of(HttpStatus.BAD_REQUEST.value(),HttpStatus.BAD_REQUEST.name(), e.getMessage(), request.getRequestURI());
         return ResponseEntity.badRequest().body(apiError);
     }
+
 
 
     @ExceptionHandler(ResourceNotFoundException.class)

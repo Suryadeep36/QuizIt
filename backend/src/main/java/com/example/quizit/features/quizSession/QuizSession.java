@@ -14,13 +14,21 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "quiz_session")
+@Table(
+        name = "quiz_session",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "join_code")
+        }
+)
 public class QuizSession {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "session_id", updatable = false, nullable = false, unique = true)
     private UUID sessionId;
+
+    @Column(name = "join_code", length = 6, nullable = false, unique = true)
+    private String joinCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_user_id", nullable = false)
