@@ -16,10 +16,10 @@ export default function UserAnalytics() {
   const [loading, setLoading] = useState(true);
 
   const { quizId } = useParams();
-  let {participantId} = useParams();
-   participantId =  participantId? participantId:useParticipant((state) => state.participant?.id);
-  console.log(participantId);
-   useEffect(() => {
+  let { participantId } = useParams();
+  participantId = participantId ? participantId : useParticipant((state) => state.participant?.id);
+  // console.log(participantId);
+  useEffect(() => {
     if (!quizId || !participantId) return;
 
     const fetchAnalyticsAndQuestions = async () => {
@@ -29,6 +29,8 @@ export default function UserAnalytics() {
           getParticipantAnalytics(participantId),
           getQuestionsByQuizId(quizId),
         ]);
+        console.log(questionData)
+        console.log(analyticsData)
         setAnalytics(analyticsData);
         setQuestions(questionData);
       } catch (err) {
@@ -140,7 +142,7 @@ export default function UserAnalytics() {
                 const qa = analyticsMap[questionId];
 
                 // 2. LOGGING: Open your browser console (F12) to see if these numbers exist
-                console.log(`Q${i + 1} ID: ${questionId}`, "Analytics:", qa);
+                // console.log(`Q${i + 1} ID: ${questionId}`, "Analytics:", qa);
 
                 const time = qa?.timeSpent || 0;
                 const isCorrect = qa?.isCorrect || false;
@@ -243,8 +245,9 @@ export default function UserAnalytics() {
                 {q.questionType === "MCQ" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     {Object.entries(q.options || {}).map(([key, value]) => {
-                      const isSelected = qa?.selectedAnswer?.key === key;
-                      const isCorrect = q.correctAnswer?.key === key;
+                      const isSelected = qa?.selectedAnswer?.keys?.includes(key);
+                      const isCorrect = q.correctAnswer?.[0]?.key === key;
+
 
                       let style = "bg-slate-50 border-slate-100 text-slate-500";
                       if (isCorrect) style = "bg-emerald-50 border-emerald-400 text-emerald-800 ring-2 ring-emerald-500/10";
@@ -263,80 +266,73 @@ export default function UserAnalytics() {
 
                 {/* ================= TRUE / FALSE ================= */}
                 {q.questionType === "TRUE_FALSE" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                    {/* User's Selection */}
-                    <div className={`p-4 rounded-2xl border-2 flex flex-col justify-center ${qa?.isCorrect
-                      ? "bg-emerald-50 border-emerald-400 text-emerald-800"
-                      : "bg-red-50 border-red-400 text-red-800"
-                      }`}>
-                      <span className="text-[10px] font-black uppercase opacity-60 tracking-widest mb-1">
-                        Your Selection
-                      </span>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold uppercase tracking-tight">
-                          {qa?.selectedAnswer?.value ?? "No Selection"}
-                        </span>
-                        {qa?.isCorrect ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        ) : (
-                          <XCircle className="w-5 h-5 text-red-600" />
-                        )}
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className={`p-4 rounded-2xl border-2 ${qa?.isCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"}`}>
+                      <p className="text-[10px] font-black uppercase opacity-60 mb-1">Your Selection</p>
+                      <p className="text-lg font-bold uppercase">{String(qa?.selectedAnswer?.value)}</p>
                     </div>
-
-                    {/* Correct Answer */}
-                    <div className="p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-400 text-emerald-800 flex flex-col justify-center ring-2 ring-emerald-500/10">
-                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">
-                        Correct Answer
-                      </span>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold">
-                          {q.correctAnswer?.value}
-                        </span>
-                        <div className="p-1 bg-emerald-100 rounded-lg">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        </div>
-                      </div>
+                    <div className="p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-400">
+                      <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Correct Answer</p>
+                      <p className="text-lg font-bold uppercase">{q.correctAnswer?.[0]?.key}</p>
                     </div>
                   </div>
                 )}
 
-                {/* ================= NUMERICAL ================= */}
-                {q.questionType === "NUMERICAL" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                    {/* User's Attempt */}
-                    <div className={`p-4 rounded-2xl border-2 flex flex-col justify-center ${qa?.isCorrect
-                      ? "bg-emerald-50 border-emerald-400 text-emerald-800"
-                      : "bg-red-50 border-red-400 text-red-800"
-                      }`}>
-                      <span className="text-[10px] font-black uppercase opacity-60 tracking-widest mb-1">
-                        Your Answer
-                      </span>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold">
-                          {qa?.selectedAnswer?.value ?? "No Answer"}
-                        </span>
-                        {qa?.isCorrect ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        ) : (
-                          <XCircle className="w-5 h-5 text-red-600" />
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Correct Answer - Green Theme */}
-                    <div className="p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-400 text-emerald-800 flex flex-col justify-center ring-2 ring-emerald-500/10">
-                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Correct Answer</span>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold uppercase tracking-tight">{q.correctAnswer?.value}</span>
-                        <div className="p-1 bg-emerald-100 rounded-lg">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        </div>
-                      </div>
+                {/* SHORT_ANSWER & NUMERICAL */}
+                {(q.questionType === "SHORT_ANSWER" || q.questionType === "NUMERICAL") && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    <div className={`p-4 rounded-2xl border-2 ${qa?.isCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"}`}>
+                      <p className="text-[10px] font-black uppercase opacity-60 mb-1">Your Answer</p>
+                      <p className="text-lg font-bold">{qa?.selectedAnswer?.value || "No Answer"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-400">
+                      <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Correct Answer</p>
+                      <p className="text-lg font-bold">{q.correctAnswer?.[0]?.key}</p>
                     </div>
                   </div>
                 )}
 
+
+                {/* MATCH_FOLLOWING - SIDE-BY-SIDE COMPARISON */}
+                {q.questionType === "MATCH_FOLLOWING" && (
+                  <div className="space-y-2 mt-3">
+                    <p className="text-[10px] font-black uppercase opacity-60 px-1 tracking-widest">Pairing Review</p>
+                    <div className="flex flex-col gap-2">
+                      {q.options.left.map((leftText, i) => {
+                        const userPair = qa?.selectedAnswer?.matchPairs?.find(p => p.hasOwnProperty(i));
+                        const selectedIdx = userPair ? userPair[i] : null;
+                        const correctIdx = q.correctAnswer?.[0]?.matchPairs?.[i];
+                        const isCorrect = selectedIdx !== null && String(selectedIdx) === String(correctIdx);
+
+                        return (
+                          <div key={i} className="flex flex-col md:flex-row md:items-center gap-2">
+                            {/* Left Side: User's Attempt */}
+                            <div className={`flex-1 p-3 rounded-xl border-2 flex justify-between items-center ${isCorrect ? "bg-emerald-50 border-emerald-400/30" : "bg-red-50 border-red-400/30"}`}>
+                              <div className=" flex-col min-w-0">
+                                <span className="text-[16px] uppercase opacity-50 font-black">{leftText.substring(0, 20)}-{">"}</span>
+                                <span className={`text-sm font-bold break-all ${isCorrect ? "text-emerald-800" : "text-red-800"}`}>
+                                  {q.options.right[selectedIdx] || "Skipped"}
+                                </span>
+                              </div>
+                              {isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+                            </div>
+
+                            {/* Right Side: Correct Answer (Only shown if wrong) */}
+                            {!isCorrect && (
+                              <div className="flex-1 p-3 bg-emerald-50 border-2 border-emerald-400/30 rounded-xl flex items-center gap-3">
+                                <div className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded">CORRECT</div>
+                                <span className="text-sm font-bold text-emerald-800 break-all">
+                                  {q.options.right[correctIdx]}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 {/* METRICS FOOTER */}
                 <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-slate-100 flex flex-wrap gap-4 md:gap-8">
                   <div className="flex items-center gap-2 text-slate-400 font-bold text-[8px] md:text-[10px] tracking-widest uppercase">

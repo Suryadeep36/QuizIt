@@ -46,7 +46,7 @@ export const createQuestion = async (questionData) => {
 
 export const getQuestionsByQuizId = async (quizId) => {
   const response = await apiClient.get(`/questions/${quizId}`);
-  console.log(response)
+  // console.log(response)
   return response.data;
 };
 
@@ -78,7 +78,7 @@ export const getParticipantAnalytics = async (participantId) => {
   const response = await apiClient.get(
     `/question-analytics-user/participant/${participantId}`
   );
-  console.log(response)
+  // console.log(response)
   return response.data;
 };
 
