@@ -143,11 +143,13 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
                         rawUserPairs,
                         new TypeReference<List<Map<String, String>>>() {}
                 );
-                for(Map<String, String> l : userPairsList){
-                    System.out.println(l.keySet());
-                    System.out.println(l.values());
+                Map <String, String> actualPairMap = new HashMap<>();
+                for(Map<String, String> pair : userPairsList){
+                    actualPairMap.putAll(pair);
                 }
-                return userPairsList.equals(correctMap);
+                System.out.println(actualPairMap);
+                System.out.println(correctMap);
+                return actualPairMap.equals(correctMap);
             default:
                 return false;
         }

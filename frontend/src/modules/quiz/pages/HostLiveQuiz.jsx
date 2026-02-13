@@ -77,6 +77,9 @@ export default function HostLiveQuiz() {
     }
     console.log("Reveal correct answer : ")
     console.log(question);
+    console.log(correctAnswer)
+    console.log(options)
+    console.log(correctAnswer?.[0]?.matchPairs)
     if (question.questionType == "MATCH_FOLLOWING") {
       <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
         <div className="flex flex-wrap gap-3 justify-center">

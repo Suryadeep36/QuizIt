@@ -161,7 +161,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         UUID quizId = session.getQuiz().getQuizId();
 
-        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
 
         if (questions.isEmpty()) {
             throw new IllegalStateException("No questions found for this quiz!");
@@ -201,7 +201,6 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         long totalQuestions = questionRepository.countQuestionByQuiz_QuizId(quizId);
 
         int nextIndex = session.getCurrentQuestionIndex() + 1;
-
         if (nextIndex >= totalQuestions) {
             endQuiz(sessionId);
             return null;
@@ -214,7 +213,8 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 //        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(nextIndex);
-
+        System.out.println("Current index " + nextIndex);
+        System.out.println(nextQuestion.getContent());
         return convertToUserDto(nextQuestion);
     }
 

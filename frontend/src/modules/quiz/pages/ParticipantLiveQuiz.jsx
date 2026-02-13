@@ -601,7 +601,7 @@ export default function ParticipantLiveQuiz() {
 
       case "TRUE_FALSE":
         selectedAnswer = {
-          value: Boolean(selectedValue),
+          value: selectedValue,
         };
         break;
 
@@ -643,7 +643,9 @@ export default function ParticipantLiveQuiz() {
     }
 
     const { questionType, options, correctAnswer } = question;
-
+    console.log(questionType)
+    console.log(options)
+    console.log(correctAnswer)
     switch (questionType) {
       case "MCQ":
         return correctAnswer
