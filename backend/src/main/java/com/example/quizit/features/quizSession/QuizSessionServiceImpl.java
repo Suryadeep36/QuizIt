@@ -181,6 +181,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .options(q.getOptions())
                 .duration(q.getDuration())
                 .questionType(q.getQuestionType())
+                .imageUrl(q.getImageUrl())
                 .build();
     }
 
