@@ -156,20 +156,19 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         long totalQuestions = questionRepository.countQuestionByQuiz_QuizId(quizId);
 
-        // if next index EXCEEDS total — end quiz
         int nextIndex = session.getCurrentQuestionIndex() + 1;
 
         if (nextIndex >= totalQuestions) {
             endQuiz(sessionId);
-            return null; // or return a special DTO indicating quiz ended
+            return null;
         }
 
-        // update index
         session.setCurrentQuestionIndex(nextIndex);
         quizSessionRepository.save(session);
 
         // fetch next question
-        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+//        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(nextIndex);
 
         return convertToUserDto(nextQuestion);

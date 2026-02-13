@@ -138,12 +138,15 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
                 if (correctAnswer.isEmpty()) return false;
                 Map<String, String> correctMap = correctAnswer.getFirst().getMatchPairs();
                 Object rawUserPairs = selectedAnswer.get("matchPairs");
+                System.out.println(rawUserPairs);
                 List<Map<String, String>> userPairsList = mapper.convertValue(
                         rawUserPairs,
                         new TypeReference<List<Map<String, String>>>() {}
                 );
-                if(userPairsList == null)
-                    return false;
+                for(Map<String, String> l : userPairsList){
+                    System.out.println(l.keySet());
+                    System.out.println(l.values());
+                }
                 return userPairsList.equals(correctMap);
             default:
                 return false;

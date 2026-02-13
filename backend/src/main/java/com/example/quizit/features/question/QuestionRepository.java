@@ -11,4 +11,6 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
      Question save(Question question);
      long countQuestionByQuiz_QuizId(UUID quizQuizId);
     List<Question> findByQuiz_QuizId(UUID quizQuizId);
+
+    List<Question> findByQuiz_QuizIdOrderByQuestionId(UUID quizQuizId);
 }
