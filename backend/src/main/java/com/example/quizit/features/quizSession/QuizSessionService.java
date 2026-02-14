@@ -13,7 +13,7 @@ public interface QuizSessionService {
     QuizSessionDto createQuizSession(UUID quizId, UUID hostId);
     QuestionForUserDto startQuiz(UUID sessionId);
     QuestionForUserDto moveToNextQuestion(UUID sessionId);
-    QuizSessionDto endQuiz(UUID sessionId);
+    QuizSessionDto endQuiz(UUID sessionId, UUID hostId);
     ParticipantJoinedMessageDto joinSession(UUID sessionId, UUID userId);
     HostReconnectResponse getHostReconnectState(UUID sessionId);
     List<AnswerKey> revealAnswer(UUID sessionId);

@@ -1,9 +1,11 @@
 package com.example.quizit.features.participant;
 
 import com.example.quizit.dtos.ParticipantResultDTO;
+import com.example.quizit.security.AppConstraint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,6 +61,7 @@ public class ParticipantController {
     }
 
     @DeleteMapping("/participant/{id}")
+    @PreAuthorize( "hasRole('" + AppConstraint.ADMIN_ROLE+ "')" )
     public ResponseEntity<Void> deleteParticipant(@PathVariable String id) {
         participantService.deleteParticipant(id);
         return ResponseEntity.noContent().build();

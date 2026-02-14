@@ -2,8 +2,11 @@ package com.example.quizit.features.quizSession;
 
 
 import com.example.quizit.dtos.HostReconnectResponse;
+import com.example.quizit.features.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -14,14 +17,14 @@ import java.util.UUID;
 public class QuizSessionController {
 
     private final QuizSessionService quizSessionService;
-    private final QuizSessionRepository quizSessionRepository;
 
     @PostMapping("/create")
     public ResponseEntity<QuizSessionDto> createQuizSession(
             @RequestParam UUID quizId,
-            @RequestParam UUID hostId
+            Authentication authentication
     ) {
-        QuizSessionDto dto = quizSessionService.createQuizSession(quizId, hostId);
+        User user = (User) authentication.getPrincipal();
+        QuizSessionDto dto = quizSessionService.createQuizSession(quizId, user.getId());
         return ResponseEntity.ok(dto);
     }
 
@@ -32,9 +35,11 @@ public class QuizSessionController {
 
     @PostMapping("/{sessionId}/end")
     public ResponseEntity<QuizSessionDto> endQuiz(
-            @PathVariable UUID sessionId
+            @PathVariable UUID sessionId,
+            Authentication authentication
     ) {
-        QuizSessionDto dto = quizSessionService.endQuiz(sessionId);
+        User user = (User) authentication.getPrincipal();
+        QuizSessionDto dto = quizSessionService.endQuiz(sessionId, user.getId());
         return ResponseEntity.ok(dto);
     }
 

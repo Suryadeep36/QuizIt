@@ -20,7 +20,7 @@ public class QuizController {
 
     @GetMapping("/quiz")
     @PreAuthorize( "hasRole('" + AppConstraint.ADMIN_ROLE+ "')" )
-    public ResponseEntity<List<QuizDto>> getAllQuizs(Authentication  authentication){
+    public ResponseEntity<List<QuizDto>> getAllQuizs(Authentication authentication){
         return ResponseEntity.status(200).body(quizService.getAllQuizzes());
     }
 

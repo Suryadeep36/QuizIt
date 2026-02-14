@@ -63,6 +63,7 @@ public class QuizWebSocketController {
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
         quizTimerService.startTimer(sessionId, nextQuestion.getDuration());
     }
+
     @MessageMapping("/quiz/join/{sessionId}/{participantId}")
     public void joinSession(@DestinationVariable UUID sessionId, @DestinationVariable UUID participantId) {
         ParticipantJoinedMessageDto session = quizSessionService.joinSession(sessionId, participantId);

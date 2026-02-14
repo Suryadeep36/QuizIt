@@ -17,6 +17,7 @@ import com.example.quizit.features.user.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -204,7 +205,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         int nextIndex = session.getCurrentQuestionIndex() + 1;
         if (nextIndex >= totalQuestions) {
-            endQuiz(sessionId);
+            endQuiz(sessionId, session.getHost().getId());
             return null;
         }
 
@@ -223,11 +224,14 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
 
     @Override
-    public QuizSessionDto endQuiz(UUID sessionId) {
+    public QuizSessionDto endQuiz(UUID sessionId, UUID hostId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
+        if (!session.getHost().getId().equals(hostId)) {
+            throw new AccessDeniedException("You are not the host of this quiz");
+        }
         session.setStatus(QuizSessionStatus.ENDED);
         session.setEndedAt(Instant.now());
 
@@ -290,7 +294,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         }
 
         UUID quizId = session.getQuiz().getQuizId();
-        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(session.getCurrentQuestionIndex());
         return nextQuestion.getCorrectAnswer();
     }
