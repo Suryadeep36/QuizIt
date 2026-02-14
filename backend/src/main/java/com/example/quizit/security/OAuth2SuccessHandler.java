@@ -115,22 +115,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
 
         String redirectUrl = frontendBaseUrl + successPath;
-        response.setContentType("text/html");
-        response.getWriter().write("""
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Redirecting...</title>
-</head>
-<body>
-  <script>
-    window.location.href = "%s";
-  </script>
-</body>
-</html>
-""".formatted(redirectUrl));
-        response.getWriter().flush();
-
         response.sendRedirect(redirectUrl);
 
 
