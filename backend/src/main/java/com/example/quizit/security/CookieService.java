@@ -53,7 +53,7 @@ public class CookieService {
         var builder = ResponseCookie.from(refreshTokenCookieName, "")
                 .httpOnly(cookieHttpOnly)
                 .secure(cookieSecure)
-                .path("")
+                .path("/")
                 .maxAge(0)
                 .sameSite(cookieSameSite);
         if(cookieDomain != null && !cookieDomain.isBlank()) {
