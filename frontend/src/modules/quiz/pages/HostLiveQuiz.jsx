@@ -6,7 +6,9 @@ import {
   Play,
   Settings,
   ChevronRight,
-  X, QrCode, Download
+  X,
+  QrCode,
+  Download,
 } from "lucide-react";
 import ParticipantsList from "../components/ParticipantsList";
 import QuestionDisplay from "../components/QuestionDisplay";
@@ -31,7 +33,7 @@ export default function HostLiveQuiz() {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [joinCode,setJoinCode] = useState();
+  const [joinCode, setJoinCode] = useState();
   const [participants, setParticipants] = useState([]);
   const { quizId } = useParams();
   const hostId = useAuth((state) => state.user.id);
@@ -54,6 +56,7 @@ export default function HostLiveQuiz() {
       status: p.status,
       answered: false,
       correct: false,
+      selectedAnswer: null,
     };
   }
 
@@ -69,17 +72,17 @@ export default function HostLiveQuiz() {
     };
   }
 
- const renderCorrectAnswer = (question) => {
+  const renderCorrectAnswer = (question) => {
     if (!question) return;
     const { correctAnswer, options } = question;
     if (!correctAnswer || correctAnswer.length === 0) {
       return null;
     }
-    console.log("Reveal correct answer : ")
+    console.log("Reveal correct answer : ");
     console.log(question);
-    console.log(correctAnswer)
-    console.log(options)
-    console.log(correctAnswer?.[0]?.matchPairs)
+    console.log(correctAnswer);
+    console.log(options);
+    console.log(correctAnswer?.[0]?.matchPairs);
     if (question.questionType == "MATCH_FOLLOWING") {
       <div className="inline-block bg-white border border-white/30 px-8 py-6 rounded-2xl shadow-lg">
         <div className="flex flex-wrap gap-3 justify-center">
@@ -131,7 +134,7 @@ export default function HostLiveQuiz() {
       );
     }
   };
-  
+
   useEffect(() => {
     if (stage !== "question" || isPaused) return;
 
@@ -155,7 +158,6 @@ export default function HostLiveQuiz() {
     connectWS();
   }, [connectWS]);
 
-
   useEffect(() => {
     async function init() {
       try {
@@ -176,7 +178,7 @@ export default function HostLiveQuiz() {
                 await getQuizSessionBySessionId(storedSessionId);
 
               console.log("Reconnected session:", sessionRes);
-              
+
               setSessionId(sessionRes.sessionId);
               // console.log("joincode",sessionRes.joinCode);
               setJoinCode(sessionRes.joinCode);
@@ -229,7 +231,7 @@ export default function HostLiveQuiz() {
           console.log("New Session Created:", sessionRes);
 
           setSessionId(sessionRes.sessionId);
-           setJoinCode(sessionRes.joinCode);
+          setJoinCode(sessionRes.joinCode);
           localStorage.setItem(
             "quizSession",
             JSON.stringify({
@@ -251,8 +253,10 @@ export default function HostLiveQuiz() {
 
   useEffect(() => {
     if (!client || !sessionId || !isConnected) return;
-    setJoinLink(`${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`);
-   
+    setJoinLink(
+      `${import.meta.env.VITE_REACT_BASE_URL}/quiz/${quizId}/join/${sessionId}`,
+    );
+
     const subscription = client.subscribe(
       `/topic/quiz/${sessionId}`,
       (message) => {
@@ -308,6 +312,39 @@ export default function HostLiveQuiz() {
             finish();
             break;
 
+          case "SUBMIT_ANSWER":
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.participantId === msg.payload.participantId
+                  ? {
+                      ...p,
+                      answered: true,
+                      selectedAnswer: msg.payload.selectedAnswer,
+                      correct: msg.payload.isCorrect ?? false,
+                    }
+                  : p,
+              ),
+            );
+            const optionIndex = extractOptionIndex(
+              msg.payload.selectedAnswer,
+              currentQuestion,
+            );
+
+            if (optionIndex.length > 0) {
+              setCurrentQuestion((prev) => {
+                const updatedResponses = { ...prev.responses };
+
+                optionIndex.forEach((index) => {
+                  updatedResponses[index] = (updatedResponses[index] || 0) + 1;
+                });
+
+                return {
+                  ...prev,
+                  responses: updatedResponses,
+                };
+              });
+            }
+            break;
           default:
             console.log("Unknown WS message:", msg);
         }
@@ -316,6 +353,39 @@ export default function HostLiveQuiz() {
 
     return () => subscription.unsubscribe();
   }, [client, sessionId, questions]);
+
+  const extractOptionIndex = (selectedAnswer, question) => {
+    if (!selectedAnswer || !question) return null;
+    const indexes = [];
+    if (question.questionType == "MCQ") {
+      if (Array.isArray(selectedAnswer.keys)) {
+        selectedAnswer.keys.forEach((letter) => {
+          const normalized = String(letter).trim().toUpperCase();
+          const index = normalized.charCodeAt(0) - 65;
+
+          if (index >= 0 && index < question.options.length) {
+            indexes.push(index);
+          }
+        });
+      }
+    }
+    if (question.questionType == "TRUE_FALSE") {
+      if (selectedAnswer.value !== undefined && selectedAnswer.value !== null) {
+        const normalized = String(selectedAnswer.value).trim().toLowerCase();
+
+        if (normalized === "true" || normalized === "false") {
+          const index = question.options.findIndex(
+            (opt) => opt.toString().trim().toLowerCase() === normalized,
+          );
+
+          if (index !== -1) {
+            indexes.push(index);
+          }
+        }
+      }
+    }
+    return indexes;
+  };
 
   const startQuiz = () => {
     client.publish({
@@ -374,7 +444,7 @@ export default function HostLiveQuiz() {
               isLive={stage === "question"}
               participantCount={participants.length}
             />
-            
+
             <QrSharePopover joinLink={joinLink} joinCode={joinCode} />
 
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all">
@@ -430,12 +500,12 @@ export default function HostLiveQuiz() {
               />
 
               <div className="grid grid-cols-2 gap-6">
-                {/* <ResponseStats
+                <ResponseStats
                   question={currentQuestion}
                   answeredCount={answeredCount}
                   totalParticipants={participants.length}
                   progressPercent={progressPercent}
-                /> */}
+                />
 
                 <div className="bg-slate-50/90 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-sm">
                   <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -479,13 +549,13 @@ export default function HostLiveQuiz() {
                   {renderCorrectAnswer(currentQuestion)}
                 </div>
 
-                {/* <ResponseStats
+                <ResponseStats
                   question={currentQuestion}
                   answeredCount={participants.length}
                   totalParticipants={participants.length}
                   progressPercent={100}
                   showResults={true}
-                /> */}
+                />
               </div>
 
               <button
@@ -562,10 +632,11 @@ export default function HostLiveQuiz() {
               {participants.map((p) => (
                 <div
                   key={p.participantSessionId}
-                  className={`p-3 rounded-lg transition-all ${p.answered
-                    ? "bg-emerald-100 border border-emerald-300"
-                    : "bg-gray-100 border border-slate-200"
-                    }`}
+                  className={`p-3 rounded-lg transition-all ${
+                    p.answered
+                      ? "bg-emerald-100 border border-emerald-300"
+                      : "bg-gray-100 border border-slate-200"
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-800">

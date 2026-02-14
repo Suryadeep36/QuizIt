@@ -78,19 +78,21 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(key)}
                 className={`
                 w-full p-5 md:p-6 rounded-2xl text-left transition-all duration-200 border-2 flex justify-between items-center active:scale-95
-                ${Array.isArray(selectedOption) && selectedOption.includes(key)
+                ${
+                  Array.isArray(selectedOption) && selectedOption.includes(key)
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  }
+                }
               `}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${Array.isArray(selectedOption) &&
-                        selectedOption.includes(key)
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
+                      Array.isArray(selectedOption) &&
+                      selectedOption.includes(key)
                         ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
                         : "border-white/30"
-                      }`}
+                    }`}
                   >
                     {key}
                   </div>
@@ -114,10 +116,11 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(value)}
                 className={`
                 p-5 md:p-6 rounded-2xl border-2 text-center transition-all duration-200 active:scale-95
-                ${selectedOption === value
+                ${
+                  selectedOption === value
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  }
+                }
               `}
               >
                 <span className="text-lg font-bold">{value}</span>
@@ -502,7 +505,7 @@ export default function ParticipantLiveQuiz() {
             setSelectedOption(null);
             setUserMatchPairs([]);
             setIsSubmitted(false);
-            setCorrectAnswer(null)
+            setCorrectAnswer(null);
             setIsAnswerCorrect(null);
             break;
           }
@@ -586,11 +589,11 @@ export default function ParticipantLiveQuiz() {
         if (Array.isArray(selectedValue)) {
           selectedValue.forEach((pair) => {
             matchMap.push({
-              [pair.right]: pair.left
-            })
+              [pair.right]: pair.left,
+            });
           });
         }
-        console.log(matchMap)
+        console.log(matchMap);
         selectedAnswer = {
           matchPairs: matchMap,
         };
@@ -623,12 +626,21 @@ export default function ParticipantLiveQuiz() {
 
     try {
       const response = await createQuestionAnalyticsUser(payload);
+      submitAnswerMessage(payload);
       setIsAnswerCorrect(response.isCorrect);
       console.log("Analytics saved:", payload);
     } catch (err) {
       console.error("Failed to save analytics", err);
     }
   };
+
+  const submitAnswerMessage = (data) => {
+    client.publish({
+      destination: `/app/quiz/submit-answer/${sessionId}`,
+      body: JSON.stringify(data),
+    });
+  };
+  
 
   const renderCorrectText = (question, answerPayload) => {
     // Use answerPayload because question.correctAnswer is likely empty during live play
@@ -724,8 +736,9 @@ export default function ParticipantLiveQuiz() {
       {stage === "question" && (
         <div className="h-1.5 w-full bg-black/10">
           <div
-            className={`h-full transition-all duration-1000 ease-linear ${timer < 5 ? "bg-red-400" : "bg-white"
-              }`}
+            className={`h-full transition-all duration-1000 ease-linear ${
+              timer < 5 ? "bg-red-400" : "bg-white"
+            }`}
             style={{ width: `${(timer / TOTAL_TIME) * 100}%` }}
           />
         </div>
@@ -739,8 +752,9 @@ export default function ParticipantLiveQuiz() {
                 Question {currentQIndex + 1} of {DUMMY_QUESTIONS.length}
               </span>
               <div
-                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${timer < 5 ? "text-red-500 animate-bounce" : "text-white"
-                  }`}
+                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${
+                  timer < 5 ? "text-red-500 animate-bounce" : "text-white"
+                }`}
               >
                 <Timer className="w-5 h-5 md:w-6 md:h-6" />
                 {timer}s
@@ -794,10 +808,11 @@ export default function ParticipantLiveQuiz() {
                   className={`
                       px-8 py-3 rounded-2xl font-black tracking-wide
                       transition-all duration-200 active:scale-95
-                      ${isSubmitted
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
-                    }
+                      ${
+                        isSubmitted
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
+                      }
                     `}
                 >
                   {isSubmitted ? "Answer Locked" : "Final Submit"}
@@ -821,17 +836,21 @@ export default function ParticipantLiveQuiz() {
                   <div className="bg-emerald-100 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12">
                     <Trophy className="w-12 h-12 text-emerald-600" />
                   </div>
-                  <h2 className="text-3xl font-black text-slate-800 tracking-tight">EXCELLENT!</h2>
-                  <p className="text-emerald-600 font-bold text-xl mt-2">+100 Points</p>
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                    EXCELLENT!
+                  </h2>
+                  <p className="text-emerald-600 font-bold text-xl mt-2">
+                    +100 Points
+                  </p>
                 </>
               ) : (
                 <>
                   <div className="bg-red-100 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 -rotate-12">
                     <XCircle className="w-12 h-12 text-red-600" />
                   </div>
-                  <h2 className="text-3xl font-black text-slate-800 tracking-tight">WRONG ANSWER</h2>
-
-
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                    WRONG ANSWER
+                  </h2>
                 </>
               )}
               <p className="text-slate-500 mt-4 font-semibold uppercase tracking-widest text-[10px]">

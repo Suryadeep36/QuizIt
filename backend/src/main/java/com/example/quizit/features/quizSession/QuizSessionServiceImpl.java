@@ -182,6 +182,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .duration(q.getDuration())
                 .questionType(q.getQuestionType())
                 .imageUrl(q.getImageUrl())
+                .allowMultipleAnswers(q.getAllowMultipleAnswers())
                 .build();
     }
 

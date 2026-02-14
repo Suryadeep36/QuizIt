@@ -3,6 +3,8 @@ package com.example.quizit.controllers;
 import com.example.quizit.dtos.*;
 import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.AnswerKey;
+import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUser;
+import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserDto;
 import com.example.quizit.services.QuizTimerService;
 import com.example.quizit.features.quizSession.QuizSessionService;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +13,9 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Controller
@@ -80,7 +82,16 @@ public class QuizWebSocketController {
                 .payload(correctAnswer)
                 .build();
 
-        System.out.println(">> REVEAL CALLED: " + msg);
+
+        simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
+    }
+
+    @MessageMapping("/quiz/submit-answer/{sessionId}")
+    public void submitAnswer(@DestinationVariable UUID sessionId, QuestionAnalyticsUserDto questionAnalyticsUserDto){
+        WsMessageDto<QuestionAnalyticsUserDto> msg = WsMessageDto.<QuestionAnalyticsUserDto>builder()
+                .messageType("SUBMIT_ANSWER")
+                .payload(questionAnalyticsUserDto)
+                .build();
 
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
     }
