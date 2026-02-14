@@ -962,7 +962,6 @@ export default function QuizManagementDashboard() {
                                                 },
                                               },
                                             ];
-
                                             updateLocalQuestion(q.questionId, {
                                               correctAnswer: newCorrect,
                                             });
@@ -1004,12 +1003,16 @@ export default function QuizManagementDashboard() {
                             {/* Display Current Matches */}
                             <div className="mt-4 p-4 bg-white/60 rounded-xl border border-slate-200">
                               <p className="text-xs font-bold text-slate-600 mb-2">
-                                Current Matches:
+                                Current Matches: 
                               </p>
                               <div className="space-y-1 text-sm text-slate-700">
                                 {Object.entries(
                                   q.correctAnswer?.[0]?.matchPairs || {},
-                                ).map(({ rightIdx, leftIdx }) => (
+                                ).map((ele) => {
+                                  let leftIdx = ele[0]
+                                  let rightIdx = ele[1]
+                                  return (
+                                  
                                   <div
                                     key={rightIdx}
                                     className="flex items-center gap-2"
@@ -1030,7 +1033,6 @@ export default function QuizManagementDashboard() {
                                           key: null,
                                           matchPairs: {},
                                         };
-
                                         const newMatchPairs = {
                                           ...(existing.matchPairs || {}),
                                         };
@@ -1056,7 +1058,7 @@ export default function QuizManagementDashboard() {
                                       <Trash2 className="w-3 h-3" />
                                     </button>
                                   </div>
-                                ))}
+                                )})}
                                 {Object.keys(q.correctAnswer || {}).length ===
                                   0 && (
                                   <p className="text-slate-400 italic">

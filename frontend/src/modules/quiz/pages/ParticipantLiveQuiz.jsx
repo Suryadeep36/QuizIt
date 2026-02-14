@@ -598,7 +598,7 @@ export default function ParticipantLiveQuiz() {
 
       case "TRUE_FALSE":
         selectedAnswer = {
-          value: Boolean(selectedValue),
+          value: selectedValue,
         };
         break;
 
