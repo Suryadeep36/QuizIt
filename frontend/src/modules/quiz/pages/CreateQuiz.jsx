@@ -63,7 +63,7 @@ export default function CreateQuiz() {
       navigate(`/quiz/${data.quizId}`);
     } catch (error) {
       console.error("Quiz creation failed:", error);
-        toast.error(  error.response?.data?.message || err.message || "Quiz are not loaded!")
+        toast.error(  error.response?.data?.message || error.message || "Quiz are not loaded!")
       // alert(`❌ Error: ${error.message}`);
     }
   };
