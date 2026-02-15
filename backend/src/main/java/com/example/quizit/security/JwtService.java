@@ -8,6 +8,9 @@ import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -141,5 +144,28 @@ public class JwtService {
         } catch (JwtException e) {
             return null; // ChatGPT
         }
+    }
+
+    public Authentication buildAuthentication(String token) {
+
+        Jws<Claims> jws = parse(token);
+        Claims claims = jws.getPayload();
+
+        if (!"access".equals(claims.get("type")))
+            throw new JwtException("Not an access token");
+
+        UUID userId = UUID.fromString(claims.getSubject());
+        String email = claims.get("email", String.class);
+
+        List<String> roles = claims.get("roles", List.class);
+
+        List<SimpleGrantedAuthority> authorities =
+                roles.stream()
+                        .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                        .toList();
+
+        UserPrincipal principal = new UserPrincipal(userId, email, authorities);
+
+        return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
 }

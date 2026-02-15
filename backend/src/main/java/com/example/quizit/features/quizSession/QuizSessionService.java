@@ -11,12 +11,12 @@ import java.util.UUID;
 
 public interface QuizSessionService {
     QuizSessionDto createQuizSession(UUID quizId, UUID hostId);
-    QuestionForUserDto startQuiz(UUID sessionId);
-    QuestionForUserDto moveToNextQuestion(UUID sessionId);
+    QuestionForUserDto startQuiz(UUID sessionId, UUID hostId);
+    QuestionForUserDto moveToNextQuestion(UUID sessionId, UUID hostId);
     QuizSessionDto endQuiz(UUID sessionId, UUID hostId);
     ParticipantJoinedMessageDto joinSession(UUID sessionId, UUID userId);
     HostReconnectResponse getHostReconnectState(UUID sessionId);
-    List<AnswerKey> revealAnswer(UUID sessionId);
+    List<AnswerKey> revealAnswer(UUID sessionId, UUID hostId);
     UUID getQuizIdBySessionId(UUID sessionId);
     public JoinQuizDto getQuizIdSessionIdByJoinCode(String joinCode);
 

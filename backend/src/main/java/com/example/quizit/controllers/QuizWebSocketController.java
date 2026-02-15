@@ -5,6 +5,8 @@ import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUser;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserDto;
+import com.example.quizit.features.user.User;
+import com.example.quizit.security.UserPrincipal;
 import com.example.quizit.services.QuizTimerService;
 import com.example.quizit.features.quizSession.QuizSessionService;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +14,11 @@ import org.modelmapper.ModelMapper;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,8 +31,10 @@ public class QuizWebSocketController {
     private final QuizTimerService quizTimerService;
 
     @MessageMapping("/quiz/start/{sessionId}")
-    public void startQuiz(@DestinationVariable UUID sessionId) {
-        QuestionForUserDto session = quizSessionService.startQuiz(sessionId);
+    public void startQuiz(@DestinationVariable UUID sessionId, Principal principal) {
+        Authentication authentication = (Authentication) principal;
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        QuestionForUserDto session = quizSessionService.startQuiz(sessionId, userPrincipal.getId());
         WsMessageDto<QuestionForUserDto> msg = WsMessageDto.<QuestionForUserDto>builder()
                 .messageType("START_QUIZ")
                 .payload(session)
@@ -38,10 +44,11 @@ public class QuizWebSocketController {
     }
 
     @MessageMapping("/quiz/next/{sessionId}")
-    public void nextQuestion(@DestinationVariable UUID sessionId) {
+    public void nextQuestion(@DestinationVariable UUID sessionId, Principal principal) {
+        Authentication authentication = (Authentication) principal;
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        QuestionForUserDto nextQuestion = quizSessionService.moveToNextQuestion(sessionId, userPrincipal.getId());
         quizTimerService.stopTimer(sessionId);
-        QuestionForUserDto nextQuestion = quizSessionService.moveToNextQuestion(sessionId);
-
         if (nextQuestion == null) {
             UUID quizId = quizSessionService.getQuizIdBySessionId(sessionId);
             EndQuizMsg endQuizMsg = EndQuizMsg.builder()
@@ -75,9 +82,11 @@ public class QuizWebSocketController {
     }
 
     @MessageMapping("/quiz/reveal/{sessionId}")
-    public void revealAnswer(@DestinationVariable UUID sessionId) {
+    public void revealAnswer(@DestinationVariable UUID sessionId, Principal principal) {
+        Authentication authentication = (Authentication) principal;
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        List<AnswerKey> correctAnswer = quizSessionService.revealAnswer(sessionId, userPrincipal.getId());
         quizTimerService.stopTimer(sessionId);
-        List<AnswerKey> correctAnswer = quizSessionService.revealAnswer(sessionId);
         WsMessageDto<List<AnswerKey>> msg = WsMessageDto.<List<AnswerKey>>builder()
                 .messageType("REVEAL_ANSWER")
                 .payload(correctAnswer)

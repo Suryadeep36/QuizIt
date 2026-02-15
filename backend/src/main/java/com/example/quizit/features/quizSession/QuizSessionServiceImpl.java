@@ -14,6 +14,7 @@ import com.example.quizit.features.question.QuestionRepository;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.features.user.UserRepository;
+import com.example.quizit.services.QuizTimerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -39,6 +40,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     private final ParticipantSessionRepository participantSessionRepository;
     private final ParticipantRepository participantRepository;
     private final ModelMapper modelMapper;
+//    private final QuizTimerService quizTimerService;
 
 
 
@@ -145,7 +147,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     }
 
     @Override
-    public QuestionForUserDto startQuiz(UUID sessionId) {
+    public QuestionForUserDto startQuiz(UUID sessionId, UUID hostId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
@@ -154,6 +156,9 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             throw new IllegalStateException("Quiz already started or ended");
         }
 
+        if(!session.getHost().getId().equals(hostId)){
+            throw new AccessDeniedException("quiz not found");
+        }
         session.setStatus(QuizSessionStatus.STARTED);
         session.setStartedAt(Instant.now());
         session.setCurrentQuestionIndex(0);
@@ -190,7 +195,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
 
     @Override
-    public QuestionForUserDto moveToNextQuestion(UUID sessionId) {
+    public QuestionForUserDto moveToNextQuestion(UUID sessionId, UUID hostId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
@@ -199,8 +204,11 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             throw new IllegalStateException("Quiz is not live");
         }
 
-        UUID quizId = session.getQuiz().getQuizId();
+        if(!session.getHost().getId().equals(hostId)){
+            throw new AccessDeniedException("quiz not found");
+        }
 
+        UUID quizId = session.getQuiz().getQuizId();
         long totalQuestions = questionRepository.countQuestionByQuiz_QuizId(quizId);
 
         int nextIndex = session.getCurrentQuestionIndex() + 1;
@@ -212,12 +220,8 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         session.setCurrentQuestionIndex(nextIndex);
         quizSessionRepository.save(session);
 
-        // fetch next question
-//        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(nextIndex);
-        System.out.println("Current index " + nextIndex);
-        System.out.println(nextQuestion.getContent());
         return convertToUserDto(nextQuestion);
     }
 
@@ -230,7 +234,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
         if (!session.getHost().getId().equals(hostId)) {
-            throw new AccessDeniedException("You are not the host of this quiz");
+            throw new AccessDeniedException("quiz not found");
         }
         session.setStatus(QuizSessionStatus.ENDED);
         session.setEndedAt(Instant.now());
@@ -285,12 +289,16 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     }
 
     @Override
-    public List<AnswerKey> revealAnswer(UUID sessionId) {
+    public List<AnswerKey> revealAnswer(UUID sessionId, UUID hostId) {
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
         if (!session.getStatus().equals(QuizSessionStatus.STARTED)) {
             throw new IllegalStateException("Quiz is not live");
+        }
+
+        if(!session.getHost().getId().equals(hostId)){
+            throw new AccessDeniedException("quiz not found");
         }
 
         UUID quizId = session.getQuiz().getQuizId();
