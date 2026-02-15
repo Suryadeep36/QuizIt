@@ -2,12 +2,15 @@ package com.example.quizit.features.question;
 
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.exceptions.ResourceNotFoundException;
+import com.example.quizit.features.quiz.QuizStatus;
 import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.features.quiz.QuizRepository;
+import com.example.quizit.mapper.QuestionToQuestionUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,28 +20,74 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuestionRepository questionRepository;
     private final QuizRepository quizRepository;
     private final ModelMapper modelMapper;
-
+    private final QuestionToQuestionUserMapper questionMapper;
     @Override
-    public QuestionDto getQuestionById(String uuid) {
+    public QuestionDto getQuestionById(String QuestionId, UUID userId) {
 
-        UUID id = UUID.fromString(uuid);
+        UUID id = UUID.fromString(QuestionId);
         Question question = questionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Question with id " + id + " not found"));
+
+        UUID quizId = question.getQuiz().getQuizId();
+        if(!quizRepository.existsByQuizIdAndHostId(quizId, userId))
+            throw new ResourceNotFoundException("Quiz not found");
 
         return modelMapper.map(question, QuestionDto.class);
     }
 
     @Override
-    public List<QuestionDto> getAllQuestionsOfQuiz(String quizId) {
-
+    public List<QuestionDto> getAllQuestionsOfQuiz(String quizId, UUID userId) {
         UUID id = UserHelper.parseUUID(quizId);
-        return questionRepository.findByQuiz_QuizId(UUID.fromString(quizId))
-                .stream()
-                .map(question -> modelMapper.map(question, QuestionDto.class))
-                .toList();
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Quiz not found")
+                );
 
+        // Rule 1: If ENDED → allow anyone
+        if (quiz.getStatus() == QuizStatus.ENDED) {
+
+            return questionRepository.findByQuiz_QuizId(id)
+                    .stream()
+                    .map(q -> modelMapper.map(q, QuestionDto.class))
+                    .toList();
+        }
+
+        // Rule 2: If not ENDED → only owner allowed
+        if (!quiz.getHost().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Quiz not found");
+        }
+
+        return questionRepository.findByQuiz_QuizId(id)
+                .stream()
+                .map(q -> modelMapper.map(q, QuestionDto.class))
+                .toList();
     }
 
-    public QuestionDto createQuestion(QuestionDto questionDto) {
+    @Override
+    public List<QuestionForUserDto> getLiveQuestions(UUID quizId) {
+
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Quiz not found")
+                );
+
+        Instant now = Instant.now();
+
+        // 1️⃣ Check start time
+        if (now.isBefore(quiz.getStartTime())) {
+            throw new ResourceNotFoundException("Quiz not started yet");
+        }
+
+
+
+        return questionRepository.findByQuiz_QuizId(quizId)
+                .stream()
+                .map(question -> modelMapper.map(question, QuestionDto.class))
+                .map(questionMapper::toUserDto)  // must NOT include correctAnswer
+                .toList();
+    }
+
+
+    public QuestionDto createQuestion(QuestionDto questionDto, UUID userId) {
         if (questionDto.getQuizId() == null) {
             throw new IllegalArgumentException("Quiz ID is required");
         }
@@ -57,8 +106,10 @@ public class QuestionServiceImpl implements QuestionService {
             );
         }
 
-        Quiz quiz = quizRepository.findById(questionDto.getQuizId())
+        Quiz quiz = quizRepository
+                .findByQuizIdAndHostId(questionDto.getQuizId(), userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
 
         Question question = modelMapper.map(questionDto, Question.class);
         question.setQuiz(quiz);
@@ -67,16 +118,21 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public QuestionDto updateQuestion(String id, QuestionDto questionDto) {
+    public QuestionDto updateQuestion(String QuestionId, QuestionDto questionDto, UUID userId) {
 
         if (questionDto == null) {
             throw new ResourceNotFoundException();
         }
         System.out.println(questionDto.getCorrectAnswer());
-        UUID uuid = UserHelper.parseUUID(id);
+        UUID uuid = UserHelper.parseUUID(QuestionId);
 
         Question existingQuestion = questionRepository.findById(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found!"));
+
+        UUID quizId = existingQuestion.getQuiz().getQuizId();
+        if(!quizRepository.existsByQuizIdAndHostId(quizId, userId))
+            throw new ResourceNotFoundException("Quiz not found");
+
 
         if (questionDto.getQuizId() != null) {
             Quiz quiz = quizRepository.findById(questionDto.getQuizId())
@@ -138,10 +194,16 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public void DeleteQuestion(String uuid) {
+    public void DeleteQuestion(String uuid, UUID userId) {
 
         UUID id = UserHelper.parseUUID(uuid);
-        Question question = questionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Question not found!"));
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found!"));
+
+        UUID quizId = question.getQuiz().getQuizId();
+        if(!quizRepository.existsByQuizIdAndHostId(quizId, userId))
+            throw new ResourceNotFoundException("Quiz not found");
+
         questionRepository.delete(question);
     }
 }

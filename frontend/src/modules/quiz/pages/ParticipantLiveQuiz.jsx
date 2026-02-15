@@ -17,6 +17,7 @@ import { useNavigate, useParams } from "react-router";
 import { joinSession } from "../../../services/stompService";
 import { createQuestionAnalyticsUser } from "../../../services/AuthService";
 import { useParticipant } from "../../../stores/store";
+import toast from "react-hot-toast";
 
 const DUMMY_QUESTIONS = [
   {
@@ -62,6 +63,42 @@ export default function ParticipantLiveQuiz() {
 
   const TOTAL_TIME = 15;
 
+  /* ================= TAB SWITCH TRACKING ================= */
+  const [tabSwitches, setTabSwitches] = useState(0);
+
+  useEffect(() => {
+    // Only track if the quiz has actually started
+    if (stage === "waiting" || stage === "end") return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Increment local state
+        setTabSwitches((prev) => prev + 1);
+
+        // Send message to backend via WebSocket
+        if (isConnected && client?.connected) {
+          client.publish({
+            destination: `/app/quiz/${sessionId}/tab-switch`, // Adjust this path to your backend mapping
+            body: JSON.stringify({
+              participantId: participant.id,
+              totalSwitches: tabSwitches + 1,
+              timestamp: new Date().toISOString()
+            }),
+          });
+          toast('Tab switch detected!', {
+            icon: '⚠️',
+          });
+          console.log("Tab switch detected and sent to backend.");
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [stage, isConnected, client, sessionId, participant?.id]);
+
   const renderPlayableOptions = (
     type,
     options,
@@ -78,21 +115,19 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(key)}
                 className={`
                 w-full p-5 md:p-6 rounded-2xl text-left transition-all duration-200 border-2 flex justify-between items-center active:scale-95
-                ${
-                  Array.isArray(selectedOption) && selectedOption.includes(key)
+                ${Array.isArray(selectedOption) && selectedOption.includes(key)
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                }
+                  }
               `}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
-                      Array.isArray(selectedOption) &&
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${Array.isArray(selectedOption) &&
                       selectedOption.includes(key)
-                        ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
-                        : "border-white/30"
-                    }`}
+                      ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
+                      : "border-white/30"
+                      }`}
                   >
                     {key}
                   </div>
@@ -116,11 +151,10 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(value)}
                 className={`
                 p-5 md:p-6 rounded-2xl border-2 text-center transition-all duration-200 active:scale-95
-                ${
-                  selectedOption === value
+                ${selectedOption === value
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                }
+                  }
               `}
               >
                 <span className="text-lg font-bold">{value}</span>
@@ -621,7 +655,7 @@ export default function ParticipantLiveQuiz() {
       participantId: participant.id,
       timeSpent,
       selectedAnswer,
-      tabSwitchCount: 0,
+      tabSwitchCount: tabSwitches,
     };
 
     try {
@@ -640,7 +674,7 @@ export default function ParticipantLiveQuiz() {
       body: JSON.stringify(data),
     });
   };
-  
+
 
   const renderCorrectText = (question, answerPayload) => {
     // Use answerPayload because question.correctAnswer is likely empty during live play
@@ -736,9 +770,8 @@ export default function ParticipantLiveQuiz() {
       {stage === "question" && (
         <div className="h-1.5 w-full bg-black/10">
           <div
-            className={`h-full transition-all duration-1000 ease-linear ${
-              timer < 5 ? "bg-red-400" : "bg-white"
-            }`}
+            className={`h-full transition-all duration-1000 ease-linear ${timer < 5 ? "bg-red-400" : "bg-white"
+              }`}
             style={{ width: `${(timer / TOTAL_TIME) * 100}%` }}
           />
         </div>
@@ -751,11 +784,16 @@ export default function ParticipantLiveQuiz() {
               <span className="bg-white/20 text-white text-[10px] md:text-xs uppercase tracking-widest px-3 py-1 rounded-full border border-white/20 font-bold">
                 Question {currentQIndex + 1} of {DUMMY_QUESTIONS.length}
               </span>
+              {tabSwitches > 0 && (
+                <div className="fixed bottom-24 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-bounce">
+                  Tab Switches: {tabSwitches}
+                </div>
+              )}
               <div
-                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${
-                  timer < 5 ? "text-red-500 animate-bounce" : "text-white"
-                }`}
+                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${timer < 5 ? "text-red-500 animate-bounce" : "text-white"
+                  }`}
               >
+
                 <Timer className="w-5 h-5 md:w-6 md:h-6" />
                 {timer}s
               </div>
@@ -808,11 +846,10 @@ export default function ParticipantLiveQuiz() {
                   className={`
                       px-8 py-3 rounded-2xl font-black tracking-wide
                       transition-all duration-200 active:scale-95
-                      ${
-                        isSubmitted
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
-                      }
+                      ${isSubmitted
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
+                    }
                     `}
                 >
                   {isSubmitted ? "Answer Locked" : "Final Submit"}

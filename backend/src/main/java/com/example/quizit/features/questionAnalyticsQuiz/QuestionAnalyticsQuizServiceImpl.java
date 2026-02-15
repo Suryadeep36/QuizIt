@@ -1,5 +1,7 @@
 package com.example.quizit.features.questionAnalyticsQuiz;
 
+import com.example.quizit.features.participant.Participant;
+import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.user.User;
@@ -24,6 +26,7 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
+    private final ParticipantRepository participantRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -36,10 +39,10 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
         }
         Quiz quizRef = quizRepository.getReferenceById(dto.getQuizId());
         Question questionRef = questionRepository.getReferenceById(dto.getQuestionId());
-        User fastestUserRef = null;
+        Participant fastestParticipantRef = null;
 
         if (dto.getFastestUserId() != null) {
-            fastestUserRef = userRepository.getReferenceById(dto.getFastestUserId());
+            fastestParticipantRef = participantRepository.getReferenceById(dto.getFastestUserId());
         }
 
         QuestionAnalyticsQuiz analytics = QuestionAnalyticsQuiz.builder()
@@ -48,7 +51,7 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
                 .totalAnswered(dto.getTotalAnswered())
                 .correctAnswerCount(dto.getCorrectAnswerCount())
                 .averageTime(dto.getAverageTime())
-                .fastestUser(fastestUserRef)
+                .fastestParticipant(fastestParticipantRef)
                 .build();
 
         QuestionAnalyticsQuiz savedAnalytics = questionAnalyticsQuizRepository.save(analytics);
