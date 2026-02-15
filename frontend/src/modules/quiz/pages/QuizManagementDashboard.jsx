@@ -28,6 +28,7 @@ import {
   getQuizsByHostId,
   updateQuestionById,
 } from "../../../services/AuthService";
+import toast from "react-hot-toast";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -80,7 +81,6 @@ export default function QuizManagementDashboard() {
       default:
         baseQuestion.options = q.options ?? {};
     }
-
     return baseQuestion;
   };
 
@@ -169,9 +169,19 @@ export default function QuizManagementDashboard() {
       default:
         break;
     }
-
-    const savedQuestion = await createQuestion(newQuestion);
-    setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
+     try{
+       const savedQuestion = await createQuestion(newQuestion);
+       setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
+     }
+     catch(err)
+     {
+      toast.error(
+          err.response?.data?.message ||
+          err.message ||
+          "Quiz Not found!"
+        );
+      }
+    
   };
 
   const deleteQuestion = async (questionId) => {
@@ -208,7 +218,12 @@ export default function QuizManagementDashboard() {
         setQuiz(quizData);
         setQuestions(quesData.map(normalizeQuestionFromApi));
       } catch (err) {
-        console.error(err.message);
+         console.log(err)
+        toast.error(
+          err.response?.data?.message ||
+          err.message ||
+          "Quiz Not found!"
+        );
       } finally {
         setLoading(false);
       }
@@ -241,7 +256,7 @@ export default function QuizManagementDashboard() {
             <div className="flex items-center gap-2 text-sm text-white/80">
               <span>My Quizzes</span>
               <ChevronRight className="w-4 h-4" />
-              <span className="text-white font-medium">{quiz.quizName}</span>
+              <span className="text-white font-medium">{quiz?.quizName}</span>
             </div>
           </div>
 

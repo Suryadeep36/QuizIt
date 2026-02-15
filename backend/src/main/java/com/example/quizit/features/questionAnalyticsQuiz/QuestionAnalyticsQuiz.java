@@ -1,7 +1,7 @@
 package com.example.quizit.features.questionAnalyticsQuiz;
 
+import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.quiz.Quiz;
-import com.example.quizit.features.user.User;
 import com.example.quizit.features.question.Question;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,10 +41,10 @@ public class QuestionAnalyticsQuiz {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "fastest_user_id",
-            referencedColumnName = "user_id"
+            name = "fastest_participant_id",
+            referencedColumnName = "participant_id"
     )
-    private User fastestUser;
+    private Participant fastestParticipant;
 
     @Column(name = "average_time")
     private long averageTime;

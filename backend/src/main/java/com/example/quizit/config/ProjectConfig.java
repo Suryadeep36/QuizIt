@@ -38,7 +38,7 @@ public class ProjectConfig {
                 .addMappings(m -> {
                     m.map(src -> src.getQuiz().getQuizId(), QuestionAnalyticsQuizDto::setQuizId);
                     m.map(src -> src.getQuestion().getQuestionId(), QuestionAnalyticsQuizDto::setQuestionId);
-                    m.map(src -> src.getFastestUser().getId(), QuestionAnalyticsQuizDto::setFastestUserId);
+                    m.map(src -> src.getFastestParticipant().getParticipantId(), QuestionAnalyticsQuizDto::setFastestUserId);
                 });
         modelMapper.typeMap(Quiz.class, QuizDto.class)
                 .addMappings(m ->

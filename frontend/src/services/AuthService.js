@@ -114,20 +114,21 @@ export const addUserToParticipant = async (participantId,userId) => {
 }
 
 export const getParticipantByUserId = async (userId) => {
-  const response = await apiClient.get(`/participants/user/${userId}`);
+  const response = await apiClient.get(`/participants/user`);
   return response.data;
 }
 
 
+
 // This fetches the fully projected data in one go
 export const getParticipantHistory = async (userId) => {
-  const response = await apiClient.get(`/participants/history/${userId}`);
+  const response = await apiClient.get(`/participants/history`);
   return response.data;
 };
 
 export const updateProfile = async (newUserProfile) => {
   console.log(newUserProfile)
-  const response = await apiClient.put(`users/${newUserProfile.id}`,newUserProfile);
+  const response = await apiClient.put(`users`,newUserProfile);
   return response.data;
 }
 

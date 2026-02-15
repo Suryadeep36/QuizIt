@@ -1,10 +1,13 @@
 package com.example.quizit.features.participant;
 
 import com.example.quizit.dtos.ParticipantResultDTO;
+import com.example.quizit.features.user.User;
 import com.example.quizit.security.AppConstraint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,14 +30,15 @@ public class ParticipantController {
         return ResponseEntity.ok(participantService.getParticipantByQuizId(quizId));
     }
 
-    @GetMapping("/participants/history/{userId}")
-    public ResponseEntity<List<ParticipantResultDTO>> getUserHistory(@PathVariable String userId) {
-        List<ParticipantResultDTO> history = participantService.getParticipantHistory(userId);
+    @GetMapping("/participants/history")
+    public ResponseEntity<List<ParticipantResultDTO>> getUserHistory(@AuthenticationPrincipal User user) {
+        List<ParticipantResultDTO> history = participantService.getParticipantHistory(String.valueOf(user.getId()));
         return ResponseEntity.ok(history);
     }
 
-    @GetMapping("/participants/user/{userId}")
-    public ResponseEntity<List<ParticipantDto>> getParticipantsByUserId(@PathVariable String userId) {
+    @GetMapping("/participants/user")
+    public ResponseEntity<List<ParticipantDto>> getParticipantsByUserId(@AuthenticationPrincipal User user) {
+        String userId = String.valueOf(user.getId());
         return ResponseEntity.ok(participantService.getParticipantByUserId(userId));
     }
 
