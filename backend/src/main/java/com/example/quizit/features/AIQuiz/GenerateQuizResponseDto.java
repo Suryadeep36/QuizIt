@@ -1,6 +1,7 @@
-package com.example.quizit.features.quiz.AIQuiz;
+package com.example.quizit.features.AIQuiz;
 
 
+import com.example.quizit.features.question.QuestionDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +22,7 @@ public class GenerateQuizResponseDto {
 
     @NotEmpty
     @Valid
-    private List<AiGeneratedQuestionDto> questions;
+    private List<QuestionDto> questions;
 
     private String provider; // "openai"
     private String model;    // e.g. "gpt-4.1-mini"

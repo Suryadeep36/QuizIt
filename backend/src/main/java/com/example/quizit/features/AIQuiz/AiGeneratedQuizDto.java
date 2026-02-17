@@ -1,11 +1,13 @@
-package com.example.quizit.features.quiz.AIQuiz;
+package com.example.quizit.features.AIQuiz;
 
 
 import com.example.quizit.features.quiz.QuizMode;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
 @AllArgsConstructor

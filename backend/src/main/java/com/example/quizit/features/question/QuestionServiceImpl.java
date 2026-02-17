@@ -6,11 +6,13 @@ import com.example.quizit.features.quiz.QuizStatus;
 import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.mapper.QuestionToQuestionUserMapper;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -113,9 +115,61 @@ public class QuestionServiceImpl implements QuestionService {
 
         Question question = modelMapper.map(questionDto, Question.class);
         question.setQuiz(quiz);
+        question.setIsAIGenerated(false);
         Question savedQuestion = questionRepository.save(question);
         return modelMapper.map(savedQuestion, QuestionDto.class);
     }
+
+    @Override
+    @Transactional
+    public List<QuestionDto> createQuestion(List<QuestionDto> questionList, UUID userId) {
+
+        if (questionList == null || questionList.isEmpty()) {
+            throw new IllegalArgumentException("Question list cannot be empty");
+        }
+
+        List<Question> questionEntities = new ArrayList<>();
+
+        for (QuestionDto questionDto : questionList) {
+
+            if (questionDto.getQuizId() == null) {
+                throw new IllegalArgumentException("Quiz ID is required");
+            }
+
+            if (questionDto.getCorrectAnswer() == null) {
+                throw new IllegalArgumentException("Correct answer is required");
+            }
+
+            if (questionDto.getDuration() == null) {
+                throw new IllegalArgumentException("Duration is required");
+            }
+
+            if (!questionDto.getAllowMultipleAnswers() &&
+                    questionDto.getCorrectAnswer().size() > 1) {
+                throw new IllegalArgumentException("Multiple correct answers not allowed");
+            }
+
+            Quiz quiz = quizRepository
+                    .findByQuizIdAndHostId(questionDto.getQuizId(), userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
+            Question question = modelMapper.map(questionDto, Question.class);
+            question.setQuiz(quiz);
+            question.setIsAIGenerated(false);
+
+            questionEntities.add(question);
+        }
+
+        // 🔥 Batch save
+        List<Question> savedQuestions = questionRepository.saveAll(questionEntities);
+
+        // Convert back to DTO
+        return savedQuestions.stream()
+                .map(q -> modelMapper.map(q, QuestionDto.class))
+                .toList();
+    }
+
+
 
     @Override
     public QuestionDto updateQuestion(String QuestionId, QuestionDto questionDto, UUID userId) {
@@ -206,4 +260,6 @@ public class QuestionServiceImpl implements QuestionService {
 
         questionRepository.delete(question);
     }
+
+
 }

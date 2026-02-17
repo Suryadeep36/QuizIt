@@ -21,6 +21,7 @@ import AfterQuizAnalytics from "./modules/dashboard/component/AfterQuizAnalytics
 import MainLayout from "./MainLayout.jsx";
 import UserProfile from "./modules/profile/pages/UserProfile.jsx";
 import OAuth2Success from "./modules/auth/pages/OAuth2Success.jsx";
+import BulkQuestionCreator from "./modules/quiz/pages/BulkQuestionCreator.jsx";
 
 
 const router = createBrowserRouter([
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
           {
             path: "/profile/:username",
             element: <UserProfile/>
+          },
+          {
+            path: "/create",
+            element: <BulkQuestionCreator/>
           },
           {
             path: "/run-quiz-host/:quizId",

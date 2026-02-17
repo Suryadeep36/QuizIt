@@ -136,3 +136,8 @@ export const getQuizIdSessionIdByCode = async (joinCode) => {
   const response = await apiClient.get(`quiz-session/${joinCode}`);
   return response.data;
 };
+
+export const AIGenQuestions = async (quizId,promptData) => {
+  const response = await apiClient.post(`quizzes/generate-with-ai/${quizId}`,promptData);
+  return response.data;
+};
