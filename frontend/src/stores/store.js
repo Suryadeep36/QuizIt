@@ -37,6 +37,9 @@ const useAuth = create(
             user: loginResponseData.user,
             authStatus: true,
           });
+          import("./webSocketStore").then(({ useWS }) =>
+            useWS.getState().reconnectWithFreshToken(),
+          );
           // console.log(get().user);
           return loginResponseData;
         } catch (error) {
@@ -49,6 +52,7 @@ const useAuth = create(
         set({ authLoading: true });
         try {
           await logoutUser();
+          import("./webSocketStore").then(({ useWS }) => useWS.getState().disconnect());
           set({
             accessToken: null,
             user: null,
@@ -56,7 +60,6 @@ const useAuth = create(
             authLoading: false,
           });
           api.persist.clearStorage();
-
           localStorage.removeItem("participant_history_cache");
           localStorage.removeItem("quizit_auth");
         } catch (error) {
@@ -97,8 +100,8 @@ const useAuth = create(
     }),
     {
       name: LOCAL_KEY,
-    }
-  )
+    },
+  ),
 );
 
 export default useAuth;
@@ -143,6 +146,8 @@ export const useParticipant = create(
         }
       },
     }),
-    { name: PARTICIPANT_KEY }
-  )
+    { name: PARTICIPANT_KEY },
+  ),
 );
+
+export const getAccessToken = () => useAuth.getState().accessToken;

@@ -65,11 +65,11 @@ export const createParticipant = async (participantData) => {
   return response.data;
 };
 
-export const createQuizSession = async ({ quizId, hostId }) => {
+export const createQuizSession = async ({ quizId }) => {
   const response = await apiClient.post(
     `/quiz-session/create`,
     {},
-    { params: { quizId, hostId } }
+    { params: { quizId } }
   );
   return response.data;
 };

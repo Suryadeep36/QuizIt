@@ -224,8 +224,7 @@ export default function HostLiveQuiz() {
 
         if (!sessionId) {
           const sessionRes = await createQuizSession({
-            quizId,
-            hostId,
+            quizId
           });
 
           console.log("New Session Created:", sessionRes);
