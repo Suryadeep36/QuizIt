@@ -35,7 +35,7 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
             throw new IllegalArgumentException("Question analytics data cannot be null");
         }
 
-        if (dto.getQauId() == null) {
+        if (dto.getQuizId() == null) {
             throw new IllegalArgumentException("Quiz ID is required");
         }
 

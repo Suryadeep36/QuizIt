@@ -184,6 +184,8 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
             qaq.setCorrectAnswerCount(correctCount);
             qaq.setAverageTime(avgTime);
             qaq.setFastestParticipant(fastest);
+            questionAnalyticsQuizRepository.save(qaq);
+
         }
     }
 

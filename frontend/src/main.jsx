@@ -22,6 +22,8 @@ import MainLayout from "./MainLayout.jsx";
 import UserProfile from "./modules/profile/pages/UserProfile.jsx";
 import OAuth2Success from "./modules/auth/pages/OAuth2Success.jsx";
 import BulkQuestionCreator from "./modules/quiz/pages/BulkQuestionCreator.jsx";
+import { Global } from "@emotion/react";
+import GlobalQuizAnalytics from "./modules/analytics/pages/GlobalQuizAnalytics.jsx";
 
 
 const router = createBrowserRouter([
@@ -85,6 +87,10 @@ const router = createBrowserRouter([
           {
             path: "/profile/:username",
             element: <UserProfile/>
+          },
+          {
+            path: "quiz-analytics/question-analytics/:quizId",
+            element: <GlobalQuizAnalytics/>
           },
           {
             path: "/create",

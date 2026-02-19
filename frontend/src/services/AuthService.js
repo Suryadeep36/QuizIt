@@ -146,3 +146,8 @@ export const createAllQAQByQuizId = async (quizId) => {
   const response = await apiClient.post(`/question-analytics-quiz/${quizId}`);
   return response.data;
 };
+
+export const getDetailedQAQ = async (quizId) => {
+  const response = await apiClient.get(`/question-analytics-quiz/quiz/${quizId}/detailed`);
+  return response.data;
+};
