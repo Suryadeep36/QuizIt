@@ -30,7 +30,8 @@ public class QuestionAnalyticsQuiz {
     )
     private Quiz quiz;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false, unique = true)
     private Question question;
 
     @Column(name = "total_answered")
@@ -48,4 +49,5 @@ public class QuestionAnalyticsQuiz {
 
     @Column(name = "average_time")
     private long averageTime;
+
 }

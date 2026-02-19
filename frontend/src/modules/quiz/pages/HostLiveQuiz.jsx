@@ -19,6 +19,7 @@ import { useWS } from "../../../stores/webSocketStore";
 import useAuth from "../../../stores/store";
 import { useNavigate, useParams } from "react-router";
 import {
+  createAllQAQByQuizId,
   createQuizSession,
   endQuiz,
   getQuestionsByQuizId,
@@ -387,6 +388,17 @@ export default function HostLiveQuiz() {
   };
 
   const startQuiz = () => {
+    // try {
+    //       //  await createAllQAQByQuizId(quizId)
+    //       //  toast.success("AI Generated Questions added to Quiz")
+    //    } catch (err) {
+    //      console.log(err)
+    //      toast.error(
+    //        err.response?.data?.message ||
+    //        err.message ||
+    //        "something happend!"
+    //      );
+    //    } 
     client.publish({
       destination: `/app/quiz/start/${sessionId}`,
       body: "",

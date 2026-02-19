@@ -57,7 +57,7 @@ export default function QuizManagementDashboard() {
       acceptableAnswers: q.acceptableAnswers ?? [],
       maxAnswerLength: q.maxAnswerLength ?? 200,
       allowMultipleAnswers: q.allowMultipleAnswers ?? false,
-      isAIGenerated:  true,
+      isAIGenerated:  q.isAIGenerated || false,
     };
 
     // Normalize options based on question type

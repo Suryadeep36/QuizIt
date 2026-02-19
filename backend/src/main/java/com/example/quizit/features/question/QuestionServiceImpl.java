@@ -155,7 +155,6 @@ public class QuestionServiceImpl implements QuestionService {
 
             Question question = modelMapper.map(questionDto, Question.class);
             question.setQuiz(quiz);
-            question.setIsAIGenerated(false);
 
             questionEntities.add(question);
         }

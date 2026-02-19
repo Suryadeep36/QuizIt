@@ -653,6 +653,7 @@ export default function ParticipantLiveQuiz() {
     const payload = {
       questionId: currentQuestion.questionId,
       participantId: participant.id,
+      quizId:quizId,
       timeSpent,
       selectedAnswer,
       tabSwitchCount: tabSwitches,

@@ -14,6 +14,7 @@ public class QuestionAnalyticsUserDto {
     private UUID qauId;
     private UUID questionId;
     private UUID participantId;
+    private UUID quizId;
     private Integer timeSpent;
     private Map<String, Object> selectedAnswer;
     private Boolean isCorrect;

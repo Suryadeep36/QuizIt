@@ -141,3 +141,8 @@ export const AIGenQuestions = async (quizId,promptData) => {
   const response = await apiClient.post(`quizzes/generate-with-ai/${quizId}`,promptData);
   return response.data;
 };
+
+export const createAllQAQByQuizId = async (quizId) => {
+  const response = await apiClient.post(`/question-analytics-quiz/${quizId}`);
+  return response.data;
+};

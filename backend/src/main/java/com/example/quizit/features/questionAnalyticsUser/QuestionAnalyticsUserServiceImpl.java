@@ -5,6 +5,7 @@ import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.question.QuestionType;
+import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.question.QuestionRepository;
@@ -25,11 +26,17 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
     private final QuestionRepository questionRepository;
     private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
     private final ModelMapper modelMapper;
+    private final QuizRepository quizRepository;
+
     @Override
     public QuestionAnalyticsUserDto createQuestionAnalyticsUser(QuestionAnalyticsUserDto dto) {
 
         if (dto == null) {
             throw new IllegalArgumentException("Question analytics data cannot be null");
+        }
+
+        if (dto.getQauId() == null) {
+            throw new IllegalArgumentException("Quiz ID is required");
         }
 
         if (dto.getParticipantId() == null) {
@@ -56,7 +63,7 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
 
 
         QuestionAnalyticsUser analytics = modelMapper.map(dto, QuestionAnalyticsUser.class);
-
+        analytics.setQuiz(quizRepository.getReferenceById(dto.getQuizId()));
         analytics.setParticipant(participant);
         analytics.setQuestion(question);
         boolean isCorrect = validateAnswer(question ,analytics.getSelectedAnswer(), question.getCorrectAnswer());

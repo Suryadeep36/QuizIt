@@ -28,7 +28,7 @@ public class AppConstraint {
             "/quizit/quiz-session/**",
             "/quizit/question",
             "/quizit/quiz/{quizId}/end",
-            "/test/groq"
+
     };
 
 

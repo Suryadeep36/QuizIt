@@ -1,8 +1,12 @@
 package com.example.quizit.controllers;//package com.example.quizit.controllers;
 
+import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuizService;
 import com.example.quizit.features.quiz.QuizService;
+import com.example.quizit.features.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,9 +20,12 @@ import java.util.UUID;
 public class ServiceController {
 
     private final QuizService quizService;
+    private final QuestionAnalyticsQuizService questionAnalyticsQuizService;
+
     @PostMapping("/quiz/{quizId}/end")
-    public ResponseEntity<Void> endQuiz(@PathVariable UUID quizId) {
+    public ResponseEntity<Void> endQuiz(@PathVariable UUID quizId,@AuthenticationPrincipal User user) {
         System.out.println("endQuiz");
+        questionAnalyticsQuizService.calculateAfterQuiz(quizId,user.getId());
         quizService.endQuiz(quizId);
         return ResponseEntity.ok().build();
     }
