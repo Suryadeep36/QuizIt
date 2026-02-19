@@ -15,7 +15,12 @@ import {
 import { useWS } from "../../../stores/webSocketStore";
 import { useNavigate, useParams } from "react-router";
 import { joinSession } from "../../../services/stompService";
-import { createQuestionAnalyticsUser } from "../../../services/AuthService";
+import {
+  createQuestionAnalyticsUser,
+  getParticipantSessionByParticipantIdAndSessionId,
+  getQuestionsByQuizId,
+  getQuizSessionBySessionId,
+} from "../../../services/AuthService";
 import { useParticipant } from "../../../stores/store";
 import toast from "react-hot-toast";
 
@@ -41,10 +46,11 @@ export default function ParticipantLiveQuiz() {
   const [stage, setStage] = useState("waiting"); // waiting | question | reveal
   const [connected, setConnected] = useState(true);
   const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [timer, setTimer] = useState(15);
   const [selectedOption, setSelectedOption] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [score, setScore] = useState(1250);
+  // const [score, setScore] = useState(1250);
 
   const { sessionId } = useParams();
 
@@ -72,21 +78,19 @@ export default function ParticipantLiveQuiz() {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        // Increment local state
         setTabSwitches((prev) => prev + 1);
 
-        // Send message to backend via WebSocket
         if (isConnected && client?.connected) {
           client.publish({
-            destination: `/app/quiz/${sessionId}/tab-switch`, // Adjust this path to your backend mapping
+            destination: `/app/quiz/${sessionId}/tab-switch`,
             body: JSON.stringify({
               participantId: participant.id,
               totalSwitches: tabSwitches + 1,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             }),
           });
-          toast('Tab switch detected!', {
-            icon: '⚠️',
+          toast("Tab switch detected!", {
+            icon: "⚠️",
           });
           console.log("Tab switch detected and sent to backend.");
         }
@@ -105,6 +109,7 @@ export default function ParticipantLiveQuiz() {
     selectedOption,
     handleOptionClick,
   ) => {
+    console.log(options);
     switch (type) {
       case "MCQ":
         return (
@@ -115,19 +120,21 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(key)}
                 className={`
                 w-full p-5 md:p-6 rounded-2xl text-left transition-all duration-200 border-2 flex justify-between items-center active:scale-95
-                ${Array.isArray(selectedOption) && selectedOption.includes(key)
+                ${
+                  Array.isArray(selectedOption) && selectedOption.includes(key)
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  }
+                }
               `}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${Array.isArray(selectedOption) &&
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
+                      Array.isArray(selectedOption) &&
                       selectedOption.includes(key)
-                      ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
-                      : "border-white/30"
-                      }`}
+                        ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
+                        : "border-white/30"
+                    }`}
                   >
                     {key}
                   </div>
@@ -151,10 +158,11 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(value)}
                 className={`
                 p-5 md:p-6 rounded-2xl border-2 text-center transition-all duration-200 active:scale-95
-                ${selectedOption === value
+                ${
+                  selectedOption === value
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  }
+                }
               `}
               >
                 <span className="text-lg font-bold">{value}</span>
@@ -507,6 +515,52 @@ export default function ParticipantLiveQuiz() {
 
     joinSession(sessionId, participant.id);
     setHasJoined(true);
+    const init = async () => {
+      const sessionRes = await getParticipantSessionByParticipantIdAndSessionId(participant.id, sessionId);
+      console.log("Reconnected session:", sessionRes);
+
+      if (sessionRes.status === "STARTED" && sessionRes.currentQuestionState) {
+        const q = sessionRes.currentQuestionState;
+        setCurrentQuestion({
+          questionId: q.questionId,
+          content: q.content,
+          options: q.options,
+          duration: q.duration,
+          questionType: q.questionType,
+        });
+        setTimer(sessionRes.currentQuestionState.duration);
+        if(sessionRes.selectedAnswer){
+          if(q.questionType == "MATCH_FOLLOWING"){
+            setUserMatchPairs(sessionRes.selectedAnswer)
+          }
+          else{
+            setSelectedOption(sessionRes.selectedAnswer);
+          }
+          setIsSubmitted(true);
+        }
+        else{
+          setSelectedOption(null);
+          setUserMatchPairs([]);
+          setIsSubmitted(false);
+        }
+        setIsAnswerCorrect(null);
+        setTotalQuestions(sessionRes.totalQuestions);
+        setCurrentQIndex(sessionRes.currentQuestionIndex);
+        console.log("stage set to question")
+        setStage("question");
+      }
+
+      if (sessionRes.status == "REVEALED") {
+        setCorrectAnswer(sessionRes.correctAnswer);
+        setIsAnswerCorrect(sessionRes.isCorrect);
+        setStage("reveal");
+      }
+
+      if (sessionRes.status != "STARTED" && sessionRes.status != "REVEALED") {
+        setStage("waiting");
+      }
+    };
+    init();
   }, [isConnected, client?.connected, participant?.id, sessionId, hasJoined]);
 
   /* ========================= SUBSCRIBE ========================= */
@@ -521,26 +575,30 @@ export default function ParticipantLiveQuiz() {
 
         switch (msg.messageType) {
           case "START_QUIZ": {
-            const q = msg.payload;
+            const q = msg.payload.questionForUserDto;
             setCurrentQuestion(q);
             setTimer(q.duration);
             setStage("question");
             setSelectedOption(null);
             setUserMatchPairs([]);
             setIsSubmitted(false);
+            setCurrentQIndex(msg.payload.currentQuestionIndex);
+            setTotalQuestions(msg.payload.totalQuestions);
             break;
           }
 
           case "NEXT_QUESTION": {
-            const q = msg.payload;
+            const q = msg.payload.questionForUserDto;
             setCurrentQuestion(q);
             setTimer(q.duration);
-            setStage("question");
             setSelectedOption(null);
             setUserMatchPairs([]);
             setIsSubmitted(false);
             setCorrectAnswer(null);
             setIsAnswerCorrect(null);
+            setCurrentQIndex(msg.payload.currentQuestionIndex);
+            setTotalQuestions(msg.payload.totalQuestions);
+            setStage("question");
             break;
           }
 
@@ -549,8 +607,10 @@ export default function ParticipantLiveQuiz() {
             break;
 
           case "REVEAL_ANSWER":
-            setStage("reveal");
+            const q = msg.payload.questionForUserDto;
+            setCurrentQuestion(q);
             setCorrectAnswer(msg.payload);
+            setStage("reveal");
             break;
 
           case "QUIZ_ENDED":
@@ -649,13 +709,14 @@ export default function ParticipantLiveQuiz() {
           value: selectedValue,
         };
     }
-
+    console.log(participant.quizId);
     const payload = {
       questionId: currentQuestion.questionId,
       participantId: participant.id,
       timeSpent,
       selectedAnswer,
       tabSwitchCount: tabSwitches,
+      quizId: participant.quizId
     };
 
     try {
@@ -674,7 +735,6 @@ export default function ParticipantLiveQuiz() {
       body: JSON.stringify(data),
     });
   };
-
 
   const renderCorrectText = (question, answerPayload) => {
     // Use answerPayload because question.correctAnswer is likely empty during live play
@@ -759,9 +819,9 @@ export default function ParticipantLiveQuiz() {
               <Flame className="w-4 h-4 text-orange-300 fill-orange-300" />
               <span className="font-bold text-sm">3</span>
             </div>
-            <div className="bg-white px-4 py-1.5 rounded-xl text-[#4a9cb0] text-sm font-bold shadow-md">
+            {/* <div className="bg-white px-4 py-1.5 rounded-xl text-[#4a9cb0] text-sm font-bold shadow-md">
               {score} pts
-            </div>
+            </div> */}
           </div>
         </div>
       </header>
@@ -770,8 +830,9 @@ export default function ParticipantLiveQuiz() {
       {stage === "question" && (
         <div className="h-1.5 w-full bg-black/10">
           <div
-            className={`h-full transition-all duration-1000 ease-linear ${timer < 5 ? "bg-red-400" : "bg-white"
-              }`}
+            className={`h-full transition-all duration-1000 ease-linear ${
+              timer < 5 ? "bg-red-400" : "bg-white"
+            }`}
             style={{ width: `${(timer / TOTAL_TIME) * 100}%` }}
           />
         </div>
@@ -782,7 +843,7 @@ export default function ParticipantLiveQuiz() {
           <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center mb-6">
               <span className="bg-white/20 text-white text-[10px] md:text-xs uppercase tracking-widest px-3 py-1 rounded-full border border-white/20 font-bold">
-                Question {currentQIndex + 1} of {DUMMY_QUESTIONS.length}
+                Question {currentQIndex + 1} of {totalQuestions}
               </span>
               {tabSwitches > 0 && (
                 <div className="fixed bottom-24 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-bounce">
@@ -790,10 +851,10 @@ export default function ParticipantLiveQuiz() {
                 </div>
               )}
               <div
-                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${timer < 5 ? "text-red-500 animate-bounce" : "text-white"
-                  }`}
+                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${
+                  timer < 5 ? "text-red-500 animate-bounce" : "text-white"
+                }`}
               >
-
                 <Timer className="w-5 h-5 md:w-6 md:h-6" />
                 {timer}s
               </div>
@@ -846,10 +907,11 @@ export default function ParticipantLiveQuiz() {
                   className={`
                       px-8 py-3 rounded-2xl font-black tracking-wide
                       transition-all duration-200 active:scale-95
-                      ${isSubmitted
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
-                    }
+                      ${
+                        isSubmitted
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
+                      }
                     `}
                 >
                   {isSubmitted ? "Answer Locked" : "Final Submit"}
@@ -876,9 +938,9 @@ export default function ParticipantLiveQuiz() {
                   <h2 className="text-3xl font-black text-slate-800 tracking-tight">
                     EXCELLENT!
                   </h2>
-                  <p className="text-emerald-600 font-bold text-xl mt-2">
+                  {/* <p className="text-emerald-600 font-bold text-xl mt-2">
                     +100 Points
-                  </p>
+                  </p> */}
                 </>
               ) : (
                 <>
@@ -944,10 +1006,10 @@ export default function ParticipantLiveQuiz() {
             <p className="text-[10px] text-white/60 uppercase font-black">
               Answering As
             </p>
-            <p className="text-white font-bold">Parth</p>
+            <p className="text-white font-bold">{participant.name}</p>
           </div>
           <div className="w-px h-8 bg-white/20" />
-          <div className="text-center">
+          {/* <div className="text-center">
             <p className="text-[10px] text-white/60 uppercase font-black">
               Live Players
             </p>
@@ -955,7 +1017,7 @@ export default function ParticipantLiveQuiz() {
               <Users className="w-3.5 h-3.5 text-white" />
               <span className="text-white font-bold">22</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </footer>
     </div>

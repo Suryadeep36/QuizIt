@@ -34,20 +34,20 @@ public class QuizWebSocketController {
     public void startQuiz(@DestinationVariable UUID sessionId, Principal principal) {
         Authentication authentication = (Authentication) principal;
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        QuestionForUserDto session = quizSessionService.startQuiz(sessionId, userPrincipal.getId());
-        WsMessageDto<QuestionForUserDto> msg = WsMessageDto.<QuestionForUserDto>builder()
+        QuestionDetailResponse session = quizSessionService.startQuiz(sessionId, userPrincipal.getId());
+        WsMessageDto<QuestionDetailResponse> msg = WsMessageDto.<QuestionDetailResponse>builder()
                 .messageType("START_QUIZ")
                 .payload(session)
                 .build();
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
-        quizTimerService.startTimer(sessionId, session.getDuration());
+        quizTimerService.startTimer(sessionId, session.getQuestionForUserDto().getDuration());
     }
 
     @MessageMapping("/quiz/next/{sessionId}")
     public void nextQuestion(@DestinationVariable UUID sessionId, Principal principal) {
         Authentication authentication = (Authentication) principal;
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        QuestionForUserDto nextQuestion = quizSessionService.moveToNextQuestion(sessionId, userPrincipal.getId());
+        QuestionDetailResponse nextQuestion = quizSessionService.moveToNextQuestion(sessionId, userPrincipal.getId());
         quizTimerService.stopTimer(sessionId);
         if (nextQuestion == null) {
             UUID quizId = quizSessionService.getQuizIdBySessionId(sessionId);
@@ -62,13 +62,13 @@ public class QuizWebSocketController {
             return;
         }
 
-        WsMessageDto<QuestionForUserDto> msg = WsMessageDto.<QuestionForUserDto>builder()
+        WsMessageDto<QuestionDetailResponse> msg = WsMessageDto.<QuestionDetailResponse>builder()
                 .messageType("NEXT_QUESTION")
                 .payload(nextQuestion)
                 .build();
 
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
-        quizTimerService.startTimer(sessionId, nextQuestion.getDuration());
+        quizTimerService.startTimer(sessionId, nextQuestion.getQuestionForUserDto().getDuration());
     }
 
     @MessageMapping("/quiz/join/{sessionId}/{participantId}")

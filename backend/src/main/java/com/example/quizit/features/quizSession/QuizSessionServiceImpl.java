@@ -11,20 +11,22 @@ import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.QuestionRepository;
+import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUser;
+import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRepository;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.features.user.UserRepository;
-import com.example.quizit.services.QuizTimerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -40,8 +42,9 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     private final ParticipantSessionRepository participantSessionRepository;
     private final ParticipantRepository participantRepository;
     private final ModelMapper modelMapper;
+    private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
+    private final JsonMapper.Builder builder;
 //    private final QuizTimerService quizTimerService;
-
 
 
     @Override
@@ -68,7 +71,6 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         quizSessionRepository.save(session);
 
 
-
         return modelMapper.map(session, QuizSessionDto.class);
     }
 
@@ -88,6 +90,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         return code;
     }
+
     //joincode
     private String randomCode() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -102,13 +105,12 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
     @Override
     public UUID getQuizIdBySessionId(UUID sessionId) {
-       QuizSession session = quizSessionRepository.findQuizSessionBySessionId(sessionId);
-       return session.getQuiz().getQuizId();
+        QuizSession session = quizSessionRepository.findQuizSessionBySessionId(sessionId);
+        return session.getQuiz().getQuizId();
     }
 
     @Override
-    public JoinQuizDto getQuizIdSessionIdByJoinCode(String joinCode)
-    {
+    public JoinQuizDto getQuizIdSessionIdByJoinCode(String joinCode) {
         QuizSession session = quizSessionRepository.findByJoinCode(joinCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Join code not found!"));
 
@@ -126,7 +128,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         List<ParticipantSession> participantSessionList = participantSessionRepository.getParticipantSessionByQuizSession_SessionId(sessionId);
 
 
-        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         HostReconnectResponse.HostReconnectResponseBuilder builder = HostReconnectResponse.builder()
                 .sessionId(session.getSessionId())
                 .quizId(session.getQuiz().getQuizId())
@@ -142,12 +144,64 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             QuestionForUserDto currentQuestion = convertToUserDto(questions.get(session.getCurrentQuestionIndex()));
             builder.currentQuestionState(currentQuestion);
         }
-
+        if (session.getStatus() == QuizSessionStatus.REVEALED) {
+            builder.currentQuestionIndex(session.getCurrentQuestionIndex());
+            Question question = questions.get(session.getCurrentQuestionIndex());
+            QuestionForUserDto currentQuestion = convertToUserDto(question);
+            builder.currentQuestionState(currentQuestion);
+            builder.correctAnswer(question.getCorrectAnswer());
+        }
         return builder.build();
     }
 
     @Override
-    public QuestionForUserDto startQuiz(UUID sessionId, UUID hostId) {
+    public ParticipantReconnectResponse getParticipantReconnectState(UUID participantId, UUID sessionId) {
+        QuizSession session = quizSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+
+        UUID quizId = session.getQuiz().getQuizId();
+
+        List<Question> questions =
+                questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
+
+        List<ParticipantSession> participantSessions =
+                participantSessionRepository
+                        .getParticipantSessionByQuizSession_SessionId(sessionId);
+
+        ParticipantReconnectResponse.ParticipantReconnectResponseBuilder builder =
+                ParticipantReconnectResponse.builder()
+                        .sessionId(session.getSessionId())
+                        .quizId(quizId)
+                        .status(session.getStatus())
+                        .joinCode(session.getJoinCode())
+                        .totalQuestions(questions.size())
+                        .participantCount(participantSessions.size());
+
+        if (session.getStatus() == QuizSessionStatus.STARTED
+                || session.getStatus() == QuizSessionStatus.REVEALED) {
+
+            Integer index = session.getCurrentQuestionIndex();
+            builder.currentQuestionIndex(index);
+
+            Question currentQuestion = questions.get(index);
+            builder.currentQuestionState(convertToUserDto(currentQuestion));
+
+            Optional<QuestionAnalyticsUser> analytics = questionAnalyticsUserRepository.findByParticipant_ParticipantIdAndQuestion_QuestionId(participantId, currentQuestion.getQuestionId());
+            analytics.ifPresent((qau) -> {
+                builder.selectedAnswer(qau.getSelectedAnswer());
+                builder.isCorrect((qau.getIsCorrect()));
+                System.out.println(qau.getSelectedAnswer());
+            });
+
+            if (session.getStatus() == QuizSessionStatus.REVEALED) {
+                builder.correctAnswer(currentQuestion.getCorrectAnswer());
+            }
+        }
+        return builder.build();
+    }
+
+    @Override
+    public QuestionDetailResponse startQuiz(UUID sessionId, UUID hostId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
@@ -156,7 +210,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             throw new IllegalStateException("Quiz already started or ended");
         }
 
-        if(!session.getHost().getId().equals(hostId)){
+        if (!session.getHost().getId().equals(hostId)) {
             throw new AccessDeniedException("quiz not found");
         }
         session.setStatus(QuizSessionStatus.STARTED);
@@ -174,8 +228,12 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         }
 
         Question firstQuestion = questions.get(0);
-
-        return convertToUserDto(firstQuestion);
+        QuestionForUserDto questionForUserDto = convertToUserDto(firstQuestion);
+        QuestionDetailResponse.QuestionDetailResponseBuilder builder = QuestionDetailResponse.builder()
+                .questionForUserDto(questionForUserDto)
+                .totalQuestions(questions.size())
+                .currentQuestionIndex(session.getCurrentQuestionIndex());
+        return builder.build();
     }
 
 
@@ -193,21 +251,21 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     }
 
 
-
     @Override
-    public QuestionForUserDto moveToNextQuestion(UUID sessionId, UUID hostId) {
+    public QuestionDetailResponse moveToNextQuestion(UUID sessionId, UUID hostId) {
 
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        if (!session.getStatus().equals(QuizSessionStatus.STARTED)) {
+        if (!session.getStatus().equals(QuizSessionStatus.STARTED) && !session.getStatus().equals(QuizSessionStatus.REVEALED)) {
             throw new IllegalStateException("Quiz is not live");
         }
 
-        if(!session.getHost().getId().equals(hostId)){
+        if (!session.getHost().getId().equals(hostId)) {
             throw new AccessDeniedException("quiz not found");
         }
 
+        session.setStatus(QuizSessionStatus.STARTED);
         UUID quizId = session.getQuiz().getQuizId();
         long totalQuestions = questionRepository.countQuestionByQuiz_QuizId(quizId);
 
@@ -222,9 +280,13 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(nextIndex);
-        return convertToUserDto(nextQuestion);
+        QuestionForUserDto questionForUserDto = convertToUserDto(nextQuestion);
+        QuestionDetailResponse.QuestionDetailResponseBuilder builder = QuestionDetailResponse.builder()
+                .questionForUserDto(questionForUserDto)
+                .totalQuestions(questions.size())
+                .currentQuestionIndex(session.getCurrentQuestionIndex());
+        return builder.build();
     }
-
 
 
     @Override
@@ -293,14 +355,14 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         QuizSession session = quizSessionRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        if (!session.getStatus().equals(QuizSessionStatus.STARTED)) {
+        if (!session.getStatus().equals(QuizSessionStatus.STARTED) && !session.getStatus().equals(QuizSessionStatus.REVEALED)) {
             throw new IllegalStateException("Quiz is not live");
         }
 
-        if(!session.getHost().getId().equals(hostId)){
+        if (!session.getHost().getId().equals(hostId)) {
             throw new AccessDeniedException("quiz not found");
         }
-
+        session.setStatus(QuizSessionStatus.REVEALED);
         UUID quizId = session.getQuiz().getQuizId();
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(session.getCurrentQuestionIndex());

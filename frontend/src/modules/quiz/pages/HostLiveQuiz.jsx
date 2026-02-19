@@ -186,10 +186,6 @@ export default function HostLiveQuiz() {
                 normalizeBackendParticipant,
               );
               setParticipants(normalizedParticipants);
-              setStage(
-                sessionRes.status === "STARTED" ? "question" : "waiting",
-              );
-
               if (
                 sessionRes.status === "STARTED" &&
                 sessionRes.currentQuestionState
@@ -206,8 +202,16 @@ export default function HostLiveQuiz() {
                   type: q.questionType,
                   correctAnswer: fullQ?.correctAnswer || null,
                 });
-                setStage("question");
                 setTimer(sessionRes.currentQuestionState.duration);
+                setStage("question");
+              }
+
+              if (sessionRes.status == "REVEALED") {
+                setCorrectAnswer(sessionRes.correctAnswer);
+                setStage("reveal");
+              }
+              if(sessionRes.status != "STARTED" || sessionRes.status != "REVEALED"){
+                setStage("waiting");
               }
 
               setLoading(false);
@@ -224,7 +228,7 @@ export default function HostLiveQuiz() {
 
         if (!sessionId) {
           const sessionRes = await createQuizSession({
-            quizId
+            quizId,
           });
 
           console.log("New Session Created:", sessionRes);
@@ -272,7 +276,7 @@ export default function HostLiveQuiz() {
 
           case "START_QUIZ":
           case "NEXT_QUESTION": {
-            const q = msg.payload;
+            const q = msg.payload.questionForUserDto;
             const fullQ = questions.find((x) => x.questionId === q.questionId);
             console.log(q);
             console.log(fullQ);

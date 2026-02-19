@@ -27,6 +27,9 @@ export const useWS = create((set) => ({
         console.log("WS Disconnected");
         set({ isConnected: false });
       },
+      onStompError: (err) => {
+        console.log(err)
+      }
     });
 
     client.activate();

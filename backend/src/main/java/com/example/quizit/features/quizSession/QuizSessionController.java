@@ -2,6 +2,7 @@ package com.example.quizit.features.quizSession;
 
 
 import com.example.quizit.dtos.HostReconnectResponse;
+import com.example.quizit.dtos.ParticipantReconnectResponse;
 import com.example.quizit.features.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +47,12 @@ public class QuizSessionController {
     @GetMapping("/{sessionId}/host-reconnect")
     public ResponseEntity<HostReconnectResponse> hostReconnect(@PathVariable UUID sessionId){
         HostReconnectResponse dto = quizSessionService.getHostReconnectState(sessionId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{sessionId}/participant-reconnect/{participantId}")
+    public ResponseEntity<ParticipantReconnectResponse> participantReconnect(@PathVariable UUID sessionId, @PathVariable UUID participantId){
+        ParticipantReconnectResponse dto = quizSessionService.getParticipantReconnectState(participantId, sessionId);
         return ResponseEntity.ok(dto);
     }
 
