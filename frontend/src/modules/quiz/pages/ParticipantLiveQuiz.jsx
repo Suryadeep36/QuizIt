@@ -663,7 +663,6 @@ export default function ParticipantLiveQuiz() {
     }
     setSelectedOption(index);
   };
-
   const submitAnswer = async (selectedValue) => {
     if (!currentQuestion || !participant) return;
 
@@ -709,15 +708,14 @@ export default function ParticipantLiveQuiz() {
           value: selectedValue,
         };
     }
-    console.log(participant.quizId);
     const payload = {
       questionId: currentQuestion.questionId,
       participantId: participant.id,
-      quizId:quizId,
+      quizId:participant.quizId,
       timeSpent,
       selectedAnswer,
       tabSwitchCount: tabSwitches,
-      quizId: participant.quizId
+
     };
 
     try {
