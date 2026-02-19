@@ -137,9 +137,12 @@ export const getQuizIdSessionIdByCode = async (joinCode) => {
   return response.data;
 };
 
-export const getParticipantSessionByParticipantIdAndSessionId = async (participantId, sessionId) => {
-  const response = await apiClient.get(
-    `/quiz-session/${sessionId}/participant-reconnect/${participantId}`
-  )
+export const AIGenQuestions = async (quizId,promptData) => {
+  const response = await apiClient.post(`quizzes/generate-with-ai/${quizId}`,promptData);
   return response.data;
-}
+};
+
+export const createAllQAQByQuizId = async (quizId) => {
+  const response = await apiClient.post(`/question-analytics-quiz/${quizId}`);
+  return response.data;
+};

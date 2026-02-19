@@ -63,4 +63,7 @@ public class Question {
     @Column(name = "allow_multiple_answers")
     private Boolean allowMultipleAnswers;
 
+    @Column(name = "is_ai_generated")
+    private Boolean isAIGenerated;
+
 }

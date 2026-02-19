@@ -2,6 +2,7 @@ package com.example.quizit.features.questionAnalyticsUser;
 
 import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.question.Question;
+import com.example.quizit.features.quiz.Quiz;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,6 +38,10 @@ public class QuestionAnalyticsUser {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "quiz_id", nullable = false)
+    private Quiz quiz;
 
     @Column(name = "time_spent")
     private Integer timeSpent;

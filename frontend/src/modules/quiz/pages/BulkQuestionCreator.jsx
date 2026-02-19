@@ -18,11 +18,9 @@ import {
   ArrowLeftRight,
   ImageIcon,
   ListChecks,
-  Sparkles,
 } from "lucide-react";
 import { useParams } from "react-router";
 import {
-  AIGenQuestions,
   createQuestion,
   deleteQuestionById,
   getQuestionsByQuizId,
@@ -31,21 +29,220 @@ import {
   updateQuestionById,
 } from "../../../services/AuthService";
 import toast from "react-hot-toast";
-import AiPromptModal from "../components/AiPromptModal";
-import { Chip } from "@mui/material";
 
-export default function QuizManagementDashboard() {
+let dummy = [
+  {
+    "content": "Which of the following is a Java keyword?",
+    "questionType": "MCQ",
+    "difficultyLevel": "EASY",
+    "duration": 30,
+    "options": {
+      "A": "class",
+      "B": "function",
+      "C": "method",
+      "D": "variable"
+    },
+    "correctAnswer": [
+      {
+        "key": "A",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "What is the size of an int in Java?",
+    "questionType": "MCQ",
+    "difficultyLevel": "NORMAL",
+    "duration": 30,
+    "options": {
+      "A": "16 bits",
+      "B": "32 bits",
+      "C": "64 bits",
+      "D": "8 bits"
+    },
+    "correctAnswer": [
+      {
+        "key": "B",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "Which of the following are valid Java access modifiers?",
+    "questionType": "MCQ",
+    "difficultyLevel": "HARD",
+    "duration": 30,
+    "options": {
+      "A": "public",
+      "B": "protected",
+      "C": "private",
+      "D": "default"
+    },
+    "correctAnswer": [
+      {
+        "key": "A",
+        "matchPairs": null
+      },
+      {
+        "key": "B",
+        "matchPairs": null
+      },
+      {
+        "key": "C",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": true,
+    "imageUrl": null
+  },
+  {
+    "content": "In Java, the 'final' keyword can be applied to a class to prevent it from being subclassed.",
+    "questionType": "TRUE_FALSE",
+    "difficultyLevel": "NORMAL",
+    "duration": 30,
+    "options": {
+      "TRUE": "TRUE",
+      "FALSE": "FALSE"
+    },
+    "correctAnswer": [
+      {
+        "key": "TRUE",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "What is the output of System.out.println(2 + 3 + \"5\");",
+    "questionType": "SHORT_ANSWER",
+    "difficultyLevel": "EASY",
+    "duration": 30,
+    "options": {},
+    "correctAnswer": [
+      {
+        "key": null,
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [
+      "55"
+    ],
+    "maxAnswerLength": 10,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "If a thread sleeps for 2000 milliseconds, how many seconds is that?",
+    "questionType": "NUMERICAL",
+    "difficultyLevel": "NORMAL",
+    "duration": 30,
+    "options": {},
+    "correctAnswer": [
+      {
+        "key": "2",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "Which collection is ordered and allows duplicate elements?",
+    "questionType": "MCQ",
+    "difficultyLevel": "NORMAL",
+    "duration": 30,
+    "options": {
+      "A": "HashSet",
+      "B": "TreeSet",
+      "C": "LinkedList",
+      "D": "ArrayList"
+    },
+    "correctAnswer": [
+      {
+        "key": "C",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "Name one advantage of using a HashMap over a TreeMap.",
+    "questionType": "SHORT_ANSWER",
+    "difficultyLevel": "HARD",
+    "duration": 30,
+    "options": {},
+    "correctAnswer": [
+      {
+        "key": null,
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [
+      "O(1) lookup",
+      "constant time lookup",
+      "fast access"
+    ],
+    "maxAnswerLength": 50,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  },
+  {
+    "content": "If each thread consumes 1 MB of stack memory, how many threads can be created with 512 MB of stack memory?",
+    "questionType": "NUMERICAL",
+    "difficultyLevel": "HARD",
+    "duration": 30,
+    "options": {},
+    "correctAnswer": [
+      {
+        "key": "512",
+        "matchPairs": null
+      }
+    ],
+    "caseSensitive": false,
+    "acceptableAnswers": [],
+    "maxAnswerLength": null,
+    "allowMultipleAnswers": false,
+    "imageUrl": null
+  }
+];
+
+
+export default function BulkQuestionCreator() {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState(null);
   const [activeTab, setActiveTab] = useState("questions");
   const [loading, setLoading] = useState(true);
-  const [questions, setQuestions] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
-  const [generating, setGenerating] = useState(false);
+
+
+
   const normalizeQuestionFromApi = (q) => {
     const baseQuestion = {
-      questionId: q.questionId,
-      quizId: q.quizId,
       content: q.content ?? "",
       questionType: q.questionType,
       duration: q.duration ?? 30,
@@ -57,7 +254,6 @@ export default function QuizManagementDashboard() {
       acceptableAnswers: q.acceptableAnswers ?? [],
       maxAnswerLength: q.maxAnswerLength ?? 200,
       allowMultipleAnswers: q.allowMultipleAnswers ?? false,
-      isAIGenerated:  q.isAIGenerated || false,
     };
 
     // Normalize options based on question type
@@ -89,23 +285,14 @@ export default function QuizManagementDashboard() {
     }
     return baseQuestion;
   };
-
+  dummy = dummy.map(q => normalizeQuestionFromApi(q))
+  const [questions, setQuestions] = useState(dummy);
   const mapOptionsToApi = (optionsArray) => ({
     A: optionsArray[0],
     B: optionsArray[1],
     C: optionsArray[2],
     D: optionsArray[3],
   });
-
-  function debounce(fn, delay = 500) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        fn(...args);
-      }, delay);
-    };
-  }
 
   const addQuestion = async (type) => {
     const newQuestion = {
@@ -176,9 +363,9 @@ export default function QuizManagementDashboard() {
         break;
     }
     try {
-      const savedQuestion = await createQuestion(newQuestion);
-      console.log("savedQuestion: ", savedQuestion);
-      setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
+      //  const savedQuestion = await createQuestion(newQuestion);
+      //  console.log("savedQuestion: " ,savedQuestion);
+      //  setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
     }
     catch (err) {
       toast.error(
@@ -189,12 +376,13 @@ export default function QuizManagementDashboard() {
     }
 
   };
-
+  const handleCloneAndSave = async () => { }
+  const handleDiscard = async () => { }
   const deleteQuestion = async (questionId) => {
     setQuestions((prev) => prev.filter((q) => q.questionId !== questionId));
 
     try {
-      await deleteQuestionById(questionId);
+      // await deleteQuestionById(questionId);
     } catch (err) {
       console.error("Failed to delete question");
     }
@@ -205,23 +393,20 @@ export default function QuizManagementDashboard() {
       prev.map((q) => (q.questionId === questionId ? { ...q, ...patch } : q)),
     );
   };
-  const updateQuestion = useRef(
-    debounce(async (questionId, patch) => {
-      let que = await updateQuestionById(questionId, patch);
-      console.log(que);
-    }, 600),
-  ).current;
+  const updateQuestion = {}
 
-   const fetchData = async () => {
+  useEffect(() => {
+    // if (!quizId) return;
+
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        const [quizData, quesData] = await Promise.all([
-          getQuizById(quizId),
-          getQuestionsByQuizId(quizId),
-        ]);
-        console.log(quesData);
-        setQuiz(quizData);
-        setQuestions(quesData.map(normalizeQuestionFromApi));
+        // setLoading(true);
+        // const [quizData, quesData] = await Promise.all([
+        //   // getQuizById(quizId),
+        //   // getQuestionsByQuizId(quizId),
+        // ]);
+        // setQuiz(quizData);
+        // setQuestions(quesData.map(normalizeQuestionFromApi));
       } catch (err) {
         console.log(err)
         toast.error(
@@ -233,8 +418,7 @@ export default function QuizManagementDashboard() {
         setLoading(false);
       }
     };
-  useEffect(() => {
-    if (!quizId) return;
+
     fetchData();
   }, [quizId]);
 
@@ -245,28 +429,6 @@ export default function QuizManagementDashboard() {
       </div>
     );
   }
-
-  const handleAiGen = async (prompt) => {
-    try {
-      // setLoading(true);
-      setGenerating(true);
-      const data = await AIGenQuestions(quizId,{prompt:prompt});
-      console.log("Ai response:", data);
-       fetchData();
-        toast.success("AI Generated Questions added to Quiz")
-    } catch (err) {
-      console.log(err)
-      toast.error(
-        err.response?.data?.message ||
-        err.message ||
-        "Questions Not generated!"
-      );
-    } finally {
-      // setLoading(false);
-      setGenerating(false);
-    }
-  };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] text-slate-800 font-sans selection:bg-white/30">
@@ -305,16 +467,6 @@ export default function QuizManagementDashboard() {
         {/* Sidebar */}
         <aside className="w-64 border-r border-white/20 p-6 sticky top-16 hidden lg:block">
           <div className="space-y-1">
-            <button
-              onClick={() => setActiveTab("questions")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "questions"
-                ? "bg-white text-[#4a9cb0] shadow-lg"
-                : "hover:bg-white/20 text-white/80 hover:text-white"
-                }`}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              Questions
-            </button>
 
             <button
               onClick={() => setActiveTab("settings")}
@@ -326,6 +478,19 @@ export default function QuizManagementDashboard() {
               <Settings className="w-5 h-5" />
               Settings
             </button>
+
+            <button
+              onClick={() => setActiveTab("questions")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "questions"
+                ? "bg-white text-[#4a9cb0] shadow-lg"
+                : "hover:bg-white/20 text-white/80 hover:text-white"
+                }`}
+            >
+              <LayoutDashboard className="w-5 h-5" />
+              Questions
+            </button>
+
+
           </div>
         </aside>
 
@@ -342,82 +507,35 @@ export default function QuizManagementDashboard() {
                     Add, edit, and organize your quiz content.
                   </p>
                 </div>
-                <div className="flex items-center gap-4">
 
-                  {/* Ai Gen Button */}
-                  <button
-                    disabled={generating}
-                    onClick={() => setOpenModal(true)}
-                    className="flex items-center gap-2 bg-[#f5a65b] text-white px-8 py-2 rounded-full font-bold hover:bg-[#f59843] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
-                  >
-                    {generating ? (
-                      <span className="animate-spin">🌀</span>
-                    ) : (
-                      <CheckCircle2 className="w-4 h-4" />
-                    )}
-                    {generating ? "Generating..." : "AiGen"}
-                  </button>
-
-                  {/* Modal */}
-                  <AiPromptModal
-                    open={openModal}
-                    onClose={() => setOpenModal(false)}
-                    onGenerate={handleAiGen}
-                  />
-                  {/* Add Question Dropdown */}
-                  <div className="relative group">
-                    <button className="bg-white text-[#4a9cb0] px-5 py-3 rounded-2xl font-bold flex items-center gap-2 hover:shadow-xl transition-all">
-                      <PlusCircle className="w-5 h-5" />
-                      Add Question
+                <div className="relative group">
+                  {/* Discard / Clear Button */}
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleDiscard}
+                      className="flex items-center gap-2 px-6 py-2 rounded-full border-2 border-red-400 text-red-500 hover:bg-red-50 font-bold transition-all active:scale-95"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Discard
                     </button>
 
-                    <div className="absolute right-0 mt-2 w-52 bg-slate-50/95 backdrop-blur-md border border-slate-200 rounded-2xl p-2 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    {/* Create / Save Button */}
+                    <button
+                      onClick={handleCloneAndSave}
+                      disabled={loading}
+                      className="flex items-center gap-2 bg-[#f5a65b] text-white px-8 py-2 rounded-full font-bold hover:bg-[#f59843] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                    >
+                      {loading ? (
+                        <span className="animate-spin">🌀</span>
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4" />
+                      )}
+                      Create Quiz
+                    </button></div>
 
-                      <button
-                        onClick={() => addQuestion("MCQ")}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
-                      >
-                        <ListTodo className="w-4 h-4 text-[#f5a65b]" />
-                        Multiple Choice
-                      </button>
 
-                      <button
-                        onClick={() => addQuestion("NUMERICAL")}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
-                      >
-                        <Hash className="w-4 h-4 text-blue-500" />
-                        Numerical
-                      </button>
-
-                      <button
-                        onClick={() => addQuestion("TRUE_FALSE")}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
-                      >
-                        <Type className="w-4 h-4 text-emerald-500" />
-                        True / False
-                      </button>
-
-                      <button
-                        onClick={() => addQuestion("SHORT_ANSWER")}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
-                      >
-                        <MessageSquare className="w-4 h-4 text-purple-500" />
-                        Short Answer
-                      </button>
-
-                      <button
-                        onClick={() => addQuestion("MATCH_FOLLOWING")}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
-                      >
-                        <ArrowLeftRight className="w-4 h-4 text-pink-500" />
-                        Match the Following
-                      </button>
-
-                    </div>
-                  </div>
 
                 </div>
-
               </div>
 
               {/* Questions */}
@@ -429,42 +547,15 @@ export default function QuizManagementDashboard() {
                   >
                     <div className="flex items-start justify-between gap-6">
                       <div className="flex-1 space-y-6">
-                        <div className="flex items-center gap-3 flex-wrap">
-
+                        <div className="flex items-center gap-3">
                           <span className="bg-[#4a9cb0] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                             Question {index + 1}
                           </span>
-
                           <span className="text-slate-300">•</span>
-
                           <span className="text-slate-600 text-xs font-medium uppercase tracking-widest">
                             {q.questionType.replace(/_/g, " ")}
                           </span>
-{q.isAIGenerated && (
-  <>
-    <span className="text-slate-300">•</span>
-    <Chip
-      icon={<Sparkles className="w-3 h-3 text-[#f5a65b]" />}
-      label="AI Generated"
-      size="small"
-      className="
-        !bg-[#f5a65b]/15
-        !text-[#f5a65b]
-        !font-semibold
-        !text-[11px]
-        !rounded-full
-        !px-2
-        !border
-        !border-[#f5a65b]/30
-        backdrop-blur-sm
-      "
-    />
-  </>
-)}
-
-
                         </div>
-
 
                         <input
                           type="text"
@@ -545,82 +636,80 @@ export default function QuizManagementDashboard() {
                         {/* MCQ */}
                         {q.questionType === "MCQ" && (
                           <div className="grid md:grid-cols-2 gap-4 mt-6">
-                            {console.log("q.options.map", q)}
-                            {
-                              q.options.map((value, i) => {
-                                const key = String.fromCharCode(65 + i);
-                                const isCorrect = q.correctAnswer?.some(
-                                  (ans) => ans.key === key,
-                                );
-                                const selectCorrectAnswer = () => {
-                                  let newCorrect;
+                            {q?.options?.map((value, i) => {
+                              const key = String.fromCharCode(65 + i);
+                              const isCorrect = q.correctAnswer?.some(
+                                (ans) => ans.key === key,
+                              );
+                              const selectCorrectAnswer = () => {
+                                let newCorrect;
 
-                                  if (q.allowMultipleAnswers) {
-                                    const exists = q.correctAnswer.some(
-                                      (ans) => ans.key === key,
-                                    );
+                                if (q.allowMultipleAnswers) {
+                                  const exists = q.correctAnswer.some(
+                                    (ans) => ans.key === key,
+                                  );
 
-                                    newCorrect = exists
-                                      ? q.correctAnswer.filter(
-                                        (ans) => ans.key !== key,
-                                      )
-                                      : [...q.correctAnswer, { key }];
-                                  } else {
-                                    newCorrect = [{ key }];
-                                  }
+                                  newCorrect = exists
+                                    ? q.correctAnswer.filter(
+                                      (ans) => ans.key !== key,
+                                    )
+                                    : [...q.correctAnswer, { key }];
+                                } else {
+                                  newCorrect = [{ key }];
+                                }
 
-                                  updateLocalQuestion(q.questionId, {
-                                    correctAnswer: newCorrect,
-                                  });
+                                updateLocalQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
 
-                                  updateQuestion(q.questionId, {
-                                    correctAnswer: newCorrect,
-                                  });
-                                };
-                                return (
+                                updateQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
+                              };
+                              return (
+                                <div
+                                  key={key}
+                                  className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white cursor-pointer`}
+                                  onClick={selectCorrectAnswer}
+                                >
                                   <div
-                                    key={key}
-                                    className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white cursor-pointer`}
-                                    onClick={selectCorrectAnswer}
-                                  >
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
+                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
     ${isCorrect
-                                          ? "border-[#f5a65b] bg-[#f5a65b] text-white"
-                                          : "border-slate-300 text-slate-400"
-                                        }
+                                        ? "border-[#f5a65b] bg-[#f5a65b] text-white"
+                                        : "border-slate-300 text-slate-400"
+                                      }
   `}
-                                    >
-                                      {isCorrect ? "✓" : key}
-                                    </div>
-
-                                    <input
-                                      type="text"
-                                      placeholder={`Option ${key}`}
-                                      className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
-                                      value={value}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onChange={(e) => {
-                                        const updatedOptions = [...q.options];
-                                        updatedOptions[i] = e.target.value;
-
-                                        updateLocalQuestion(q.questionId, {
-                                          options: updatedOptions,
-                                        });
-
-                                        updateQuestion(q.questionId, {
-                                          options:
-                                            mapOptionsToApi(updatedOptions),
-                                        });
-                                      }}
-                                    />
-
-                                    {isCorrect && (
-                                      <CheckCircle2 className="w-4 h-4 text-[#4a9cb0]" />
-                                    )}
+                                  >
+                                    {isCorrect ? "✓" : key}
                                   </div>
-                                );
-                              })}
+
+                                  <input
+                                    type="text"
+                                    placeholder={`Option ${key}`}
+                                    className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
+                                    value={value}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      const updatedOptions = [...q.options];
+                                      updatedOptions[i] = e.target.value;
+
+                                      updateLocalQuestion(q.questionId, {
+                                        options: updatedOptions,
+                                      });
+
+                                      updateQuestion(q.questionId, {
+                                        options:
+                                          mapOptionsToApi(updatedOptions),
+                                      });
+                                    }}
+                                  />
+
+                                  {isCorrect && (
+                                    <CheckCircle2 className="w-4 h-4 text-[#4a9cb0]" />
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 

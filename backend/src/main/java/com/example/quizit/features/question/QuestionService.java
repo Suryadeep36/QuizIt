@@ -7,6 +7,7 @@ public interface QuestionService {
 
     QuestionDto getQuestionById(String QuestionId, UUID userId);
     QuestionDto createQuestion(QuestionDto questionDto, UUID userId);
+    List<QuestionDto> createQuestion(List<QuestionDto> questionDto, UUID userId);
     QuestionDto updateQuestion(String QuestionId, QuestionDto questionDto, UUID userId);
     void DeleteQuestion(String QuestionId, UUID userId);
     List<QuestionDto> getAllQuestionsOfQuiz(String quizId, UUID userId);

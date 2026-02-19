@@ -8,6 +8,8 @@ import useAuth from "../../../stores/store";
 import toast from "react-hot-toast";
 import DeleteConfirmationModal from "../component/DeleteConfirmationModal";
 import AttendedQuizzes from "../../profile/components/AttendedQuizzes";
+import { Copy } from "lucide-react";
+import CloneQuizModal from "../component/CloneQuizModal";
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState([
     {
@@ -53,11 +55,11 @@ export default function Dashboard() {
 
   const hostId = (user && user.id) ? user.id : null;;
   const isDraftQuiz = (quiz) => !quiz.mode;
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
   const isServerQuiz = (quiz) => quiz.mode === "SERVER";
   const isRandomizedQuiz = (quiz) => quiz.mode === "RANDOMIZED";
   // 1. State to track which quiz is being deleted (null = modal closed)
   const [quizToDelete, setQuizToDelete] = useState(null);
-
   // 2. The actual function that runs AFTER the user types the name and clicks "Delete" in the modal
   const handleDeleteQuiz = async () => {
     if (!quizToDelete) return;
@@ -150,7 +152,22 @@ export default function Dashboard() {
                 {user?.username}
               </Typography>
             </Box>
+            <button
+              onClick={() => setIsCloneModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl border border-white/30 transition-all"
+            >
+              
+              <Copy className="w-4 h-4" />
+              Clone from Code
+            </button>
 
+            <CloneQuizModal
+              isOpen={isCloneModalOpen}
+              onClose={() => setIsCloneModalOpen(false)}
+              onRefresh={() => {
+                // Logic to refresh your quiz list
+              }}
+            />
 
             <button
               className="px-5 py-2 rounded-lg bg-white border border-cyan-200

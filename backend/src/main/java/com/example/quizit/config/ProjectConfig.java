@@ -8,6 +8,7 @@ import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.role.Role;
 import com.example.quizit.features.user.User;
 import com.example.quizit.features.user.UserDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
@@ -67,5 +68,14 @@ public class ProjectConfig {
                 );
 
         return modelMapper;
+    }
+
+    @Configuration
+    public class JacksonConfig {
+
+        @Bean
+        public ObjectMapper objectMapper() {
+            return new ObjectMapper();
+        }
     }
 }

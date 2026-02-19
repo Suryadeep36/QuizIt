@@ -23,6 +23,18 @@ public class QuestionController {
     public ResponseEntity<QuestionDto> createQuestion(@RequestBody QuestionDto question, @AuthenticationPrincipal User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(questionService.createQuestion(question,user.getId()));
     }
+    @PostMapping("/questions")
+    public ResponseEntity<List<QuestionDto>> createQuestions(
+            @RequestBody List<QuestionDto> questionList,
+            @AuthenticationPrincipal User user) {
+
+        List<QuestionDto> createdList = questionList.stream()
+                .map(question -> questionService.createQuestion(question, user.getId()))
+                .toList();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdList);
+    }
+
 
     @GetMapping("/questions/{quizid}")
     public ResponseEntity<List<QuestionDto>> getQuestionsOfQuiz(@PathVariable String quizid,@AuthenticationPrincipal User user) {

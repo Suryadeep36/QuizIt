@@ -1,4 +1,4 @@
-package com.example.quizit.features.quiz.AIQuiz;
+package com.example.quizit.features.AIQuiz;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -12,6 +12,6 @@ import lombok.*;
 public class GenerateQuizRequestDto {
 
     @NotBlank
-    @Size(max = 4000)
+    @Size(max = 300)
     private String prompt;
 }

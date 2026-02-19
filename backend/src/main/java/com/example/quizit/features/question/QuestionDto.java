@@ -27,5 +27,6 @@ public class QuestionDto {
     private List<String> acceptableAnswers;
     private Integer maxAnswerLength;
     private Boolean allowMultipleAnswers;
+    private Boolean isAIGenerated;
 
 }
