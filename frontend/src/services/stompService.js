@@ -24,8 +24,6 @@ export function nextQuestion(sessionId) {
 
 export function joinSession(sessionId, participantId) {
   const client = getClient();
-  console.log("Create new participant");
-  console.log(client);
   if (!client) return;
   client.publish({
     destination: `/app/quiz/join/${sessionId}/${participantId}`,

@@ -8,11 +8,12 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-@Data
 @Builder
-public class HostReconnectResponse {
+@Data
+public class ParticipantReconnectResponse {
     private UUID sessionId;
     private UUID quizId;
     private QuizSessionStatus status;
@@ -20,8 +21,8 @@ public class HostReconnectResponse {
     private Integer totalQuestions;
     private QuestionForUserDto currentQuestionState;
     private String joinCode;
-    // Participant info
-    private List<ParticipantSession> participants;
     private Integer participantCount;
     private List<AnswerKey> correctAnswer;
+    private Map<String, Object> selectedAnswer;
+    private Boolean isCorrect;
 }
