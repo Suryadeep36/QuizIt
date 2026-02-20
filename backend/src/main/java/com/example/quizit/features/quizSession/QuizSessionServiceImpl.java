@@ -16,6 +16,7 @@ import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRe
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.features.user.UserRepository;
+import com.example.quizit.services.QuizAntiCheatService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -44,7 +45,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
     private final ModelMapper modelMapper;
     private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
     private final JsonMapper.Builder builder;
-//    private final QuizTimerService quizTimerService;
+    private final QuizAntiCheatService quizAntiCheatService;
 
 
     @Override
@@ -127,7 +128,6 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         List<ParticipantSession> participantSessionList = participantSessionRepository.getParticipantSessionByQuizSession_SessionId(sessionId);
 
-
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         HostReconnectResponse.HostReconnectResponseBuilder builder = HostReconnectResponse.builder()
                 .sessionId(session.getSessionId())
@@ -168,6 +168,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 participantSessionRepository
                         .getParticipantSessionByQuizSession_SessionId(sessionId);
 
+        int tabSwitchesCount = quizAntiCheatService.getTabSwitchCount(sessionId, participantId);
         ParticipantReconnectResponse.ParticipantReconnectResponseBuilder builder =
                 ParticipantReconnectResponse.builder()
                         .sessionId(session.getSessionId())
@@ -175,7 +176,8 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                         .status(session.getStatus())
                         .joinCode(session.getJoinCode())
                         .totalQuestions(questions.size())
-                        .participantCount(participantSessions.size());
+                        .participantCount(participantSessions.size())
+                        .tabSwitches(tabSwitchesCount);
 
         if (session.getStatus() == QuizSessionStatus.STARTED
                 || session.getStatus() == QuizSessionStatus.REVEALED) {
@@ -300,7 +302,6 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         }
         session.setStatus(QuizSessionStatus.ENDED);
         session.setEndedAt(Instant.now());
-
         quizSessionRepository.save(session);
 
         return modelMapper.map(session, QuizSessionDto.class);

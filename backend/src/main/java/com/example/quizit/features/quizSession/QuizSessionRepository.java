@@ -12,4 +12,6 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, UUID> 
 
     boolean existsByJoinCode(String joinCode);
     Optional<QuizSession> findByJoinCode(String joinCode);
+
+    QuizSession findByQuiz_QuizId(UUID quizQuizId);
 }

@@ -7,6 +7,7 @@ import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUser;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserDto;
 import com.example.quizit.features.user.User;
 import com.example.quizit.security.UserPrincipal;
+import com.example.quizit.services.QuizAntiCheatService;
 import com.example.quizit.services.QuizTimerService;
 import com.example.quizit.features.quizSession.QuizSessionService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class QuizWebSocketController {
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ModelMapper modelMapper;
     private final QuizTimerService quizTimerService;
+    private final QuizAntiCheatService quizAntiCheatService;
 
     @MessageMapping("/quiz/start/{sessionId}")
     public void startQuiz(@DestinationVariable UUID sessionId, Principal principal) {
@@ -74,6 +76,7 @@ public class QuizWebSocketController {
     @MessageMapping("/quiz/join/{sessionId}/{participantId}")
     public void joinSession(@DestinationVariable UUID sessionId, @DestinationVariable UUID participantId) {
         ParticipantJoinedMessageDto session = quizSessionService.joinSession(sessionId, participantId);
+        quizAntiCheatService.registerParticipant(sessionId, participantId);
         WsMessageDto<ParticipantJoinedMessageDto> msg = WsMessageDto.<ParticipantJoinedMessageDto>builder()
                 .messageType("PLAYER_JOINED")
                 .payload(session)
@@ -104,5 +107,12 @@ public class QuizWebSocketController {
                 .build();
 
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
+    }
+
+    @MessageMapping("/quiz/tab-switch/{sessionId}/{participantId}")
+    public void tabSwitch(@DestinationVariable UUID sessionId,
+                          @DestinationVariable UUID participantId) {
+
+        quizAntiCheatService.handleTabSwitch(sessionId, participantId);
     }
 }
