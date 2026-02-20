@@ -112,7 +112,7 @@ public class QuizWebSocketController {
     @MessageMapping("/quiz/tab-switch/{sessionId}/{participantId}")
     public void tabSwitch(@DestinationVariable UUID sessionId,
                           @DestinationVariable UUID participantId) {
-
+        System.out.println("tab switch ws");
         quizAntiCheatService.handleTabSwitch(sessionId, participantId);
     }
 }

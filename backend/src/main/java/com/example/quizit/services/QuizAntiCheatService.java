@@ -19,20 +19,21 @@ public class QuizAntiCheatService {
     private static final int TAB_LIMIT = 3;
 
     public void registerParticipant(UUID sessionId, UUID participantId){
+        System.out.println("Register participant " + participantId + " session" + sessionId);
         antiCheatSessions
                 .computeIfAbsent(sessionId, id -> new ConcurrentHashMap<>())
                 .put(participantId, new ParticipantAntiCheatState());
     }
 
     public void handleTabSwitch(UUID sessionId, UUID participantId){
+        System.out.println("handle tab switch");
         Map<UUID, ParticipantAntiCheatState> participants = antiCheatSessions.get(sessionId);
         if(participants == null) return;
 
         ParticipantAntiCheatState state = participants.get(participantId);
         if(state == null) return;
-
         int count = state.increment(TAB_LIMIT);
-
+        System.out.println("new value " + participantId + " " + participants.get(participantId).getTabSwitches());
 //        if(state.isBlocked()){
 //            ParticipantCheatMsg.ParticipantCheatMsgBuilder builder = ParticipantCheatMsg.builder()
 //                    .participantId(participantId)
@@ -48,10 +49,12 @@ public class QuizAntiCheatService {
     }
 
     public Map<UUID, ParticipantAntiCheatState> consumeSession(UUID sessionId){
+        System.out.println("consume session called " + sessionId);
         return antiCheatSessions.remove(sessionId);
     }
 
     public int getTabSwitchCount(UUID sessionId, UUID participantId) {
+        System.out.println("Get tab switch called " + sessionId + " " + participantId);
         Map<UUID, ParticipantAntiCheatState> participants = antiCheatSessions.get(sessionId);
         if (participants == null) return 0;
 

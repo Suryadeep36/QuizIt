@@ -216,7 +216,7 @@ public class QuizServiceImpl implements QuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
         quiz.setStatus(QuizStatus.ENDED);
-        QuizSession quizSession = quizSessionRepository.findByQuiz_QuizId(quizId);
+        QuizSession quizSession = quizSessionRepository.findQuizSessionByQuiz_QuizId(quizId).getLast();
         if(quizSession == null){
             throw new RuntimeException("Quiz Session not found");
         }
@@ -245,6 +245,7 @@ public class QuizServiceImpl implements QuizService {
             Long totalTime = (Long) row[2];
             ParticipantAntiCheatState cheat = cheatStates.get(participantId);
             float tabSwitches = cheat != null ? cheat.getTabSwitches() : 0;
+            System.out.println("Tab switches for " + participantId + " " + tabSwitches);
             performances.add(
                     ParticipantPerformance.builder()
                             .participant(participantMap.get(participantId))

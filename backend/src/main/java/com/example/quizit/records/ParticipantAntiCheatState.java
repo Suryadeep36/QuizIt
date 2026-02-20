@@ -8,6 +8,7 @@ public class ParticipantAntiCheatState {
 
     public int increment(int limit){
         int val = tabSwitches.incrementAndGet();
+        System.out.println("Increment tab switch for participant " + val);
 //        if(val > limit){
 //            blocked = true;
 //        }

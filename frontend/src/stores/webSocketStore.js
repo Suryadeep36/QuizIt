@@ -3,7 +3,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { getAccessToken } from "./store";
 
-export const useWS = create((set) => ({
+export const useWS = create((set, get) => ({
   client: null,
   isConnected: false,
   connect: () => {

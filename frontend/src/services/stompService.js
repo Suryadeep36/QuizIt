@@ -44,7 +44,7 @@ export function tabSwitchEvent(sessionId, participantId){
   const client = getClient();
   if(!client) return;
   client.publish({
-    destination: `app/quiz/tab-switch/${sessionId}/${participantId}`,
+    destination: `/app/quiz/tab-switch/${sessionId}/${participantId}`,
     body: ""
   })
 }
