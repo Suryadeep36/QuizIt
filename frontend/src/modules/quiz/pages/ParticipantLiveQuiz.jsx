@@ -551,6 +551,8 @@ export default function ParticipantLiveQuiz() {
       }
 
       if (sessionRes.status == "REVEALED") {
+        console.log("Hy");
+        console.log("revealed:", sessionRes);
         setCorrectAnswer(sessionRes.correctAnswer);
         setIsAnswerCorrect(sessionRes.isCorrect);
         setStage("reveal");
@@ -608,6 +610,8 @@ export default function ParticipantLiveQuiz() {
 
           case "REVEAL_ANSWER":
             const q = msg.payload.questionForUserDto;
+            console.log( "REVEAL_ANSWER",msg.payload);
+            console.log("question",msg);
             setCurrentQuestion(q);
             setCorrectAnswer(msg.payload);
             setStage("reveal");
