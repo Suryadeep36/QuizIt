@@ -25,8 +25,9 @@ public class ServiceController {
     @PostMapping("/quiz/{quizId}/end")
     public ResponseEntity<Void> endQuiz(@PathVariable UUID quizId,@AuthenticationPrincipal User user) {
         System.out.println("endQuiz");
-        questionAnalyticsQuizService.calculateAfterQuiz(quizId,user.getId());
         quizService.endQuiz(quizId);
+        questionAnalyticsQuizService.createAllByQuizId(quizId.toString(),user.getId());
+        questionAnalyticsQuizService.calculateAfterQuiz(quizId,user.getId());
         return ResponseEntity.ok().build();
     }
 

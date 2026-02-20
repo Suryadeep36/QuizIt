@@ -224,7 +224,8 @@ public class QuizServiceImpl implements QuizService {
                 quizAntiCheatService.consumeSession(quizSession.getSessionId());
 
         if (cheatStates == null)
-            cheatStates = Map.of();
+            cheatStates = Map.of();        
+        quizRepository.save(quiz);
         Map<UUID, Participant> participantMap =
                 participantRepository.findAllByQuiz_QuizId(quizId)
                         .stream()

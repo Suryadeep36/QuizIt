@@ -37,9 +37,15 @@ public class QuestionController {
 
 
     @GetMapping("/questions/{quizid}")
-    public ResponseEntity<List<QuestionDto>> getQuestionsOfQuiz(@PathVariable String quizid,@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(questionService.getAllQuestionsOfQuiz(quizid,user.getId()));
+    public ResponseEntity<List<QuestionDto>> getQuestionsOfQuiz(@PathVariable String quizid, @AuthenticationPrincipal User user) {
+
+        UUID userId = (user != null) ? user.getId() : null;
+
+        return ResponseEntity.ok(
+                questionService.getAllQuestionsOfQuiz(quizid, userId)
+        );
     }
+
 
     @GetMapping("/quiz/{quizId}/questions-only")
     public ResponseEntity<List<QuestionForUserDto>> getQuestionsForQuiz(

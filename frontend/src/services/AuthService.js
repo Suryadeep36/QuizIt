@@ -147,6 +147,10 @@ export const createAllQAQByQuizId = async (quizId) => {
   return response.data;
 };
 
+export const getDetailedQAQ = async (quizId) => {
+  const response = await apiClient.get(`/question-analytics-quiz/quiz/${quizId}/detailed`);
+  return response.data;
+};
 export const getParticipantSessionByParticipantIdAndSessionId = async (participantId, sessionId) => {
   const response = await apiClient.get(
     `/quiz-session/${sessionId}/participant-reconnect/${participantId}`

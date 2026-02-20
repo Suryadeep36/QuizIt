@@ -15,6 +15,6 @@ public class QuestionAnalyticsQuizDto {
     private UUID questionId;
     private Integer totalAnswered;
     private Integer correctAnswerCount;
-    private UUID fastestUserId;
+    private String fastestUserId;
     private long averageTime;
 }

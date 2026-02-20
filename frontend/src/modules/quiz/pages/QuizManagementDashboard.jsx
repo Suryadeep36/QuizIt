@@ -209,7 +209,7 @@ export default function QuizManagementDashboard() {
     debounce(async (questionId, patch) => {
       let que = await updateQuestionById(questionId, patch);
       console.log(que);
-    }, 600),
+    }, 100),
   ).current;
 
    const fetchData = async () => {
