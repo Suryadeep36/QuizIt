@@ -364,6 +364,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             throw new AccessDeniedException("quiz not found");
         }
         session.setStatus(QuizSessionStatus.REVEALED);
+
         UUID quizId = session.getQuiz().getQuizId();
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
         Question nextQuestion = questions.get(session.getCurrentQuestionIndex());

@@ -89,7 +89,7 @@ const router = createBrowserRouter([
             element: <UserProfile/>
           },
           {
-            path: "quiz-analytics/question-analytics/:quizId",
+            path: "quiz-analytics/insights/:quizId",
             element: <GlobalQuizAnalytics/>
           },
           {

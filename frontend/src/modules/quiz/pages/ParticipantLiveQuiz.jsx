@@ -540,6 +540,8 @@ export default function ParticipantLiveQuiz() {
       }
 
       if (sessionRes.status == "REVEALED") {
+        console.log("Hy");
+        console.log("revealed:", sessionRes);
         setCorrectAnswer(sessionRes.correctAnswer);
         setIsAnswerCorrect(sessionRes.isCorrect);
         setStage("reveal");
