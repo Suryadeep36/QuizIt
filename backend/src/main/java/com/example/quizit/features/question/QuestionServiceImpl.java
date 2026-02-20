@@ -58,7 +58,7 @@ public class QuestionServiceImpl implements QuestionService {
             throw new ResourceNotFoundException("Quiz not found");
         }
 
-        return questionRepository.findByQuiz_QuizId(id)
+        return questionRepository.findByQuiz_QuizIdOrderByQuestionId(id)
                 .stream()
                 .map(q -> modelMapper.map(q, QuestionDto.class))
                 .toList();

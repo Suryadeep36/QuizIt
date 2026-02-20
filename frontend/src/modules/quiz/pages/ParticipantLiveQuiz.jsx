@@ -101,7 +101,6 @@ export default function ParticipantLiveQuiz() {
     selectedOption,
     handleOptionClick,
   ) => {
-    console.log(options);
     switch (type) {
       case "MCQ":
         return (
@@ -509,7 +508,6 @@ export default function ParticipantLiveQuiz() {
     setHasJoined(true);
     const init = async () => {
       const sessionRes = await getParticipantSessionByParticipantIdAndSessionId(participant.id, sessionId);
-      console.log("Reconnected session:", sessionRes);
       setTabSwitches(sessionRes.tabSwitches);
       if (sessionRes.status === "STARTED" && sessionRes.currentQuestionState) {
         const q = sessionRes.currentQuestionState;
@@ -538,7 +536,6 @@ export default function ParticipantLiveQuiz() {
         setIsAnswerCorrect(null);
         setTotalQuestions(sessionRes.totalQuestions);
         setCurrentQIndex(sessionRes.currentQuestionIndex);
-        console.log("stage set to question")
         setStage("question");
       }
 
@@ -599,9 +596,8 @@ export default function ParticipantLiveQuiz() {
             break;
 
           case "REVEAL_ANSWER":
-            const q = msg.payload.questionForUserDto;
-            setCurrentQuestion(q);
             setCorrectAnswer(msg.payload);
+            setTabSwitches(0);
             setStage("reveal");
             break;
 
@@ -678,7 +674,6 @@ export default function ParticipantLiveQuiz() {
             });
           });
         }
-        console.log(matchMap);
         selectedAnswer = {
           matchPairs: matchMap,
         };
