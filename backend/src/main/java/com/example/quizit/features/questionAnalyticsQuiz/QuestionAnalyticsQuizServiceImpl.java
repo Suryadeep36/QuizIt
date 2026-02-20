@@ -15,10 +15,11 @@ import com.example.quizit.features.user.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,7 +51,7 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
         Participant fastestParticipantRef = null;
 
         if (dto.getFastestUserId() != null) {
-            fastestParticipantRef = participantRepository.getReferenceById(dto.getFastestUserId());
+            fastestParticipantRef = participantRepository.getReferenceById(UUID.fromString(dto.getFastestUserId()));
         }
 
         QuestionAnalyticsQuiz analytics = QuestionAnalyticsQuiz.builder()
@@ -101,59 +102,66 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
     @Override
     @Transactional
     public void createAllByQuizId(String quizId, UUID userId) {
-        UUID id  = UUID.fromString(quizId);
-        List<QuestionDto> questionDtos =
-                questionService.getAllQuestionsOfQuiz(quizId, userId);
 
-        if (questionDtos.isEmpty()) return;
+        UUID id = UUID.fromString(quizId);
 
-        Quiz quizRef = quizRepository.getReferenceById(id);
+        // 1️⃣ Fetch quiz
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
-        // 1️⃣ Extract all questionIds
-        List<UUID> questionIds = questionDtos.stream()
-                .map(QuestionDto::getQuestionId)
+        // 2️⃣ Fetch all questions directly (NO security logic)
+        List<Question> questions =
+                questionRepository.findByQuiz_QuizId(id);
+
+        if (questions.isEmpty()) return;
+
+        // 3️⃣ Fetch existing analytics questionIds
+        List<UUID> questionIds = questions.stream()
+                .map(Question::getQuestionId)
                 .toList();
 
-        // 2️⃣ Fetch existing QAQ questionIds in ONE query
         List<UUID> existingQuestionIds =
                 questionAnalyticsQuizRepository.findExistingQuestionIds(questionIds);
 
-        // 3️⃣ Filter only new ones
-        List<QuestionAnalyticsQuiz> analyticsList = questionDtos.stream()
-                .filter(dto -> !existingQuestionIds.contains(dto.getQuestionId()))
-                .map(dto -> QuestionAnalyticsQuiz.builder()
-                        .quiz(quizRef)
-                        .question(
-                                questionRepository.getReferenceById(dto.getQuestionId())
+        // 4️⃣ Create analytics only for missing ones
+        List<QuestionAnalyticsQuiz> analyticsList =
+                questions.stream()
+                        .filter(q -> !existingQuestionIds.contains(q.getQuestionId()))
+                        .map(q -> QuestionAnalyticsQuiz.builder()
+                                .quiz(quiz)
+                                .question(q)
+                                .totalAnswered(0)
+                                .correctAnswerCount(0)
+                                .averageTime(0L)
+                                .fastestParticipant(null)
+                                .build()
                         )
-                        .averageTime(0)
-                        .totalAnswered(0)
-                        .correctAnswerCount(0)
-                        .fastestParticipant(null)
-                        .build()
-                )
-                .toList();
+                        .toList();
 
         if (!analyticsList.isEmpty()) {
             questionAnalyticsQuizRepository.saveAll(analyticsList);
         }
     }
 
-    @Transactional
     @Override
-    public void calculateAfterQuiz(UUID quizId,UUID  userId) {
+    @Transactional
+    public void calculateAfterQuiz(UUID quizId, UUID userId) {
 
-        // 1️⃣ Get all questions via service
-        List<QuestionDto> questions =
-                questionService.getAllQuestionsOfQuiz(quizId.toString(), userId);
+        // 1️⃣ Fetch quiz
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
+        // 2️⃣ Fetch all questions directly
+        List<Question> questions =
+                questionRepository.findByQuiz_QuizId(quizId);
 
         if (questions.isEmpty()) return;
 
-        for (QuestionDto questionDto : questions) {
+        for (Question question : questions) {
 
-            UUID questionId = questionDto.getQuestionId();
+            UUID questionId = question.getQuestionId();
 
-            // 2️⃣ Aggregate from QuestionAnalyticsUser
+            // 3️⃣ Aggregate from QuestionAnalyticsUser
             Integer totalAnswered =
                     questionAnalyticsQuizRepository.countTotalAnswered(quizId, questionId);
 
@@ -168,26 +176,37 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
                             .findFastestParticipant(
                                     quizId,
                                     questionId,
-                                    (Pageable) PageRequest.of(0, 1)
+                                    PageRequest.of(0, 1)
                             )
                             .stream()
                             .findFirst()
                             .orElse(null);
 
-            // 3️⃣ Update QuestionAnalyticsQuiz
+            // 4️⃣ Get existing analytics row OR create new one safely
             QuestionAnalyticsQuiz qaq =
                     questionAnalyticsQuizRepository
                             .findByQuestion_QuestionId(questionId)
-                            .orElseThrow();
+                            .orElseGet(() ->
+                                    QuestionAnalyticsQuiz.builder()
+                                            .quiz(quiz)
+                                            .question(question)
+                                            .totalAnswered(0)
+                                            .correctAnswerCount(0)
+                                            .averageTime(0L)
+                                            .fastestParticipant(null)
+                                            .build()
+                            );
 
-            qaq.setTotalAnswered(totalAnswered);
-            qaq.setCorrectAnswerCount(correctCount);
-            qaq.setAverageTime(avgTime);
+            // 5️⃣ Update values safely (handle nulls)
+            qaq.setTotalAnswered(totalAnswered != null ? totalAnswered : 0);
+            qaq.setCorrectAnswerCount(correctCount != null ? correctCount : 0);
+            qaq.setAverageTime(avgTime != null ? avgTime : 0L);
             qaq.setFastestParticipant(fastest);
-            questionAnalyticsQuizRepository.save(qaq);
 
+            questionAnalyticsQuizRepository.save(qaq);
         }
     }
+
 
 
     @Override
@@ -214,7 +233,7 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
                                 .averageTime(qaq.getAverageTime())
                                 .fastestUserId(
                                         qaq.getFastestParticipant() != null
-                                                ? qaq.getFastestParticipant().getParticipantId()
+                                                ? qaq.getFastestParticipant().getParticipantName()
                                                 : null
                                 )
                                 .build()

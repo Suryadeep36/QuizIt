@@ -1,12 +1,11 @@
 package com.example.quizit.features.questionAnalyticsQuiz;
 
 import com.example.quizit.features.participant.Participant;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.awt.print.Pageable;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,9 +64,10 @@ public interface QuestionAnalyticsQuizRepository extends JpaRepository<QuestionA
        FROM QuestionAnalyticsUser qau
        WHERE qau.quiz.quizId = :quizId
        AND qau.question.questionId = :questionId
+       AND qau.isCorrect = true
        ORDER BY qau.timeSpent ASC
        """)
-    List<Participant> findFastestParticipant(UUID quizId, UUID questionId, Pageable pageable);
+    List<Participant> findFastestParticipant(UUID quizId, UUID questionId, PageRequest pageable);
 
     Optional<QuestionAnalyticsQuiz> findByQuestion_QuestionId(UUID questionId);
 }

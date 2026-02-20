@@ -212,7 +212,7 @@ public class QuizServiceImpl implements QuizService {
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
 
         quiz.setStatus(QuizStatus.ENDED);
-
+        quizRepository.save(quiz);
         Map<UUID, Participant> participantMap =
                 participantRepository.findAllByQuiz_QuizId(quizId)
                         .stream()
