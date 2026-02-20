@@ -25,4 +25,5 @@ public class ParticipantReconnectResponse {
     private List<AnswerKey> correctAnswer;
     private Map<String, Object> selectedAnswer;
     private Boolean isCorrect;
+    private Integer tabSwitches;
 }

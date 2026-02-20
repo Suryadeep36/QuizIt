@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useWS } from "../../../stores/webSocketStore";
 import { useNavigate, useParams } from "react-router";
-import { joinSession } from "../../../services/stompService";
+import { joinSession, tabSwitchEvent } from "../../../services/stompService";
 import {
   createQuestionAnalyticsUser,
   getParticipantSessionByParticipantIdAndSessionId,
@@ -81,18 +81,10 @@ export default function ParticipantLiveQuiz() {
         setTabSwitches((prev) => prev + 1);
 
         if (isConnected && client?.connected) {
-          client.publish({
-            destination: `/app/quiz/${sessionId}/tab-switch`,
-            body: JSON.stringify({
-              participantId: participant.id,
-              totalSwitches: tabSwitches + 1,
-              timestamp: new Date().toISOString(),
-            }),
-          });
+          tabSwitchEvent(sessionId, participant?.id)
           toast("Tab switch detected!", {
             icon: "⚠️",
           });
-          console.log("Tab switch detected and sent to backend.");
         }
       }
     };
@@ -518,7 +510,7 @@ export default function ParticipantLiveQuiz() {
     const init = async () => {
       const sessionRes = await getParticipantSessionByParticipantIdAndSessionId(participant.id, sessionId);
       console.log("Reconnected session:", sessionRes);
-
+      setTabSwitches(sessionRes.tabSwitches);
       if (sessionRes.status === "STARTED" && sessionRes.currentQuestionState) {
         const q = sessionRes.currentQuestionState;
         setCurrentQuestion({

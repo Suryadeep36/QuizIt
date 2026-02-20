@@ -7,11 +7,14 @@ import com.example.quizit.features.participantPerformance.ParticipantPerformance
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.participantPerformance.ParticipantPerformanceRepository;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRepository;
+import com.example.quizit.features.quizSession.QuizSession;
+import com.example.quizit.features.quizSession.QuizSessionRepository;
 import com.example.quizit.features.user.UserRepository;
 import com.example.quizit.helpers.UserHelper;
+import com.example.quizit.records.ParticipantAntiCheatState;
+import com.example.quizit.services.QuizAntiCheatService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,8 @@ public class QuizServiceImpl implements QuizService {
     private final ParticipantRepository participantRepository;
     private final ParticipantPerformanceRepository participantPerformanceRepository;
     private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
+    private final QuizSessionRepository quizSessionRepository;
+    private final QuizAntiCheatService quizAntiCheatService;
     private void validateQuizTimeWindow(Instant startTime, Instant endTime) {
 
         if (startTime == null || endTime == null) {
@@ -210,8 +215,16 @@ public class QuizServiceImpl implements QuizService {
 
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
-
         quiz.setStatus(QuizStatus.ENDED);
+        QuizSession quizSession = quizSessionRepository.findQuizSessionByQuiz_QuizId(quizId).getLast();
+        if(quizSession == null){
+            throw new RuntimeException("Quiz Session not found");
+        }
+        Map<UUID, ParticipantAntiCheatState> cheatStates =
+                quizAntiCheatService.consumeSession(quizSession.getSessionId());
+
+        if (cheatStates == null)
+            cheatStates = Map.of();        
         quizRepository.save(quiz);
         Map<UUID, Participant> participantMap =
                 participantRepository.findAllByQuiz_QuizId(quizId)
@@ -230,13 +243,16 @@ public class QuizServiceImpl implements QuizService {
             UUID participantId = (UUID) row[0];
             Integer score = ((Long) row[1]).intValue();
             Long totalTime = (Long) row[2];
-
+            ParticipantAntiCheatState cheat = cheatStates.get(participantId);
+            float tabSwitches = cheat != null ? cheat.getTabSwitches() : 0;
+            System.out.println("Tab switches for " + participantId + " " + tabSwitches);
             performances.add(
                     ParticipantPerformance.builder()
                             .participant(participantMap.get(participantId))
                             .quiz(quiz)
                             .score(score)
                             .totalTimeSpent(totalTime)
+                            .cheatingRiskScore(tabSwitches)
                             .build()
             );
         }
