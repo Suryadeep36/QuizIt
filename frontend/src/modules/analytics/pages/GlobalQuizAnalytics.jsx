@@ -85,18 +85,18 @@ export default function GlobalQuizAnalytics() {
 function QuestionStatCard({ item, index, isExpanded, onToggle }) {
   const { question, analytics, accuracyPercentage } = item;
 
-  // Logic to get the readable answer instead of keys like "C" or "FALSE"
-  const getReadableAnswer = () => {
-    const correctKey = question.correctAnswer?.[0]?.key;
-    if (question.questionType === "MCQ") {
-      return question.options[correctKey] || correctKey;
-    }
-    if (question.questionType === "TRUE_FALSE") {
-      // Return "True" or "False" labels from options instead of "TRUE" key
-      return question.options[correctKey] || correctKey;
-    }
-    return correctKey; // For Short Answer and Numerical
+  // Handles resolving one or many correct answers into their readable values
+  const getResolvedAnswers = () => {
+    const answers = question.correctAnswer || [];
+    return answers.map(ans => {
+      const key = ans.key;
+      // Resolve against options map if it exists, otherwise return the raw key
+      return question.options?.[key] || key;
+    });
   };
+
+  const correctValues = getResolvedAnswers();
+  const isMultiSelect = question.allowMultipleAnswers || correctValues.length > 1;
 
   return (
     <div className={`bg-white rounded-[2rem] border transition-all duration-300 ${isExpanded ? 'shadow-xl border-[#4a9cb0]/30' : 'border-slate-200 shadow-sm'}`}>
@@ -106,16 +106,19 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
             <span className="bg-slate-100 text-slate-500 font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">
               Q{index + 1} • {question.questionType.replace('_', ' ')}
             </span>
-            <span className={`text-[9px] font-black uppercase ${question.difficultyLevel === 'HARD' ? 'text-red-500' : 'text-slate-400'}`}>
-              {question.difficultyLevel}
-            </span>
+            {/* Visual Indicator for Multi-Select */}
+            {isMultiSelect && (
+              <span className="bg-amber-100 text-amber-700 font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+                <Info size={10} /> Multiple Selection
+              </span>
+            )}
           </div>
           <h3 className="text-slate-800 font-bold text-lg leading-tight line-clamp-1">{question.content}</h3>
         </div>
 
         <div className="flex items-center gap-6">
           <div className="hidden md:block text-right">
-            <p className="text-[10px] font-black text-slate-400 uppercase">Accuracy</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Global Accuracy</p>
             <p className={`text-xl font-black ${accuracyPercentage < 40 ? 'text-red-500' : 'text-[#4a9cb0]'}`}>
               {accuracyPercentage}%
             </p>
@@ -128,11 +131,19 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
 
       {isExpanded && (
         <div className="px-6 pb-8 pt-2 bg-slate-50/50 border-t border-slate-100 rounded-b-[2rem]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
             
-            {/* Correct Answer Section */}
+            {/* CORRECT SOLUTION PANEL */}
             <div className="space-y-4">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Correct Solution</p>
+              <div className="flex items-center justify-between px-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Correct Solution</p>
+                {isMultiSelect && (
+                  <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest italic">
+                    * All must be selected
+                  </p>
+                )}
+              </div>
+
               {question.questionType === "MATCH_FOLLOWING" ? (
                 <div className="space-y-2">
                   {Object.entries(question.correctAnswer[0].matchPairs).map(([leftIdx, rightIdx]) => (
@@ -144,36 +155,45 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
                   ))}
                 </div>
               ) : (
-                <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center gap-4">
-                  <div className="bg-emerald-500 p-2 rounded-lg text-white">
-                    <CheckCircle2 size={20} />
-                  </div>
-                  <span className="text-lg font-black text-emerald-900 leading-tight">
-                    {getReadableAnswer()}
-                  </span>
+                <div className={`grid gap-2 ${isMultiSelect ? 'grid-cols-1' : 'grid-cols-1'}`}>
+                  {correctValues.map((val, i) => (
+                    <div 
+                      key={i} 
+                      className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center gap-4 transition-transform hover:scale-[1.01]"
+                    >
+                      <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-lg shadow-emerald-200">
+                        <CheckCircle2 size={18} />
+                      </div>
+                      <span className="text-base font-black text-emerald-900">
+                        {val}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Performance Metrics */}
-            <div className="grid grid-cols-1 gap-4">
+            {/* METRICS PANEL */}
+            <div className="flex flex-col gap-4">
                <div className="grid grid-cols-2 gap-4">
                   <DetailBox icon={<Users className="text-blue-500" />} label="Total Responses" value={analytics.totalAnswered} />
                   <DetailBox icon={<Target className="text-emerald-500" />} label="Correct Hits" value={analytics.correctAnswerCount} />
                </div>
                
-               <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+               <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between mt-auto">
                   <div className="flex items-center gap-4">
                     <div className="bg-orange-100 p-3 rounded-2xl text-orange-600">
                       <Zap size={24} fill="currentColor" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase">Fastest Response</p>
-                      <p className="text-lg font-black text-slate-800 uppercase tracking-tight">{analytics.fastestUserId || "N/A"}</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Top Speed</p>
+                      <p className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                        {analytics.fastestUserId || "No Data"}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase">Avg Time</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Avg Response</p>
                     <p className="text-xl font-black text-[#4a9cb0]">{analytics.averageTime}s</p>
                   </div>
                </div>
