@@ -279,8 +279,6 @@ export default function HostLiveQuiz() {
           case "NEXT_QUESTION": {
             const q = msg.payload.questionForUserDto;
             const fullQ = questions.find((x) => x.questionId === q.questionId);
-            console.log(q);
-            console.log(fullQ);
             setCurrentQuestion({
               questionId: q.questionId,
               content: q.content,
