@@ -14,7 +14,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "quiz")
+@Table(
+        name = "quiz",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_quiz_name_per_host",
+                        columnNames = {"quiz_name", "host_user_id"}
+                )
+        }
+)
 public class Quiz {
 
     @Id
@@ -22,7 +30,7 @@ public class Quiz {
     @Column(name = "quiz_id", updatable = false, nullable = false)
     private UUID quizId;
 
-    @Column(name = "quiz_name", nullable = false, unique = true)
+    @Column(name = "quiz_name", nullable = false)
     private String quizName;
 
     @ManyToOne(fetch = FetchType.LAZY)

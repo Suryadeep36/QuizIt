@@ -26,8 +26,14 @@ public class ServiceController {
     public ResponseEntity<Void> endQuiz(@PathVariable UUID quizId,@AuthenticationPrincipal User user) {
         System.out.println("endQuiz");
         quizService.endQuiz(quizId);
+        try{
         questionAnalyticsQuizService.createAllByQuizId(quizId.toString(),user.getId());
         questionAnalyticsQuizService.calculateAfterQuiz(quizId,user.getId());
+
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("QAQ");
+        }
         return ResponseEntity.ok().build();
     }
 
