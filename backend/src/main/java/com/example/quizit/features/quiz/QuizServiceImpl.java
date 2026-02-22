@@ -1,6 +1,7 @@
 package com.example.quizit.features.quiz;
 
 
+import com.example.quizit.features.allowedUser.AllowedUserSerivce;
 import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.participantPerformance.ParticipantPerformance;
@@ -40,6 +41,7 @@ public class QuizServiceImpl implements QuizService {
     private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
     private final QuizSessionRepository quizSessionRepository;
     private final QuizAntiCheatService quizAntiCheatService;
+    private final AllowedUserSerivce allowedUserSerivce;
     private void validateQuizTimeWindow(Instant startTime, Instant endTime) {
 
         if (startTime == null || endTime == null) {
@@ -79,21 +81,30 @@ public class QuizServiceImpl implements QuizService {
 
         Quiz quiz = new Quiz();
         quiz.setStatus(QuizStatus.CREATED);
+        quiz.setCreatedAt(Instant.now());
         quiz.setQuizName(quizDto.getQuizName());
         quiz.setMode(quizDto.getMode());
         quiz.setStartTime(quizDto.getStartTime());
         quiz.setEndTime(quizDto.getEndTime());
-
         quiz.setAllowGuest(quizDto.isAllowGuest());
         quiz.setShuffleQuestions(quizDto.isShuffleQuestions());
         quiz.setShowLeaderboard(quizDto.isShowLeaderboard());
-
+        quiz.setAllowGuest(quizDto.isAllowGuest());
+        quiz.setAllowAllAuthenticated(quizDto.isAllowAllAuthenticated());
         quiz.setHost(
                 userRepository.getReferenceById(userId)
         );
-
         Quiz savedQuiz = quizRepository.save(quiz);
 
+        if (quiz.getMode() == QuizMode.EXAM
+                && !quiz.isAllowAllAuthenticated()
+                && quizDto.getAllowedEmails() != null) {
+
+            allowedUserSerivce.createAllowedUserInBulk(
+                    savedQuiz.getQuizId(),
+                    quizDto.getAllowedEmails()
+            );
+        }
         return modelMapper.map(savedQuiz, QuizDto.class);
     }
 
