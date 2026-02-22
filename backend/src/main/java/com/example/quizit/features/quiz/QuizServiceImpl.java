@@ -1,6 +1,8 @@
 package com.example.quizit.features.quiz;
 
 
+import com.example.quizit.features.allowedUser.AllowedUser;
+import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.allowedUser.AllowedUserSerivce;
 import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantRepository;
@@ -15,6 +17,7 @@ import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.records.ParticipantAntiCheatState;
 import com.example.quizit.services.QuizAntiCheatService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
@@ -42,6 +45,8 @@ public class QuizServiceImpl implements QuizService {
     private final QuizSessionRepository quizSessionRepository;
     private final QuizAntiCheatService quizAntiCheatService;
     private final AllowedUserSerivce allowedUserSerivce;
+    private final AllowedUserRepository allowedUserRepository;
+
     private void validateQuizTimeWindow(Instant startTime, Instant endTime) {
 
         if (startTime == null || endTime == null) {
@@ -115,6 +120,12 @@ public class QuizServiceImpl implements QuizService {
             throw new IllegalArgumentException("Quiz data is required");
         }
 
+        if (quizDto.getQuizName() != null &&
+                quizRepository.existsByQuizNameAndHostId(
+                        quizDto.getQuizName(), userId)) {
+                throw new IllegalArgumentException("Quiz already exists");
+        }
+
         UUID quizUUID = UserHelper.parseUUID(quizId);
 
         Quiz existingQuiz = quizRepository
@@ -147,6 +158,9 @@ public class QuizServiceImpl implements QuizService {
         if (quizDto.getEndTime() != null)
             existingQuiz.setEndTime(quizDto.getEndTime());
 
+        existingQuiz.setAllowAllAuthenticated(
+                quizDto.isAllowAllAuthenticated()
+        );
         /* Settings */
         existingQuiz.setAllowGuest(quizDto.isAllowGuest());
         existingQuiz.setShuffleQuestions(quizDto.isShuffleQuestions());
@@ -169,7 +183,15 @@ public class QuizServiceImpl implements QuizService {
         Quiz existingQuiz = quizRepository.findByQuizIdAndHostId(quizUUID,userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
-        return modelMapper.map(existingQuiz, QuizDto.class);
+        List<String> emails = allowedUserRepository
+                .findAllByQuiz_QuizId(quizUUID)
+                .stream()
+                .map(AllowedUser::getEmail)
+                .toList();
+
+        QuizDto response = modelMapper.map(existingQuiz, QuizDto.class);
+        response.setAllowedEmails(emails);
+        return response;
     }
 
 
