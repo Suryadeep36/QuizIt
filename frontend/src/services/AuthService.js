@@ -160,3 +160,8 @@ export const updateQuizById = async (quizId,quizData) => {
   const response = await apiClient.post(`/quiz/${quizId}`,quizData);
   return response.data;
 };
+
+export const verifyEmail = async (VerificationData) => {
+  const response = await apiClient.post(`/verify-otp`,VerificationData);
+  return response.data;
+};

@@ -45,6 +45,10 @@ public class GlobalException {
         return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handlerRuntimeException(RuntimeException ex){
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, 500);
+        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
 
 }

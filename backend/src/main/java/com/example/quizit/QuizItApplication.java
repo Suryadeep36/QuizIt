@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 
+@EnableAsync
 @SpringBootApplication
 public class QuizItApplication implements CommandLineRunner {
 
@@ -22,7 +24,6 @@ public class QuizItApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
         //UNCOMMENT THIS PART TO ADD ROLE IN DATABASE
 //        roleRepository.findByName("ROLE_" + AppConstraint.ADMIN_ROLE).ifPresentOrElse(role -> {
 //

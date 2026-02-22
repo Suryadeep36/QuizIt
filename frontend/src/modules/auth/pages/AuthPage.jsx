@@ -2,8 +2,9 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { NavLink, useNavigate } from "react-router";
 import CircularProgress from "@mui/material/CircularProgress";
-import { registerUser, loginUser, addUserToParticipant } from "../../../services/AuthService";
+import { registerUser, loginUser, addUserToParticipant, verifyEmail } from "../../../services/AuthService";
 import useAuth, { useParticipant } from "../../../stores/store";
+import VerificationForm from "../components/VerificationForm";
 
 
 
@@ -34,6 +35,10 @@ export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const login = useAuth(state => state.login);
+
+  const [step, setStep] = useState("verify"); // "auth" or "verify"
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(false);
 
   const isParticipant = useParticipant((state) => state.isParticipant);
   const participant = useParticipant((state) => state.participant);
@@ -68,6 +73,26 @@ export default function AuthPage() {
     });
   };
 
+  const handleVerify = async (otp) => {
+    setVerificationLoading(true);
+    try {
+      await verifyEmail({ email: signupData.email, otp });
+      toast.success("Email verified! You can now login.");
+      setStep("auth");
+      setSignupData({
+        username: "",
+        email: "",
+        password: "",
+      });
+
+      setIsSignUp(false);
+    } catch (err) {
+      console.log(err)
+      setVerificationError(err.response?.data?.message || "Invalid Code");
+    } finally {
+      setVerificationLoading(false);
+    }
+  }
 
   const handleSignup = async () => {
     if (signupLoading) return;
@@ -91,15 +116,11 @@ export default function AuthPage() {
         enable: true,
       });
 
-      toast.success("Registration successful! Please sign in.");
+      toast.success("Code sent to your email!");
+      setStep("verify");
 
-      setSignupData({
-        username: "",
-        email: "",
-        password: "",
-      });
 
-      setIsSignUp(false);
+      // setIsSignUp(false);
     } catch (err) {
       setSignupError(
         err.response?.data?.message || err.message || "Registration failed"
@@ -159,6 +180,7 @@ export default function AuthPage() {
 
       navigate("/dashboard");
     } catch (err) {
+      console.log("login error", err);
       setLoginError(
         err.response?.data?.message || err.message || "Login failed"
       );
@@ -193,7 +215,6 @@ export default function AuthPage() {
               value={loginData.password}
               onChange={handleLoginChange}
             />
-
             {loginError && (
               <p className="text-red-500 text-sm mb-2">{loginError}</p>
             )}
@@ -202,52 +223,72 @@ export default function AuthPage() {
               type="button"
               onClick={handleLogin}
               disabled={loginLoading}
-              className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
+            className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] mb-6 flex justify-center items-center"
             >
               {loginLoading ? <CircularProgress size={24} color="inherit" /> : "Login"}
             </button>
           </div>
 
-          <div className="w-1/2 flex flex-col justify-center px-12 bg-gray-50">
-            <h2 className="text-3xl font-bold mb-2">Create Account</h2>
-            <p className="text-gray-500 mb-6">Start creating smarter quizzes</p>
-
-            <input
-              type="name"
-              className="auth-input"
-              placeholder="Username"
-              name="username"
-              value={signupData.username}
-              onChange={handleSignupChange}
+          {step === "verify" ? (
+            <VerificationForm
+              email={signupData.email}
+              loading={verificationLoading}
+              error={verificationError}
+              onCancel={() => setStep("auth")}
+              onVerify={handleVerify}
             />
-            <input
-              type="email"
-              className="auth-input"
-              placeholder="Email"
-              name="email"
-              value={signupData.email}
-              onChange={handleSignupChange}
-            />
-            <input
-              className="auth-input"
-              placeholder="Password"
-              type="password"
-              name="password"
-              value={signupData.password}
-              onChange={handleSignupChange}
-            />
+          ) : (
+            <div className="w-1/2 flex flex-col justify-center px-12 bg-gray-50">
+              <h2 className="text-3xl font-bold mb-2">Create Account</h2>
+              <p className="text-gray-500 mb-6">Start creating smarter quizzes</p>
 
-            {signupError && <p className="text-red-500 text-sm mb-2">{signupError}</p>}
+              <input
+                type="name"
+                className="auth-input"
+                placeholder="Username"
+                name="username"
+                value={signupData.username}
+                onChange={handleSignupChange}
+              />
+              <input
+                type="email"
+                className="auth-input"
+                placeholder="Email"
+                name="email"
+                value={signupData.email}
+                onChange={handleSignupChange}
+              />
+              <input
+                className="auth-input"
+                placeholder="Password"
+                type="password"
+                name="password"
+                value={signupData.password}
+                onChange={handleSignupChange}
+              />
 
-            <button
-              onClick={handleSignup}
-              disabled={signupLoading}
-              className="bg-orange-400 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
-            >
-              {signupLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
-            </button>
+              {signupError && <p className="text-red-500 text-sm mb-2">{signupError}</p>}
 
-          </div>
+              <button
+                onClick={handleSignup}
+                disabled={signupLoading}
+                   className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] mb-6 flex justify-center items-center"
+              >
+                {signupLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
+              </button>
+
+              {/* ADD THIS SECTION BELOW THE BUTTON */}
+              <p className="mt-4 text-xs text-center text-gray-400">
+                Already have a verification code?{" "}
+                <button
+                  onClick={() => setStep("verify")}
+                  className="text-cyan-600 hover:underline font-medium"
+                >
+                  Verify here
+                </button>
+              </p>
+            </div>
+          )}
         </div>
 
         <div
@@ -266,11 +307,12 @@ export default function AuthPage() {
             </p>
 
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {setIsSignUp(!isSignUp); setStep("auth")}}
               className="border border-white px-6 py-2 rounded-lg hover:bg-white hover:text-cyan-700 transition"
             >
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
+
             <Divider />
             <GoogleButton />
           </div>

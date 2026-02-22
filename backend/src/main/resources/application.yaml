@@ -39,6 +39,14 @@ spring:
 
   jvm:
     arguments: --add-opens=java.base/sun.misc=ALL-UNNAMED
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_SERVICE_EMAIL}
+    password: ${EMAIL_SERVICE_PASSWORD}
+    properties:
+       mail.smtp.auth: true
+       mail.smtp.starttls.enable: true
 server:
   port: ${PORT:3000}
 
@@ -86,3 +94,4 @@ groq:
   api:
     key: ${GROQ_API_KEY}
     url: https://api.groq.com/openai/v1/chat/completions
+
