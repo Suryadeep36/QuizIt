@@ -24,6 +24,7 @@ import OAuth2Success from "./modules/auth/pages/OAuth2Success.jsx";
 import BulkQuestionCreator from "./modules/quiz/pages/BulkQuestionCreator.jsx";
 import { Global } from "@emotion/react";
 import GlobalQuizAnalytics from "./modules/analytics/pages/GlobalQuizAnalytics.jsx";
+import ExamRegistration from "./modules/exam mode/pages/ExamRegistration.jsx";
 
 
 const router = createBrowserRouter([
@@ -87,6 +88,10 @@ const router = createBrowserRouter([
           {
             path: "/profile/:username",
             element: <UserProfile/>
+          },
+          {
+            path: "/register-exam",
+            element: <ExamRegistration/>
           },
           {
             path: "quiz-analytics/insights/:quizId",
