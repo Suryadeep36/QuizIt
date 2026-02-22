@@ -50,7 +50,7 @@ export default function CreateQuiz() {
       shuffleQuestions: quiz.shuffleQuestions,
       showLeaderboard: quiz.showLeaderboard,
       host: hostId,
-      allowAllAuthenticated:  quiz.mode === "RANDOMIZE" ? quiz.allowAllAuthenticated : false,
+      allowAllAuthenticated:  quiz.mode === "EXAM" ? quiz.allowAllAuthenticated : false,
       allowedEmails: quiz.allowAllAuthenticated ? [] : quiz.allowedEmails,
     };
     console.log(payload.allowedEmails);
