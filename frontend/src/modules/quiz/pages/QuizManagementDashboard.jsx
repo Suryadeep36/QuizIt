@@ -33,6 +33,7 @@ import {
 import toast from "react-hot-toast";
 import AiPromptModal from "../components/AiPromptModal";
 import { Chip } from "@mui/material";
+import QuizSettings from "../components/QuizSettings";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -219,7 +220,8 @@ export default function QuizManagementDashboard() {
           getQuizById(quizId),
           getQuestionsByQuizId(quizId),
         ]);
-        console.log(quesData);
+
+        console.log(quizData);
         setQuiz(quizData);
         setQuestions(quesData.map(normalizeQuestionFromApi));
       } catch (err) {
@@ -1354,30 +1356,11 @@ export default function QuizManagementDashboard() {
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-3xl font-bold text-white">Quiz Settings</h1>
-              <p className="text-white/70 mt-1 mb-8">
-                Update your assessment's core behavior and security.
-              </p>
-
-              <div className="bg-slate-50/90 backdrop-blur-sm border border-slate-200/50 rounded-3xl p-8 flex justify-between shadow-xl">
-                <div className="flex items-center gap-4">
-                  <AlertCircle className="w-6 h-6 text-[#f5a65b]" />
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-800">
-                      Delete Quiz
-                    </h3>
-                    <p className="text-sm text-slate-600">
-                      Permanently remove this quiz.
-                    </p>
-                  </div>
-                </div>
-                <button className="px-6 py-3 border-2 border-red-400 text-red-500 rounded-xl hover:bg-red-50 font-medium">
-                  Delete Permanently
-                </button>
-              </div>
-            </div>
-          )}
+          <QuizSettings 
+            quiz={quiz} 
+           
+          />
+        )}
         </main>
       </div>
     </div>

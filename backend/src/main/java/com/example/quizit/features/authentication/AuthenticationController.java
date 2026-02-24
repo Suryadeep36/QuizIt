@@ -1,5 +1,9 @@
 package com.example.quizit.features.authentication;
 
+import com.example.quizit.features.otpVerification.OtpRequestDto;
+import com.example.quizit.features.otpVerification.OtpResponseDto;
+import com.example.quizit.features.otpVerification.OtpVerification;
+import com.example.quizit.features.otpVerification.OtpVerificationRepository;
 import com.example.quizit.features.user.UserDto;
 import com.example.quizit.features.user.User;
 import com.example.quizit.records.LoginReuest;
@@ -11,6 +15,7 @@ import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,8 +51,9 @@ public class AuthenticationController {
    private final RegisterService registerService;
    private final UserRepository userRepository;
    private final ModelMapper modelMapper;
+    private final OtpVerificationRepository otpVerificationRepository;
 
-   @PostMapping("/login")
+    @PostMapping("/login")
    public ResponseEntity<TokenResponse> login(@RequestBody LoginReuest loginReuest, HttpServletResponse response)
    {
         Authentication authentication=  authenticate(loginReuest);
@@ -95,6 +102,32 @@ public class AuthenticationController {
 
    }
 
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody OtpRequestDto request) {
+
+        OtpVerification otpEntity = otpVerificationRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("OTP not found"));
+
+        if (!otpEntity.getOtp().equals(request.getOtp())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+        if (otpEntity.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP expired");
+        }
+
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow();
+
+        user.setEnable(true);
+        userRepository.save(user);
+
+        otpVerificationRepository.delete(otpEntity);
+
+        return ResponseEntity.ok(
+                new OtpResponseDto("Account verified successfully", true)
+        );
+    }
 
    @PostMapping("/register")
     public ResponseEntity<UserDto> registerUser(@RequestBody UserDto userDto) {

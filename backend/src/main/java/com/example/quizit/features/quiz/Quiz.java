@@ -1,10 +1,14 @@
 package com.example.quizit.features.quiz;
 
+import com.example.quizit.features.allowedUser.AllowedUser;
+import com.example.quizit.features.question.Question;
 import com.example.quizit.features.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -70,6 +74,15 @@ public class Quiz {
         this.createdAt = Instant.now();
     }
 
+    @OneToMany(mappedBy = "quiz",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Question> questions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "quiz",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<AllowedUser> allowedUsers = new ArrayList<>();
 }
 
 

@@ -152,8 +152,16 @@ export const getDetailedQAQ = async (quizId) => {
   return response.data;
 };
 export const getParticipantSessionByParticipantIdAndSessionId = async (participantId, sessionId) => {
-  const response = await apiClient.get(
-    `/quiz-session/${sessionId}/participant-reconnect/${participantId}`
-  )
+  const response = await apiClient.get(`/quiz-session/${sessionId}/participant-reconnect/${participantId}`)
   return response.data;
 }
+
+export const updateQuizById = async (quizId,quizData) => {
+  const response = await apiClient.post(`/quiz/${quizId}`,quizData);
+  return response.data;
+};
+
+export const verifyEmail = async (VerificationData) => {
+  const response = await apiClient.post(`/verify-otp`,VerificationData);
+  return response.data;
+};
