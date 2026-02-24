@@ -7,4 +7,5 @@ import java.util.UUID;
 public interface AllowedUserSerivce {
     public AllowedUserResponse createAllowedUser(AllowedUserRequest allowedUserDto);
     public void createAllowedUserInBulk(UUID quizId, List<String> emails);
+    public List<AllowedUserStatusDto> getAllAllowedUser(String quizId,UUID userId);
 }

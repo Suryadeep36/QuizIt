@@ -98,7 +98,7 @@ export default function Dashboard() {
       navigate("/auth", { replace: true });
       return;
     }
-
+     
 
     if (!user?.id) return;
 

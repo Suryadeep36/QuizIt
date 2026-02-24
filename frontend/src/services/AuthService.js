@@ -165,3 +165,19 @@ export const verifyEmail = async (VerificationData) => {
   const response = await apiClient.post(`/verify-otp`,VerificationData);
   return response.data;
 };
+
+
+export const getAllAllowedUser = async (quizId) => {
+  const response = await apiClient.get(`/allowed-user/quiz/${quizId}`);
+  return response.data;
+};
+
+export const sendInvitationToAll = async (quizId) => {
+  const response = await apiClient.post(`/quiz/${quizId}/invitations/send-all`);
+  return response.data;
+};
+
+export const sendInvitation = async (quizId,allowedUserId) => {
+  const response = await apiClient.post(`/quiz/${quizId}/invitations/${allowedUserId}/send`);
+  return response.data;
+};

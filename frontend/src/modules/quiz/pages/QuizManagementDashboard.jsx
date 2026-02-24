@@ -25,6 +25,7 @@ import {
   AIGenQuestions,
   createQuestion,
   deleteQuestionById,
+  getAllAllowedUser,
   getQuestionsByQuizId,
   getQuizById,
   getQuizsByHostId,
@@ -34,6 +35,7 @@ import toast from "react-hot-toast";
 import AiPromptModal from "../components/AiPromptModal";
 import { Chip } from "@mui/material";
 import QuizSettings from "../components/QuizSettings";
+import InvitationManager from "../components/InvitationManager";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -58,7 +60,7 @@ export default function QuizManagementDashboard() {
       acceptableAnswers: q.acceptableAnswers ?? [],
       maxAnswerLength: q.maxAnswerLength ?? 200,
       allowMultipleAnswers: q.allowMultipleAnswers ?? false,
-      isAIGenerated:  q.isAIGenerated || false,
+      isAIGenerated: q.isAIGenerated || false,
     };
 
     // Normalize options based on question type
@@ -213,28 +215,29 @@ export default function QuizManagementDashboard() {
     }, 100),
   ).current;
 
-   const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [quizData, quesData] = await Promise.all([
-          getQuizById(quizId),
-          getQuestionsByQuizId(quizId),
-        ]);
-
-        console.log(quizData);
-        setQuiz(quizData);
-        setQuestions(quesData.map(normalizeQuestionFromApi));
-      } catch (err) {
-        console.log(err)
-        toast.error(
-          err.response?.data?.message ||
-          err.message ||
-          "Quiz Not found!"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [quizData, quesData] = await Promise.all([
+        getQuizById(quizId),
+        getQuestionsByQuizId(quizId),
+      ]);
+      let users = await getAllAllowedUser(quizId);
+      console.log(users);
+      console.log(quizData);
+      setQuiz(quizData);
+      setQuestions(quesData.map(normalizeQuestionFromApi));
+    } catch (err) {
+      console.log(err)
+      toast.error(
+        err.response?.data?.message ||
+        err.message ||
+        "Quiz Not found!"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     if (!quizId) return;
     fetchData();
@@ -252,10 +255,10 @@ export default function QuizManagementDashboard() {
     try {
       // setLoading(true);
       setGenerating(true);
-      const data = await AIGenQuestions(quizId,{prompt:prompt});
+      const data = await AIGenQuestions(quizId, { prompt: prompt });
       console.log("Ai response:", data);
-       fetchData();
-        toast.success("AI Generated Questions added to Quiz")
+      fetchData();
+      toast.success("AI Generated Questions added to Quiz")
     } catch (err) {
       console.log(err)
       toast.error(
@@ -319,6 +322,16 @@ export default function QuizManagementDashboard() {
             </button>
 
             <button
+              onClick={() => setActiveTab("allowedUser")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "allowedUser"
+                ? "bg-white text-[#4a9cb0] shadow-lg"
+                : "hover:bg-white/20 text-white/80 hover:text-white"
+                }`}
+            >
+              <Settings className="w-5 h-5" />
+              Registered User
+            </button>
+            <button
               onClick={() => setActiveTab("settings")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "settings"
                 ? "bg-white text-[#4a9cb0] shadow-lg"
@@ -328,12 +341,22 @@ export default function QuizManagementDashboard() {
               <Settings className="w-5 h-5" />
               Settings
             </button>
+
+
+
           </div>
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 md:p-10">
-          {activeTab === "questions" ? (
+
+
+
+        <main className="flex-1 p-2 md:p-8">
+          {activeTab == "settings" && (<QuizSettings quiz={quiz} />)}
+
+          {(activeTab == "allowedUser" && !quiz?.allowAllAuthenticated) && (<InvitationManager quiz={quiz} />)}
+
+          {activeTab === "questions" && (
             <div className="max-w-4xl mx-auto space-y-8">
               <div className="flex items-center justify-between">
                 <div>
@@ -442,14 +465,14 @@ export default function QuizManagementDashboard() {
                           <span className="text-slate-600 text-xs font-medium uppercase tracking-widest">
                             {q.questionType.replace(/_/g, " ")}
                           </span>
-{q.isAIGenerated && (
-  <>
-    <span className="text-slate-300">•</span>
-    <Chip
-      icon={<Sparkles className="w-3 h-3 text-[#f5a65b]" />}
-      label="AI Generated"
-      size="small"
-      className="
+                          {q.isAIGenerated && (
+                            <>
+                              <span className="text-slate-300">•</span>
+                              <Chip
+                                icon={<Sparkles className="w-3 h-3 text-[#f5a65b]" />}
+                                label="AI Generated"
+                                size="small"
+                                className="
         !bg-[#f5a65b]/15
         !text-[#f5a65b]
         !font-semibold
@@ -460,9 +483,9 @@ export default function QuizManagementDashboard() {
         !border-[#f5a65b]/30
         backdrop-blur-sm
       "
-    />
-  </>
-)}
+                              />
+                            </>
+                          )}
 
 
                         </div>
@@ -1355,12 +1378,9 @@ export default function QuizManagementDashboard() {
                 </button>
               </div>
             </div>
-          ) : (
-          <QuizSettings 
-            quiz={quiz} 
-           
-          />
-        )}
+          )}
+
+
         </main>
       </div>
     </div>
