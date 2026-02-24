@@ -2,6 +2,7 @@ package com.example.quizit.features.participant;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 @Getter
@@ -17,5 +18,9 @@ public class ParticipantDto {
     private UUID userId;
     private ParticipantStatus status;
     private LocalDateTime joinedAt;
+    private String firstName;
+    private String lastName;
+    private LocalDate birthDate;
+    private String rollNumber;
 
 }
