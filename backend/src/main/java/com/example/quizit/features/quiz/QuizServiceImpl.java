@@ -229,7 +229,14 @@ public class QuizServiceImpl implements QuizService {
         Quiz existingQuiz = quizRepository.findById(quizUUID)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
-        return modelMapper.map(existingQuiz,  QuizDtoForParticipant.class);
+        return QuizDtoForParticipant.builder()
+                .quizId(quizUUID)
+                .quizName(existingQuiz.getQuizName())
+                .mode(existingQuiz.getMode())
+                .startTime(existingQuiz.getStartTime())
+                .endTime(existingQuiz.getEndTime())
+                .host(existingQuiz.getHost().getId())
+                .build();
     }
 
     @Override

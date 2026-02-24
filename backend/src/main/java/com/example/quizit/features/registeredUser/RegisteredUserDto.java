@@ -4,6 +4,7 @@ package com.example.quizit.features.registeredUser;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.util.Date;
 import java.util.UUID;
 
 @Setter
@@ -20,7 +21,7 @@ public class RegisteredUserDto {
     private String email;
 
     @NotBlank(message = "Birthdate is required")
-    private String birthdate;
+    private Date birthdate;
 
     @NotBlank(message = "Enrollment ID is required")
     private String enrollmentId;

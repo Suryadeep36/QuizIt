@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 import com.example.quizit.features.allowedUser.AllowedUser;
 
@@ -28,7 +29,7 @@ public class RegisteredUser {
 
     private String email;
 
-    private String birthdate;
+    private Date birthdate;
 
     @Column(name = "enrollment_id")
     private String enrollmentId;

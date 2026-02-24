@@ -29,10 +29,9 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
     public RegisteredUserDto registerUser(RegisteredUserDto registeredUserDto, User user) {
         System.out.println(registeredUserDto.toString());
         AllowedUser allowedUser = allowedUserRepository.findByEmailAndQuiz_QuizId(user.getEmail(), registeredUserDto.getQuizId())
-                .orElseThrow(()->new AccessDeniedException("User not found")
-        );
-        if(!allowedUser.getToken().equals(registeredUserDto.getRegistrationToken()))
-        {
+                .orElseThrow(() -> new AccessDeniedException("User not found")
+                );
+        if (!allowedUser.getToken().equals(registeredUserDto.getRegistrationToken())) {
             throw new AccessDeniedException("Access denied");
         }
 
@@ -43,15 +42,15 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
                 .build();
         participant = participantRepository.save(participant);
 
-        RegisteredUser registeredUser = modelMapper.map(registeredUserDto,RegisteredUser.class);
+        RegisteredUser registeredUser = modelMapper.map(registeredUserDto, RegisteredUser.class);
         registeredUser.setEmail(user.getEmail());
         registeredUser.setAllowedUser(allowedUser);
         registeredUser.setRegisteredAt(Instant.now());
         registeredUser.setParticipant(participant);
-
-         allowedUser.setRegistered(true);
-         allowedUserRepository.save(allowedUser);
-         registeredUser = registeredUserRepository.save(registeredUser);
-        return modelMapper.map(registeredUser,RegisteredUserDto.class);
+        registeredUser.setBirthdate(registeredUser.getBirthdate());
+        allowedUser.setRegistered(true);
+        allowedUserRepository.save(allowedUser);
+        registeredUser = registeredUserRepository.save(registeredUser);
+        return modelMapper.map(registeredUser, RegisteredUserDto.class);
     }
 }

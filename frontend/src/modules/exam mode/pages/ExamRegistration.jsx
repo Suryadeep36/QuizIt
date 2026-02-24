@@ -11,7 +11,7 @@ import {
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
 import { useParams } from "react-router";
-import { getQuizById, registerExam } from "../../../services/AuthService";
+import { getQuizById, getQuizForParticipantById, registerExam } from "../../../services/AuthService";
 
 export default function ExamRegistration() {
   const user = useAuth((state) => state.user);
@@ -28,7 +28,8 @@ export default function ExamRegistration() {
   useEffect(() => {
     async function fetchQuiz() {
       try {
-        const response = await getQuizById(quizId);
+        const response = await getQuizForParticipantById(quizId);
+        console.log(response)
         setQuiz(response);
       } catch (error) {
         toast.error("Unable to load quiz details");
@@ -45,7 +46,7 @@ export default function ExamRegistration() {
     const registrationData = {
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: user.email,
-      birthDate: formData.birthDate, // Ensure format is what backend expects (usually DD-MM-YYYY)
+      birthDate: formData.birthDate, 
       enrollmentId: formData.enrollmentId, // Changed key to match DTO
       registrationToken: token,
       quizId: quizId, // Changed key to match DTO
@@ -224,7 +225,7 @@ export default function ExamRegistration() {
                   Date of Birth
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   required
                   className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] focus:bg-white outline-none px-5 py-4 rounded-2xl font-bold text-slate-700 transition-all"
                   onChange={(e) =>
