@@ -187,3 +187,9 @@ export const registerExam = async (registrationData) => {
   const response = await apiClient.post(`/exam/register`,registrationData);
   return response.data;
 };
+
+export const sendJoinLinkToRegistered = async (quizId) => {
+  const response = await apiClient.post(`/quiz/${quizId}/join-link/send-all`);
+  return response.data;
+};
+

@@ -32,10 +32,10 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   jvm:
     arguments: --add-opens=java.base/sun.misc=ALL-UNNAMED

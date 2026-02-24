@@ -26,4 +26,6 @@ public interface AllowedUserRepository extends JpaRepository<AllowedUser, UUID> 
     Optional<AllowedUser> findByEmailAndToken(String email, String token);
 
     Optional<AllowedUser> findByEmailAndQuiz_QuizId(String email, UUID quizQuizId);
+
+    List<AllowedUser> findAllByQuiz_QuizIdAndRegistered(UUID quizId, boolean b);
 }
