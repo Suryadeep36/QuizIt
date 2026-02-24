@@ -23,12 +23,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -120,11 +116,11 @@ public class QuizServiceImpl implements QuizService {
             throw new IllegalArgumentException("Quiz data is required");
         }
 
-        if (quizDto.getQuizName() != null &&
-                quizRepository.existsByQuizNameAndHostId(
-                        quizDto.getQuizName(), userId)) {
-                throw new IllegalArgumentException("Quiz already exists");
-        }
+//        if (quizDto.getQuizName() != null &&
+//                quizRepository.existsByQuizNameAndHostId(
+//                        quizDto.getQuizName(), userId)) {
+//                throw new IllegalArgumentException("Quiz already exists");
+//        }
 
         UUID quizUUID = UserHelper.parseUUID(quizId);
 
@@ -158,13 +154,39 @@ public class QuizServiceImpl implements QuizService {
         if (quizDto.getEndTime() != null)
             existingQuiz.setEndTime(quizDto.getEndTime());
 
-        existingQuiz.setAllowAllAuthenticated(
-                quizDto.isAllowAllAuthenticated()
-        );
-        /* Settings */
+        existingQuiz.setAllowAllAuthenticated(quizDto.isAllowAllAuthenticated());
         existingQuiz.setAllowGuest(quizDto.isAllowGuest());
         existingQuiz.setShuffleQuestions(quizDto.isShuffleQuestions());
         existingQuiz.setShowLeaderboard(quizDto.isShowLeaderboard());
+
+        Set<String> updatedEmailList = quizDto.getAllowedEmails()
+                .stream()
+                .map(e -> e.trim().toLowerCase())
+                .collect(Collectors.toSet());
+
+        List<AllowedUser> existingUsers =
+                allowedUserRepository.findAllByQuiz_QuizId(quizUUID);
+
+        Set<String> currentEmailList = existingUsers.stream()
+                .map(AllowedUser::getEmail)
+                .collect(Collectors.toSet());
+
+        Set<String> usersToAdd = new HashSet<>(updatedEmailList);
+        usersToAdd.removeAll(currentEmailList);
+
+        Set<String> usersToRemove = new HashSet<>(currentEmailList);
+        usersToRemove.removeAll(updatedEmailList);
+
+
+        allowedUserSerivce.createAllowedUserInBulk(
+                quizUUID,
+                usersToAdd.stream().toList()
+        );
+
+        allowedUserSerivce.deleleAllowedUserInBulk(
+                quizUUID,
+                usersToRemove.stream().toList()
+        );
 
         Quiz savedQuiz = quizRepository.save(existingQuiz);
 
@@ -240,6 +262,13 @@ public class QuizServiceImpl implements QuizService {
         }
 
         quizRepository.delete(existingQuiz);
+    }
+
+    private Instant parseToInstant(String dateTime) {
+        LocalDateTime ldt = LocalDateTime.parse(dateTime);
+        return ldt
+                .atZone(ZoneId.of("Asia/Kolkata"))
+                .toInstant();
     }
 
     @Override

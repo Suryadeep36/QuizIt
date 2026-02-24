@@ -157,7 +157,7 @@ export const getParticipantSessionByParticipantIdAndSessionId = async (participa
 }
 
 export const updateQuizById = async (quizId,quizData) => {
-  const response = await apiClient.post(`/quiz/${quizId}`,quizData);
+  const response = await apiClient.put(`/quiz/${quizId}`,quizData);
   return response.data;
 };
 
