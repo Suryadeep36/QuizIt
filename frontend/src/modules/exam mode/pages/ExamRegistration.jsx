@@ -42,29 +42,23 @@ export default function ExamRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-   const registrationData = {
+    const registrationData = {
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: user.email,
       birthDate: formData.birthDate, // Ensure format is what backend expects (usually DD-MM-YYYY)
       enrollmentId: formData.enrollmentId, // Changed key to match DTO
-      registrationToken: token,      
-      quizId:quizId       // Changed key to match DTO
+      registrationToken: token,
+      quizId: quizId, // Changed key to match DTO
     };
 
     try {
-       const registrateredData = await registerExam(registrationData);
-       console.log(registrateredData)
-    toast.success("Details saved successfully!");
-
+      const registrateredData = await registerExam(registrationData);
+      console.log(registrateredData);
+      toast.success("Details saved successfully!");
     } catch (err) {
-          console.log(err)
-                    toast.error(
-                      err.response?.data?.message ||
-                      err.message ||
-                      "Send failed"
-                    );
+      console.log(err);
+      toast.error(err.response?.data?.message || err.message || "Send failed");
     }
-    
   };
 
   if (!quiz) {
@@ -230,7 +224,7 @@ export default function ExamRegistration() {
                   Date of Birth
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   required
                   className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] focus:bg-white outline-none px-5 py-4 rounded-2xl font-bold text-slate-700 transition-all"
                   onChange={(e) =>
