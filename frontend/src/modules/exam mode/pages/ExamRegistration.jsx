@@ -49,7 +49,7 @@ export default function ExamRegistration() {
       birthDate: formData.birthDate, 
       enrollmentId: formData.enrollmentId, // Changed key to match DTO
       registrationToken: token,
-      quizId: quizId, // Changed key to match DTO
+      quizId: quizId, 
     };
 
     try {

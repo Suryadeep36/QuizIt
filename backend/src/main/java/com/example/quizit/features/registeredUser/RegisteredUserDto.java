@@ -1,9 +1,12 @@
 package com.example.quizit.features.registeredUser;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.UUID;
 
@@ -14,14 +17,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString
 public class RegisteredUserDto {
+
     @NotBlank(message = "Name is required")
     private String name;
 
     @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank(message = "Birthdate is required")
-    private Date birthdate;
+    @NotNull(message = "Birthdate is required")
+    private LocalDate birthDate;
 
     @NotBlank(message = "Enrollment ID is required")
     private String enrollmentId;
@@ -30,5 +34,4 @@ public class RegisteredUserDto {
     private String registrationToken;
 
     private UUID quizId;
-
 }
