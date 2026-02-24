@@ -13,7 +13,7 @@ spring:
             scope:
               - email
               - profile
-              - openid
+              - openidx
 
 
   datasource:
@@ -32,10 +32,10 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
-        format_sql: false
+        format_sql: true
 
   jvm:
     arguments: --add-opens=java.base/sun.misc=ALL-UNNAMED

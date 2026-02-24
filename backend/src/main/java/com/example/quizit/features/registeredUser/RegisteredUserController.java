@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequestMapping("/quizit")
 @RestController
+@RequestMapping("/quizit/exam")
 @AllArgsConstructor
 public class RegisteredUserController {
     private final RegisteredUserService registeredUserService;
     private final UserRepository userRepository;
 
-    @PostMapping("/registerexam")
+    @PostMapping("/register")
     public ResponseEntity<RegisteredUserDto>  registerExam( @RequestBody RegisteredUserDto registeredUserDto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         System.out.println("registerExam");
