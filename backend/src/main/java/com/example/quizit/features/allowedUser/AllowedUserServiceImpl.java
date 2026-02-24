@@ -44,6 +44,7 @@ public class AllowedUserServiceImpl implements AllowedUserSerivce{
                 .registered(false)
                 .tokenExpiry(Instant.now().plusSeconds(TOKEN_EXPIRY_SECONDS))
                 .quiz(quiz)
+                .invitationStatus(InvitationStatus.NOT_SENT)
                 .build();
 
         allowedUserRepository.save(allowedUser);
@@ -76,6 +77,7 @@ public class AllowedUserServiceImpl implements AllowedUserSerivce{
                         .registered(false)
                         .tokenExpiry(Instant.now().plusSeconds(172800))
                         .quiz(quiz)
+                        .invitationStatus(InvitationStatus.NOT_SENT)
                         .build())
                 .toList();
 

@@ -1,5 +1,6 @@
 package com.example.quizit.features.quiz;
 
+import com.example.quizit.features.allowedUser.InvitationService;
 import com.example.quizit.features.user.User;
 import com.example.quizit.security.AppConstraint;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class QuizController {
     private final QuizService quizService;
-
+    private final InvitationService invitationService;
     @GetMapping("/quiz")
     @PreAuthorize( "hasRole('" + AppConstraint.ADMIN_ROLE+ "')" )
     public ResponseEntity<List<QuizDto>> getAllQuizs(Authentication authentication){
@@ -67,4 +68,19 @@ public class QuizController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/quiz/{quizId}/invitations/send-all")
+    public ResponseEntity<Void> sendAllEmail(@PathVariable UUID quizId, Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        invitationService.sendAllEmail(quizId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/quiz/{quizId}/invitations/{allowedUserId}/send")
+    public ResponseEntity<Void> sendOneEmail(@PathVariable UUID quizId, @PathVariable UUID allowedUserId, Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        invitationService.sendOneEmail(quizId, allowedUserId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

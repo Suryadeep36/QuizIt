@@ -79,4 +79,22 @@ public class EmailService {
             throw new RuntimeException("Failed to send OTP email", e);
         }
     }
+
+    @Async
+    public void sendRegisterMail(String toEmail, String subject, String htmlBody){
+        try{
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(message);
+
+        }
+        catch (MessagingException e){
+            throw new RuntimeException("Failed to send OTP email", e);
+        }
+    }
 }

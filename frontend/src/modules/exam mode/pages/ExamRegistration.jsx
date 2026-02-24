@@ -10,10 +10,11 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
+import { useParams } from "react-router";
 
 export default function ExamRegistration({ onRegister }) {
   const user = useAuth((state) => state.user);
-  
+  const {quizId, token} = useParams();
   // Quiz state including Start Time
   const [quiz] = useState({
     quizName: "Advanced System Architecture",
