@@ -181,3 +181,9 @@ export const sendInvitation = async (quizId,allowedUserId) => {
   const response = await apiClient.post(`/quiz/${quizId}/invitations/${allowedUserId}/send`);
   return response.data;
 };
+
+export const registerExam = async (registrationData) => {
+  console.log(registrationData)
+  const response = await apiClient.post(`/registerexam`,registrationData);
+  return response.data;
+};

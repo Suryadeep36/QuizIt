@@ -28,7 +28,13 @@ export default function InvitationManager({ quiz }) {
             const data = await getAllAllowedUser(quiz.quizId);
             setUsers(data || []);
         } catch (err) {
-            toast.error("Could not sync participant list");
+             console.log(err)
+                    toast.error(
+                      err.response?.data?.message ||
+                      err.message ||
+                      "Could not sync participant list"
+                    );
+         
         } finally {
             setLoading(false);
         }
@@ -46,7 +52,12 @@ export default function InvitationManager({ quiz }) {
             toast.success("All invitations sent!", { id: loadId });
             fetchUsers();
         } catch (err) {
-            toast.error("Bulk send failed", { id: loadId });
+              console.log(err)
+                    toast.error(
+                      err.response?.data?.message ||
+                      err.message ||
+                      "Bulk send failed"
+                    );
         } finally {
             setIsSendingAll(false);
         }
@@ -59,7 +70,12 @@ export default function InvitationManager({ quiz }) {
             toast.success("Sent!", { id: userId });
             fetchUsers();
         } catch (err) {
-            toast.error("Failed", { id: userId });
+                console.log(err)
+                    toast.error(
+                      err.response?.data?.message ||
+                      err.message ||
+                      "Send failed"
+                    );
         }
     };
 

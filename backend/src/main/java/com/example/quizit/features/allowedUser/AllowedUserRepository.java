@@ -8,6 +8,7 @@ import javax.swing.text.html.Option;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface AllowedUserRepository extends JpaRepository<AllowedUser, UUID> {
@@ -20,4 +21,8 @@ public interface AllowedUserRepository extends JpaRepository<AllowedUser, UUID> 
     List<AllowedUser> findAllowedUsersByQuiz_QuizIdAndInvitationStatus(UUID quizQuizId, InvitationStatus invitationStatus);
 
     List<AllowedUser> findAllowedUsersByQuiz_QuizIdAndInvitationStatusIn(UUID quizQuizId, Collection<InvitationStatus> invitationStatuses);
+
+    Optional<AllowedUser> findByEmailAndToken(String email, String token);
+
+    Optional<AllowedUser> findByEmailAndQuiz_QuizId(String email, UUID quizQuizId);
 }

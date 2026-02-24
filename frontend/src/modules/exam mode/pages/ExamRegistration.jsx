@@ -11,9 +11,9 @@ import {
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
 import { useParams } from "react-router";
-import { getQuizById } from "../../../services/AuthService";
+import { getQuizById, registerExam } from "../../../services/AuthService";
 
-export default function ExamRegistration({ onRegister }) {
+export default function ExamRegistration() {
   const user = useAuth((state) => state.user);
   const { quizId, token } = useParams();
   const [quiz, setQuiz] = useState(null);
@@ -22,7 +22,7 @@ export default function ExamRegistration({ onRegister }) {
     firstName: "",
     lastName: "",
     birthDate: "",
-    studentId: "",
+    enrollmentId: "",
   });
 
   useEffect(() => {
@@ -40,17 +40,31 @@ export default function ExamRegistration({ onRegister }) {
     }
   }, [quizId]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const participantData = {
-      ...formData,
+   const registrationData = {
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: user.email,
-      fullName: `${formData.firstName} ${formData.lastName}`.trim(),
-      registrationTime: new Date().toISOString(),
-      token: token
+      birthDate: formData.birthDate, // Ensure format is what backend expects (usually DD-MM-YYYY)
+      enrollmentId: formData.enrollmentId, // Changed key to match DTO
+      registrationToken: token,      
+      quizId:quizId       // Changed key to match DTO
     };
+
+    try {
+       const registrateredData = await registerExam(registrationData);
+       console.log(registrateredData)
     toast.success("Details saved successfully!");
-    onRegister(participantData);
+
+    } catch (err) {
+          console.log(err)
+                    toast.error(
+                      err.response?.data?.message ||
+                      err.message ||
+                      "Send failed"
+                    );
+    }
+    
   };
 
   if (!quiz) {
@@ -234,7 +248,7 @@ export default function ExamRegistration({ onRegister }) {
                   placeholder="Ex: 2024-ARCH-01"
                   className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] focus:bg-white outline-none px-5 py-4 rounded-2xl font-bold text-slate-700 transition-all placeholder:text-slate-300"
                   onChange={(e) =>
-                    setFormData({ ...formData, studentId: e.target.value })
+                    setFormData({ ...formData, enrollmentId: e.target.value })
                   }
                 />
               </div>

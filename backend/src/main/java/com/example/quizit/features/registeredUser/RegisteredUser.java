@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.Instant;
 import java.util.UUID;
 import com.example.quizit.features.allowedUser.AllowedUser;
 
@@ -35,7 +37,9 @@ public class RegisteredUser {
     @JoinColumn(name = "participant_id", nullable = false, unique = true)
     private Participant participant;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "allowed_user_id", nullable = false,unique = true)
     private AllowedUser allowedUser;
+
+    private Instant registeredAt;
 }

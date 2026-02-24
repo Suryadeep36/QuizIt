@@ -13,6 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.nio.file.AccessDeniedException;
+
 @RestControllerAdvice
 public class GlobalException {
 
@@ -50,5 +52,11 @@ public class GlobalException {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, 500);
         return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handlerAccessDeniedException(AccessDeniedException ex){
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, 403);
+        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
 
 }
