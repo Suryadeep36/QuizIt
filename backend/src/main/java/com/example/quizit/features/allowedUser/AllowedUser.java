@@ -43,4 +43,12 @@ public class AllowedUser {
     @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
+    @Column(name = "invitation_status")
+    @Enumerated(EnumType.STRING)
+    private InvitationStatus invitationStatus;
+
+    private Instant invitationSentAt;
+
+    private String deliveryErrorMessage;
+
 }

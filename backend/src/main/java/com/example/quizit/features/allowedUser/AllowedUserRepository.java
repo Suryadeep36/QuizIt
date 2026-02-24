@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface AllowedUserRepository extends JpaRepository<AllowedUser, UUID> {
 
     boolean existsAllowedUserByEmailAndQuiz_QuizId(String email, UUID quizQuizId);
+
+    List<AllowedUser> findAllowedUsersByQuiz_QuizIdAndInvitationStatus(UUID quizQuizId, InvitationStatus invitationStatus);
 }
