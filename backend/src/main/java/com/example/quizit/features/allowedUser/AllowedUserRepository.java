@@ -17,6 +17,7 @@ public interface AllowedUserRepository extends JpaRepository<AllowedUser, UUID> 
 
     List<AllowedUser> findAllByQuiz_QuizId(UUID quizId);
 
+    void deleteAllowedUsersByQuiz_QuizIdAndEmailIn(UUID quizQuizId, Collection<String> emails);
 
     List<AllowedUser> findAllowedUsersByQuiz_QuizIdAndInvitationStatus(UUID quizQuizId, InvitationStatus invitationStatus);
 

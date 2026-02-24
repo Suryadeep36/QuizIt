@@ -85,6 +85,18 @@ public class AllowedUserServiceImpl implements AllowedUserSerivce{
         allowedUserRepository.saveAll(allowedUsers);
     }
 
+    @Override
+    @Transactional
+    public void deleleAllowedUserInBulk(UUID quizId, List<String> emails) {
+        if (quizId == null) {
+            throw new IllegalArgumentException("quiz id is null");
+        }
+
+        if (emails == null || emails.isEmpty()) {
+            return;
+        }
+        allowedUserRepository.deleteAllowedUsersByQuiz_QuizIdAndEmailIn(quizId, emails);
+    }
 
     @Override
     public List<AllowedUserStatusDto> getAllAllowedUser(String quizId,UUID userId) {
