@@ -90,7 +90,7 @@ const router = createBrowserRouter([
             element: <UserProfile/>
           },
           {
-            path: "/register-exam",
+            path: "/register-exam/:quizId/:token",
             element: <ExamRegistration/>
           },
           {
