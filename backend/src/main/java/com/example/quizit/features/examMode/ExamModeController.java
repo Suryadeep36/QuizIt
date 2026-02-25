@@ -1,6 +1,7 @@
 package com.example.quizit.features.examMode;
 
 import com.example.quizit.features.user.User;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +22,12 @@ public class ExamModeController {
     @PostMapping("/verify")
     public ResponseEntity<PreRegisterResponse> verifyParticipant(
             @RequestBody PreRegisterUserDto userDto,
-            Authentication authentication) {
+            Authentication authentication, HttpServletRequest request) {
         System.out.println("Verify");
         User user = (User) authentication.getPrincipal();
-        PreRegisterResponse response = examModeService.preRegisterParticipant(userDto, user.getId());
-
+        String userAgent = request.getHeader("User-Agent");
+        String ipAddress = request.getRemoteAddr();
+        PreRegisterResponse response = examModeService.preRegisterParticipant(userDto, user.getId(), userAgent, ipAddress);
         return ResponseEntity.ok(response);
     }
 }

@@ -26,7 +26,7 @@ public class ExamModeServiceImpl implements ExamModeService{
     private final AllowedUserRepository allowedUserRepository;
     private final ModelMapper modelMapper;
     @Override
-    public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId) {
+    public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId, String userAgent, String ipAddress) {
         AllowedUser allowedUser = allowedUserRepository.findByEmailAndQuiz_QuizId(
                 preRegisterUserDto.getEmail(),
                 preRegisterUserDto.getQuizId()
@@ -50,7 +50,9 @@ public class ExamModeServiceImpl implements ExamModeService{
         if (!allowedUser.isRegistered()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not registered");
         }
-
+        registeredUser.setUserAgent(userAgent);
+        registeredUser.setIpAddress(ipAddress);
+        registeredUserRepository.save(registeredUser);
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
                 .participant(modelMapper.map(registeredUser.getParticipant(), ParticipantDto.class))

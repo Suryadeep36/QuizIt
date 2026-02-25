@@ -3,5 +3,5 @@ package com.example.quizit.features.examMode;
 import java.util.UUID;
 
 public interface ExamModeService {
-    public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId);
+    public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId, String userAgent, String ipAddress);
 }
