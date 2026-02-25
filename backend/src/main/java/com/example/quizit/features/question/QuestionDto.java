@@ -28,5 +28,6 @@ public class QuestionDto {
     private Integer maxAnswerLength;
     private Boolean allowMultipleAnswers;
     private Boolean isAIGenerated;
+    private Integer displayOrder;
 
 }

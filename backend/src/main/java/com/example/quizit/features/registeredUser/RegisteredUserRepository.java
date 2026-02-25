@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface RegisteredUserRepository extends JpaRepository<RegisteredUser, UUID> {
 
      public RegisteredUser save(RegisteredUser registeredUser);
+
+     RegisteredUser findByAllowedUser_Id(UUID allowedUserId);
 }

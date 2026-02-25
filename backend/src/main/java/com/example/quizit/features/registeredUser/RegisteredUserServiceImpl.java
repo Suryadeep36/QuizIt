@@ -3,6 +3,7 @@ package com.example.quizit.features.registeredUser;
 import com.example.quizit.features.allowedUser.AllowedUser;
 import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.allowedUser.AllowedUserSerivce;
+import com.example.quizit.features.allowedUser.InvitationStatus;
 import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.user.User;
@@ -26,7 +27,7 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
 
     @Override
     @Transactional
-    public RegisteredUserDto registerUser(RegisteredUserDto registeredUserDto, User user) {
+    public RegisteredUserDto registerUser(RegisteredUserDto registeredUserDto, User user, String userAgent, String ipAddress) {
         System.out.println(registeredUserDto.toString());
         AllowedUser allowedUser = allowedUserRepository.findByEmailAndQuiz_QuizId(user.getEmail(), registeredUserDto.getQuizId())
                 .orElseThrow(() -> new AccessDeniedException("User not found")
@@ -48,7 +49,10 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
         registeredUser.setRegisteredAt(Instant.now());
         registeredUser.setParticipant(participant);
         registeredUser.setBirthdate(registeredUser.getBirthdate());
+        registeredUser.setUserAgent(userAgent);
+        registeredUser.setIpAddress(ipAddress);
         allowedUser.setRegistered(true);
+        allowedUser.setInvitationStatus(InvitationStatus.REGISTERED);
         allowedUserRepository.save(allowedUser);
         registeredUser = registeredUserRepository.save(registeredUser);
         return modelMapper.map(registeredUser, RegisteredUserDto.class);

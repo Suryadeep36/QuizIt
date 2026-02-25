@@ -47,7 +47,7 @@ export default function ExamRegistration() {
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: user.email,
       birthDate: formData.birthDate, 
-      enrollmentId: formData.enrollmentId, // Changed key to match DTO
+      enrollmentId: formData.enrollmentId,
       registrationToken: token,
       quizId: quizId, 
     };

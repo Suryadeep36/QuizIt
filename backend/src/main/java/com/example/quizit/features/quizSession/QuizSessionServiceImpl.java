@@ -128,7 +128,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         List<ParticipantSession> participantSessionList = participantSessionRepository.getParticipantSessionByQuizSession_SessionId(sessionId);
 
-        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
         HostReconnectResponse.HostReconnectResponseBuilder builder = HostReconnectResponse.builder()
                 .sessionId(session.getSessionId())
                 .quizId(session.getQuiz().getQuizId())
@@ -162,7 +162,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         UUID quizId = session.getQuiz().getQuizId();
 
         List<Question> questions =
-                questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
+                questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
 
         List<ParticipantSession> participantSessions =
                 participantSessionRepository
@@ -223,7 +223,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         UUID quizId = session.getQuiz().getQuizId();
 
-        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
 
         if (questions.isEmpty()) {
             throw new IllegalStateException("No questions found for this quiz!");
@@ -248,6 +248,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .duration(q.getDuration())
                 .questionType(q.getQuestionType())
                 .imageUrl(q.getImageUrl())
+                .displayOrder(q.getDisplayOrder())
                 .allowMultipleAnswers(q.getAllowMultipleAnswers())
                 .build();
     }
@@ -280,7 +281,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         session.setCurrentQuestionIndex(nextIndex);
         quizSessionRepository.save(session);
 
-        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
         Question nextQuestion = questions.get(nextIndex);
         QuestionForUserDto questionForUserDto = convertToUserDto(nextQuestion);
         QuestionDetailResponse.QuestionDetailResponseBuilder builder = QuestionDetailResponse.builder()
@@ -366,7 +367,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         session.setStatus(QuizSessionStatus.REVEALED);
 
         UUID quizId = session.getQuiz().getQuizId();
-        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByQuestionId(quizId);
+        List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
         Question nextQuestion = questions.get(session.getCurrentQuestionIndex());
         return nextQuestion.getCorrectAnswer();
     }

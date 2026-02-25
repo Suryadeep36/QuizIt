@@ -4,6 +4,7 @@ import com.example.quizit.features.emailService.EmailService;
 import com.example.quizit.features.role.Role;
 import com.example.quizit.features.role.RoleRepository;
 import com.example.quizit.security.AppConstraint;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -50,6 +51,8 @@ public class QuizItApplication implements CommandLineRunner {
 //
 //            roleRepository.save(roleOb);
 //        });
+
+
     }
 
 

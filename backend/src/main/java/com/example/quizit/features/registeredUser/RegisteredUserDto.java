@@ -33,5 +33,10 @@ public class RegisteredUserDto {
     @NotBlank(message = "registration Token is required")
     private String registrationToken;
 
+    private String userAgent;
+
+    private String ipAddress;
+
+
     private UUID quizId;
 }

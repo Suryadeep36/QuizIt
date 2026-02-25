@@ -35,6 +35,12 @@ public class RegisteredUser {
     @Column(name = "enrollment_id")
     private String enrollmentId;
 
+    @Column(name = "user_agent", length = 512)
+    private String userAgent;
+
+    @Column(name = "ip_address", length = 50)
+    private String ipAddress;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "participant_id", nullable = false, unique = true)
     private Participant participant;

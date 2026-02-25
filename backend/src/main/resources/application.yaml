@@ -53,7 +53,7 @@ server:
 # JVM args (NOTE: ths is usually NOT read from application.yml)
 
 # ===============================
-# JWT Security Configuration
+# JWT lity Configuration
 # ===============================
 
 security:
@@ -95,3 +95,8 @@ groq:
     key: ${GROQ_API_KEY}
     url: https://api.groq.com/openai/v1/chat/completions
 
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG

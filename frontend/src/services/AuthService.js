@@ -193,3 +193,8 @@ export const sendJoinLinkToRegistered = async (quizId) => {
   return response.data;
 };
 
+export const verifyParticipant = async (participantData) => {
+  const response = await apiClient.post(`/exam-room/verify`, participantData)
+  return response.data;
+}
+

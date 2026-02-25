@@ -61,6 +61,7 @@ export default function QuizManagementDashboard() {
       maxAnswerLength: q.maxAnswerLength ?? 200,
       allowMultipleAnswers: q.allowMultipleAnswers ?? false,
       isAIGenerated: q.isAIGenerated || false,
+      displayOrder: q.displayOrder || 0
     };
 
     // Normalize options based on question type
@@ -570,7 +571,6 @@ export default function QuizManagementDashboard() {
                         {/* MCQ */}
                         {q.questionType === "MCQ" && (
                           <div className="grid md:grid-cols-2 gap-4 mt-6">
-                            {console.log("q.options.map", q)}
                             {
                               q.options.map((value, i) => {
                                 const key = String.fromCharCode(65 + i);
