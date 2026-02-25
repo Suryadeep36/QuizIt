@@ -1,6 +1,7 @@
 package com.example.quizit.features.quiz;
 
 import com.example.quizit.features.allowedUser.InvitationService;
+import com.example.quizit.features.registeredUser.SendJoinLinkService;
 import com.example.quizit.features.user.User;
 import com.example.quizit.security.AppConstraint;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public class QuizController {
     private final QuizService quizService;
     private final InvitationService invitationService;
+    private final SendJoinLinkService sendJoinLinkService;
+
     @GetMapping("/quiz")
     @PreAuthorize( "hasRole('" + AppConstraint.ADMIN_ROLE+ "')" )
     public ResponseEntity<List<QuizDto>> getAllQuizs(Authentication authentication){
@@ -83,4 +86,15 @@ public class QuizController {
         invitationService.sendOneEmail(quizId, allowedUserId, userId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/quiz/{quizId}/join-link/send-all")
+    public ResponseEntity<Void> sendJoinLinkAll(@PathVariable UUID quizId,Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        sendJoinLinkService.sendJoinLinkAll(quizId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+
+
 }

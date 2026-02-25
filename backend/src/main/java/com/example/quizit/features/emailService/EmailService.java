@@ -94,7 +94,7 @@ public class EmailService {
 
         }
         catch (MessagingException e){
-            throw new RuntimeException("Failed to send OTP email", e);
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 }

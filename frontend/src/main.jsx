@@ -25,11 +25,13 @@ import BulkQuestionCreator from "./modules/quiz/pages/BulkQuestionCreator.jsx";
 import { Global } from "@emotion/react";
 import GlobalQuizAnalytics from "./modules/analytics/pages/GlobalQuizAnalytics.jsx";
 import ExamRegistration from "./modules/exam mode/pages/ExamRegistration.jsx";
+import PreQuizWaitingRoom from "./modules/exam mode/pages/PreQuizWaitingRoom.jsx";
+import SecurityProvider from "./modules/exam mode/component/SecurityProvider.jsx";
 
 
 const router = createBrowserRouter([
   // 1. NO NAVBAR ROUTES (Landing, Auth, Live Quiz Taking)
-  
+
   {
     path: "/",
     element: <LandingPage />, // Landing page has its own internal nav
@@ -87,19 +89,19 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/profile/:username",
-            element: <UserProfile/>
+            element: <UserProfile />
           },
           {
             path: "/register-exam/:quizId/:token",
-            element: <ExamRegistration/>
+            element: <ExamRegistration />
           },
           {
             path: "quiz-analytics/insights/:quizId",
-            element: <GlobalQuizAnalytics/>
+            element: <GlobalQuizAnalytics />
           },
           {
             path: "/create",
-            element: <BulkQuestionCreator/>
+            element: <BulkQuestionCreator />
           },
           {
             path: "/run-quiz-host/:quizId",
@@ -119,6 +121,26 @@ const router = createBrowserRouter([
           },
         ],
       },
+
+
+    ]
+
+  },
+  // Protected Routes (Require Login + No Navbar)
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        // Parent Security Wrapper
+        element: <SecurityProvider />,
+        children: [
+          {
+            path: "/waiting-room/:quizId",
+            element: <PreQuizWaitingRoom />
+          },
+          // You can add the actual Quiz component here too
+        ]
+      }
     ]
   }
 ]);

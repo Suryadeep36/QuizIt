@@ -13,13 +13,30 @@ import {
     Users
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getAllAllowedUser, sendInvitation, sendInvitationToAll } from "../../../services/AuthService";
+import { getAllAllowedUser, sendInvitation,sendJoinLinkToRegistered } from "../../../services/AuthService";
 
 export default function InvitationManager({ quiz }) {
     const [isSendingAll, setIsSendingAll] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const [isSendingLinksAll, setIsSendingLinksAll] = useState(false);
+
+const handleSendJoinLinksToRegistered = async () => {
+    setIsSendingLinksAll(true);
+    const loadId = toast.loading("Sending join links to registered users...");
+    try {
+        // Replace this with your actual service call
+        await sendJoinLinkToRegistered(quiz.quizId); 
+        toast.success("Join links sent to all registered participants!", { id: loadId });
+        fetchUsers();
+    } catch (err) {
+        toast.error(err.message || "Failed to send join links", { id: loadId });
+    } finally {
+        setIsSendingLinksAll(false);
+    }
+};
 
     const fetchUsers = useCallback(async () => {
         if (!quiz?.quizId) return;
@@ -112,27 +129,40 @@ export default function InvitationManager({ quiz }) {
         <div className="flex-1 p-2 max-w-5l mx-auto w-full animate-in fade-in slide-in-from-bottom-4">
             <div className="flex flex-col gap-8">
 
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg text-white">
-                                <Users className="w-5 h-5" />
-                            </div>
-                            <h1 className="text-3xl font-bold text-white">Registry</h1>
-                        </div>
-                        <p className="text-white/70">Managing <span className="text-white font-bold">{users.length}</span> whitelisted participants for <span className="italic">{quiz?.quizName}</span>.</p>
-                    </div>
+                {/* Header Section Updates */}
+<div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div>
+        <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg text-white">
+                <Users className="w-5 h-5" />
+            </div>
+            <h1 className="text-3xl font-bold text-white">Registry</h1>
+        </div>
+        <p className="text-white/70">Managing <span className="text-white font-bold">{users.length}</span> whitelisted participants.</p>
+    </div>
 
-                    <button
-                        onClick={handleInviteAll}
-                        disabled={isSendingAll || users.length === 0}
-                        className="bg-[#f5a65b] hover:bg-[#f59843] disabled:opacity-50 text-white px-8 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95"
-                    >
-                        {isSendingAll ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        Send All Invites
-                    </button>
-                </div>
+    <div className="flex flex-wrap gap-3">
+        {/* NEW: Send Join Link Button */}
+        <button
+            onClick={handleSendJoinLinksToRegistered}
+            disabled={isSendingLinksAll || !users.some(u => u.registered)}
+            className="bg-[#1b8599] hover:bg-[#166d7d] disabled:opacity-50 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95"
+        >
+            {isSendingLinksAll ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+            Send Join Links
+        </button>
+
+        {/* Existing Invite All Button */}
+        <button
+            onClick={handleInviteAll}
+            disabled={isSendingAll || users.length === 0}
+            className="bg-[#f5a65b] hover:bg-[#f59843] disabled:opacity-50 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95"
+        >
+            {isSendingAll ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Invite All
+        </button>
+    </div>
+</div>
 
                 {/* Main Card */}
                 <div className="bg-slate-50/90 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col">
