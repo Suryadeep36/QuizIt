@@ -112,6 +112,8 @@ export const useParticipant = create(
       participant: {
         id: null,
         name: null,
+        email: null,
+        entrollmentId: null,
         status: null,
         quizId: null,
         sessionId: null,
@@ -127,6 +129,14 @@ export const useParticipant = create(
         set({ participant: data });
       },
 
+      updateParticipant: (data) =>
+        set((state) => ({
+          participant: {
+            ...state.participant,
+            ...data,
+          },
+        })),
+        
       participantCreation: async (createData) => {
         try {
           const responseData = await createParticipant(createData);
