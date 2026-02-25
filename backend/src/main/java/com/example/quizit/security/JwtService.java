@@ -91,7 +91,7 @@ public class JwtService {
 
     public Jws<Claims> parse(String token) {
         return Jwts.parser() // ChatGPT
-                .setSigningKey(key)  // ChatGPT
+                .verifyWith(key)  // ChatGPT
                 .build()             // ChatGPT
                 .parseSignedClaims(token);
     }

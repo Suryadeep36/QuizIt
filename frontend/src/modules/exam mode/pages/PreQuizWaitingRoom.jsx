@@ -13,13 +13,16 @@ import {
 import { useParams, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
-import { getQuizForParticipantById } from "../../../services/AuthService";
+import {
+  getQuizForParticipantById,
+  verifyParticipant,
+} from "../../../services/AuthService";
 
 export default function PreQuizWaitingRoom() {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const user = useAuth((state) => state.user);
-  
+
   const [quiz, setQuiz] = useState({
     quizId: "ef7d764a-a550-429a-8dc4-79d19722dbbe",
     quizName: "bhul tari che",
@@ -27,8 +30,8 @@ export default function PreQuizWaitingRoom() {
     status: null,
     mode: "EXAM",
     startTime: "2026-02-25T13:15:00Z",
-    endTime: "2026-02-26T13:01:00Z"
-});
+    endTime: "2026-02-26T13:01:00Z",
+  });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [birthDate, setBirthDate] = useState("");
@@ -74,11 +77,12 @@ export default function PreQuizWaitingRoom() {
     e.preventDefault();
     try {
       setSubmitting(true);
-      // Replace with your actual validation service call
-      // await verifyParticipant({ quizId, birthDate, email: user.email });
-      toast.success("Identity Verified! Starting...");
-      navigate(`/exam/${quizId}/session`);
+      const data = await verifyParticipant({ quizId, birthDate, email: user.email });
+      console.log(data);
+      // toast.success("Identity Verified! Starting...");
+      // navigate(`/exam/${quizId}/session`);
     } catch (err) {
+      console.log(err);
       toast.error(err.response?.data?.message || "Verification failed");
     } finally {
       setSubmitting(false);
@@ -89,7 +93,9 @@ export default function PreQuizWaitingRoom() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#1b8599] animate-spin mb-4" />
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Synchronizing with Server...</p>
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">
+          Synchronizing with Server...
+        </p>
       </div>
     );
   }
@@ -97,13 +103,14 @@ export default function PreQuizWaitingRoom() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-0 md:p-6 font-sans">
       <div className="w-full max-w-[1000px] bg-white md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-slate-100 min-h-[600px]">
-        
         {/* LEFT SIDE: Quiz Metadata */}
         <div className="w-full md:w-[40%] bg-[#1b8599] p-8 md:p-12 text-white flex flex-col justify-between relative">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full mb-6 border border-white/10">
               <ClipboardCheck className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Pre-Exam Check</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Pre-Exam Check
+              </span>
             </div>
 
             <h1 className="text-3xl md:text-4xl font-black uppercase leading-tight mb-8">
@@ -112,35 +119,62 @@ export default function PreQuizWaitingRoom() {
 
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10"><Calendar className="w-5 h-5" /></div>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                  <Calendar className="w-5 h-5" />
+                </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase opacity-60">Scheduled Date</p>
-                  <p className="font-bold">{new Date(quiz?.startTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  <p className="text-[10px] font-bold uppercase opacity-60">
+                    Scheduled Date
+                  </p>
+                  <p className="font-bold">
+                    {new Date(quiz?.startTime).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10"><Clock className="w-5 h-5" /></div>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                  <Clock className="w-5 h-5" />
+                </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase opacity-60">Start Time</p>
-                  <p className="font-bold">{new Date(quiz?.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-[10px] font-bold uppercase opacity-60">
+                    Start Time
+                  </p>
+                  <p className="font-bold">
+                    {new Date(quiz?.startTime).toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10"><Timer className="w-5 h-5" /></div>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                  <Timer className="w-5 h-5" />
+                </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase opacity-60">Duration</p>
-                  <p className="font-bold">60 Minutes</p> 
+                  <p className="text-[10px] font-bold uppercase opacity-60">
+                    Duration
+                  </p>
+                  <p className="font-bold">60 Minutes</p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div className="relative z-10 pt-8 border-t border-white/10 mt-10">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2 text-white">Status</p>
+            <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2 text-white">
+              Status
+            </p>
             <p className="text-sm font-medium leading-relaxed">
-              {isTooEarly ? "The portal is locked. Please return 5 minutes before the start time." : "The portal is open. Verify your identity to enter."}
+              {isTooEarly
+                ? "The portal is locked. Please return 5 minutes before the start time."
+                : "The portal is open. Verify your identity to enter."}
             </p>
           </div>
         </div>
@@ -156,12 +190,15 @@ export default function PreQuizWaitingRoom() {
                 </div>
               </div>
               <header>
-                <h2 className="text-2xl font-black text-slate-800 uppercase">Access Restricted</h2>
+                <h2 className="text-2xl font-black text-slate-800 uppercase">
+                  Access Restricted
+                </h2>
                 <p className="text-slate-400 text-sm font-medium mt-2">
-                  Please return to this link 5 minutes before <br/> the exam start time.
+                  Please return to this link 5 minutes before <br /> the exam
+                  start time.
                 </p>
               </header>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
               >
@@ -172,26 +209,39 @@ export default function PreQuizWaitingRoom() {
             /* STATE 2: CHECK-IN OPEN (< 5 MINS) */
             <div className="w-full">
               <header className="mb-8 text-center md:text-left">
-                <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Identity Verification</h2>
-                <p className="text-slate-400 text-sm font-medium">Verify your credentials to initialize the proctored session.</p>
+                <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
+                  Identity Verification
+                </h2>
+                <p className="text-slate-400 text-sm font-medium">
+                  Verify your credentials to initialize the proctored session.
+                </p>
               </header>
 
               {/* Countdown Bar */}
-<div className="bg-slate-700 text-white p-6 rounded-[2rem] mb-10 flex items-center justify-center shadow-xl shadow-slate-200">
-  <div className="flex flex-col items-center">
-    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Time Remaining</span>
-    <span className="text-3xl font-black font-mono tracking-tighter text-orange-500">
-      {String(minutesLeft).padStart(2, '0')}:{String(secondsLeft).padStart(2, '0')}
-    </span>
-  </div>
-</div>
+              <div className="bg-slate-700 text-white p-6 rounded-[2rem] mb-10 flex items-center justify-center shadow-xl shadow-slate-200">
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Time Remaining
+                  </span>
+                  <span className="text-3xl font-black font-mono tracking-tighter text-orange-500">
+                    {String(minutesLeft).padStart(2, "0")}:
+                    {String(secondsLeft).padStart(2, "0")}
+                  </span>
+                </div>
+              </div>
 
               <form onSubmit={handleStartQuiz} className="space-y-6">
                 <div className="bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#1b8599]"><User className="w-6 h-6" /></div>
+                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#1b8599]">
+                    <User className="w-6 h-6" />
+                  </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Authenticated Email</p>
-                    <p className="text-sm font-black text-slate-800">{user?.email || "student@example.com"}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">
+                      Authenticated Email
+                    </p>
+                    <p className="text-sm font-black text-slate-800">
+                      {user?.email || "student@example.com"}
+                    </p>
                   </div>
                 </div>
 
@@ -200,12 +250,11 @@ export default function PreQuizWaitingRoom() {
                     <LockKeyhole size={12} /> Security Key (Birthdate)
                   </label>
                   <input
-                    type="text"
+                    type="date"
                     required
-                    placeholder="DD-MM-YYYY"
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] focus:bg-white outline-none px-6 py-4 rounded-2xl font-black text-slate-700 transition-all text-xl tracking-widest placeholder:text-slate-200"
+                    className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] focus:bg-white outline-none px-6 py-4 rounded-2xl font-black text-slate-700 transition-all text-xl tracking-widest"
                   />
                 </div>
 
@@ -214,7 +263,8 @@ export default function PreQuizWaitingRoom() {
                   disabled={submitting}
                   className="w-full bg-[#1b8599] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-[#166d7d] transition-all shadow-xl shadow-[#1b8599]/20 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
                 >
-                  {submitting ? "Verifying Identity..." : "Start Assessment"} <ArrowRight className="w-5 h-5" />
+                  {submitting ? "Verifying Identity..." : "Start Assessment"}{" "}
+                  <ArrowRight className="w-5 h-5" />
                 </button>
               </form>
             </div>

@@ -2,6 +2,7 @@ package com.example.quizit.features.registeredUser;
 
 import com.example.quizit.features.user.User;
 import com.example.quizit.features.user.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,10 @@ public class RegisteredUserController {
     private final UserRepository userRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<RegisteredUserDto>  registerExam( @RequestBody RegisteredUserDto registeredUserDto, Authentication authentication) {
+    public ResponseEntity<RegisteredUserDto> registerExam(@RequestBody RegisteredUserDto registeredUserDto, Authentication authentication, HttpServletRequest request) {
         User user = (User) authentication.getPrincipal();
-        System.out.println("registerExam");
-       return ResponseEntity.ok(registeredUserService.registerUser(registeredUserDto,user));
+        String userAgent = request.getHeader("User-Agent");
+        String ipAddress = request.getRemoteAddr();
+        return ResponseEntity.ok(registeredUserService.registerUser(registeredUserDto, user, userAgent, ipAddress));
     }
 }
