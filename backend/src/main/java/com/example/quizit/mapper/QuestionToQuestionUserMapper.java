@@ -15,6 +15,7 @@ public class QuestionToQuestionUserMapper {
         userDto.setOptions(dto.getOptions());
         userDto.setDuration(dto.getDuration());
         userDto.setQuestionType(dto.getQuestionType());
+        userDto.setDisplayOrder(dto.getDisplayOrder());
         return userDto;
     }
 }

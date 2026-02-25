@@ -66,4 +66,7 @@ public class Question {
     @Column(name = "is_ai_generated")
     private Boolean isAIGenerated;
 
+    @Column(name = "display_order", nullable = true)
+    private Integer displayOrder;
+
 }

@@ -24,4 +24,6 @@ public class QuestionForUserDto {
     private Boolean caseSensitive;
     private Integer maxAnswerLength;
     private Boolean allowMultipleAnswers;
+    private Integer displayOrder;
+
 }

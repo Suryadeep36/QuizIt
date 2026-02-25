@@ -23,6 +23,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuizRepository quizRepository;
     private final ModelMapper modelMapper;
     private final QuestionToQuestionUserMapper questionMapper;
+    private static Integer counter = 0;
     @Override
     public QuestionDto getQuestionById(String QuestionId, UUID userId) {
 
@@ -58,7 +59,7 @@ public class QuestionServiceImpl implements QuestionService {
             throw new ResourceNotFoundException("Quiz not found");
         }
 
-        return questionRepository.findByQuiz_QuizIdOrderByQuestionId(id)
+        return questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(id)
                 .stream()
                 .map(q -> modelMapper.map(q, QuestionDto.class))
                 .toList();
@@ -112,10 +113,16 @@ public class QuestionServiceImpl implements QuestionService {
                 .findByQuizIdAndHostId(questionDto.getQuizId(), userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
+        Integer maxOrder = questionRepository
+                .findMaxDisplayOrderByQuizId(questionDto.getQuizId());
+
+        int nextOrder = (maxOrder == null) ? 10 : maxOrder + 10;
 
         Question question = modelMapper.map(questionDto, Question.class);
+
         question.setQuiz(quiz);
         question.setIsAIGenerated(false);
+        question.setDisplayOrder(nextOrder);
         Question savedQuestion = questionRepository.save(question);
         return modelMapper.map(savedQuestion, QuestionDto.class);
     }
@@ -128,12 +135,27 @@ public class QuestionServiceImpl implements QuestionService {
             throw new IllegalArgumentException("Question list cannot be empty");
         }
 
+        UUID quizId = questionList.get(0).getQuizId();
+
+        if (quizId == null) {
+            throw new IllegalArgumentException("Quiz ID is required");
+        }
+
+        Quiz quiz = quizRepository
+                .findByQuizIdAndHostId(quizId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
+        Integer maxOrder = questionRepository
+                .findMaxDisplayOrderByQuizId(quizId);
+
+        int nextOrder = (maxOrder == null) ? 10 : maxOrder + 10;
+
         List<Question> questionEntities = new ArrayList<>();
 
         for (QuestionDto questionDto : questionList) {
 
-            if (questionDto.getQuizId() == null) {
-                throw new IllegalArgumentException("Quiz ID is required");
+            if (!quizId.equals(questionDto.getQuizId())) {
+                throw new IllegalArgumentException("All questions must belong to same quiz");
             }
 
             if (questionDto.getCorrectAnswer() == null) {
@@ -144,25 +166,28 @@ public class QuestionServiceImpl implements QuestionService {
                 throw new IllegalArgumentException("Duration is required");
             }
 
-            if (!questionDto.getAllowMultipleAnswers() &&
+            boolean allowMultiple =
+                    Boolean.TRUE.equals(questionDto.getAllowMultipleAnswers());
+
+            if (!allowMultiple &&
                     questionDto.getCorrectAnswer().size() > 1) {
                 throw new IllegalArgumentException("Multiple correct answers not allowed");
             }
 
-            Quiz quiz = quizRepository
-                    .findByQuizIdAndHostId(questionDto.getQuizId(), userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
-
             Question question = modelMapper.map(questionDto, Question.class);
+
             question.setQuiz(quiz);
+            question.setIsAIGenerated(false);
+            question.setDisplayOrder(nextOrder);
+
+            nextOrder += 10;
 
             questionEntities.add(question);
         }
 
-        // 🔥 Batch save
-        List<Question> savedQuestions = questionRepository.saveAll(questionEntities);
+        List<Question> savedQuestions =
+                questionRepository.saveAll(questionEntities);
 
-        // Convert back to DTO
         return savedQuestions.stream()
                 .map(q -> modelMapper.map(q, QuestionDto.class))
                 .toList();
@@ -259,6 +284,4 @@ public class QuestionServiceImpl implements QuestionService {
 
         questionRepository.delete(question);
     }
-
-
 }

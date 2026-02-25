@@ -187,3 +187,4 @@ export const registerExam = async (registrationData) => {
   const response = await apiClient.post(`/exam/register`,registrationData);
   return response.data;
 };
+
