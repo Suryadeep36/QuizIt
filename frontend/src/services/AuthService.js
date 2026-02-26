@@ -198,3 +198,8 @@ export const verifyParticipant = async (participantData) => {
   return response.data;
 }
 
+export const checkStatusForRegistered = async (token) => {
+  const response = await apiClient.get(`/exam/register-status/${token}`)
+  return response.data;
+}
+
