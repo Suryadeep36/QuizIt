@@ -16,6 +16,9 @@ public class QuestionToQuestionUserMapper {
         userDto.setDuration(dto.getDuration());
         userDto.setQuestionType(dto.getQuestionType());
         userDto.setDisplayOrder(dto.getDisplayOrder());
+        userDto.setImageUrl(dto.getImageUrl());
+        userDto.setCaseSensitive(dto.getCaseSensitive());
+        userDto.setAllowMultipleAnswers(dto.getAllowMultipleAnswers());
         return userDto;
     }
 }
