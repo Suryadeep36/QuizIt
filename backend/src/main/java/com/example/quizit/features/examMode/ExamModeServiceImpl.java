@@ -6,14 +6,17 @@ import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.allowedUser.InvitationStatus;
 import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantDto;
+import com.example.quizit.features.participant.ParticipantStatus;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.features.question.QuestionDto;
+import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.QuestionRepository;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.features.registeredUser.RegisteredUser;
 import com.example.quizit.features.registeredUser.RegisteredUserDto;
 import com.example.quizit.features.registeredUser.RegisteredUserRepository;
+import com.example.quizit.mapper.QuestionToQuestionUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -39,7 +42,7 @@ public class ExamModeServiceImpl implements ExamModeService{
     private final QuestionRepository questionRepository;
     private final QuizRepository quizRepository;
     private final ExamRedisService examRedisService;
-
+    private final QuestionToQuestionUserMapper mapper;
     @Override
     public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId, String userAgent, String ipAddress) {
         AllowedUser allowedUser = allowedUserRepository.findByEmailAndQuiz_QuizId(
@@ -67,12 +70,13 @@ public class ExamModeServiceImpl implements ExamModeService{
         }
         registeredUser.setUserAgent(userAgent);
         registeredUser.setIpAddress(ipAddress);
+        registeredUser.getParticipant().setStatus(ParticipantStatus.READY);
         registeredUserRepository.save(registeredUser);
-
         Quiz quiz = quizRepository.getReferenceById(preRegisterUserDto.getQuizId());
         List<Question> questionList = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(preRegisterUserDto.getQuizId());
-        List<QuestionDto> questionDtos = questionList.stream()
+        List<QuestionForUserDto> questionDtos = questionList.stream()
                 .map((q) -> modelMapper.map(q, QuestionDto.class))
+                .map(mapper::toUserDto)
                 .collect(Collectors.toList());
         Duration duration = Duration.between(quiz.getStartTime(), quiz.getEndTime());
 

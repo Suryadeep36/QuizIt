@@ -28,7 +28,5 @@ public class ExamModeController {
         return ResponseEntity.ok(response);
     }
 
-//    @PostMapping("/start")
-//    public void startExam(@RequestBody )
 
 }

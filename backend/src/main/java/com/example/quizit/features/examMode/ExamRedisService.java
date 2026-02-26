@@ -1,7 +1,6 @@
 package com.example.quizit.features.examMode;
 
-import com.example.quizit.features.question.Question;
-import com.example.quizit.features.question.QuestionDto;
+import com.example.quizit.features.question.QuestionForUserDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,36 +14,36 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class ExamRedisService {
 
-    /*
-    * Attempt key = attempt:{quizId}:participant:{participantId}
-    * Question map key = quiz:{quizId}:questions:{questionId}
-    * Question order key = quiz:{quizId}:order:{participantId}
-    * */
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     private static final String ATTEMPT_KEY_PREFIX = "attempt:";
-    private static final String QUESTION_KEY_PREFIX = "quiz:";
+    private static final String QUIZ_KEY_PREFIX = "quiz:";
     private static final long EXTRA_SECONDS = Duration.ofHours(2).getSeconds();
 
-    public void setTTL(String key, long durationInSeconds){
+    public void setTTL(String key, long durationInSeconds) {
         redisTemplate.expire(key,
                 durationInSeconds + EXTRA_SECONDS,
                 TimeUnit.SECONDS);
     }
-    public String getAttemptKey(UUID quizId, UUID participantId){
+
+    public String getAttemptKey(UUID quizId, UUID participantId) {
         return ATTEMPT_KEY_PREFIX + quizId + ":participant:" + participantId;
     }
 
-    public String getQuestionMapKey(UUID quizId, UUID questionId){
-        return QUESTION_KEY_PREFIX + quizId + ":question:" + questionId;
+    public String getQuestionMapKey(UUID quizId, UUID questionId) {
+        return QUIZ_KEY_PREFIX + quizId + ":question:" + questionId;
     }
 
-    public String getQuestionOrderKey(UUID quizId, UUID participantId){
-        return QUESTION_KEY_PREFIX + quizId + ":order:" + participantId;
+    public String getQuestionOrderKey(UUID quizId, UUID participantId) {
+        return QUIZ_KEY_PREFIX + quizId + ":order:" + participantId;
     }
 
-    public String getQuestionCachedMarker(UUID quizId){
-        return QUESTION_KEY_PREFIX + quizId + ":questions:cached";
+    public String getQuestionCachedMarker(UUID quizId) {
+        return QUIZ_KEY_PREFIX + quizId + ":questions:cached";
+    }
+
+    public String getAnswerKey(UUID quizId, UUID participantId) {
+        return ATTEMPT_KEY_PREFIX + quizId + ":participant:" + participantId + ":answers";
     }
 
     public void initializeAttempt(UUID quizId,
@@ -69,9 +68,13 @@ public class ExamRedisService {
 
         redisTemplate.opsForHash().putAll(key, fields);
         setTTL(key, duration.getSeconds());
+        String answerKey = getAnswerKey(quizId, participantId);
+        redisTemplate.expire(answerKey,
+                duration.getSeconds() + EXTRA_SECONDS,
+                TimeUnit.SECONDS);
     }
 
-    public void cacheQuestions(UUID quizId, List<QuestionDto> questions, Duration duration) {
+    public void cacheQuestions(UUID quizId, List<QuestionForUserDto> questions, Duration duration) {
         String markerKey = getQuestionCachedMarker(quizId);
 
         Boolean firstTime = redisTemplate.opsForValue()
@@ -80,7 +83,7 @@ public class ExamRedisService {
             return;
         }
         setTTL(markerKey, duration.getSeconds());
-        for (QuestionDto q : questions) {
+        for (QuestionForUserDto q : questions) {
             String key = getQuestionMapKey(quizId, q.getQuestionId());
             try {
                 String value = objectMapper.writeValueAsString(q);
@@ -117,25 +120,168 @@ public class ExamRedisService {
         setTTL(key, duration.getSeconds());
     }
 
-    public QuestionDto getCurrentQuestion(UUID quizId, UUID participantId){
+    public QuestionForUserDto getQuestionFromIndex(UUID quizId, UUID participantId, int newIndex) {
+        String orderKey = getQuestionOrderKey(quizId, participantId);
 
+        String questionIdStr = redisTemplate.opsForList()
+                .index(orderKey, newIndex);
+
+        if (questionIdStr == null) {
+            throw new IllegalStateException("Invalid question index");
+        }
+
+        UUID questionId = UUID.fromString(questionIdStr);
+
+        String questionKey = getQuestionMapKey(quizId, questionId);
+
+        String jsonString = redisTemplate.opsForValue().get(questionKey);
+
+        if (jsonString == null) {
+            throw new IllegalStateException("Question not found in cache");
+        }
+        try {
+            return objectMapper.readValue(jsonString, QuestionForUserDto.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize question", e);
+        }
     }
-    public void startAttempt(UUID quizId, UUID participantId){
-        String attemptKey = getAttemptKey(quizId,participantId);
-        Map <Object, Object> attempt = redisTemplate.opsForHash().entries(attemptKey);
+
+    public int getCurrentIndex(UUID quizId, UUID participantId) {
+        String attemptKey = getAttemptKey(quizId, participantId);
+
+        Map<Object, Object> attempt =
+                redisTemplate.opsForHash().entries(attemptKey);
+
+        if (attempt == null || attempt.isEmpty()) {
+            throw new IllegalStateException("Attempt not initialized");
+        }
+
         String status = (String) attempt.get("status");
-//        if ("ACTIVE".equals(status)) {
-//            return getCurrentQuestion(quizId, participantId);
-//        }
+        if (!"ACTIVE".equals(status)) {
+            throw new IllegalStateException("Quiz not active");
+        }
+
+        String indexStr = (String) attempt.get("currentIndex");
+        if (indexStr == null) {
+            throw new IllegalStateException("Current index missing");
+        }
+        return Integer.parseInt(indexStr);
+    }
+
+    public QuestionForUserDto getCurrentQuestion(UUID quizId, UUID participantId) {
+        int currentIndex = getCurrentIndex(quizId, participantId);
+        return getQuestionFromIndex(quizId, participantId, currentIndex);
+    }
+
+    public QuestionForUserDto startAttempt(UUID quizId, UUID participantId, Duration duration) {
+        String attemptKey = getAttemptKey(quizId, participantId);
+        Map<Object, Object> attempt = redisTemplate.opsForHash().entries(attemptKey);
+        String status = (String) attempt.get("status");
+        if ("ACTIVE".equals(status)) {
+            return getCurrentQuestion(quizId, participantId);
+        }
 
         if (!"READY".equals(status)) {
             throw new IllegalStateException("Invalid state");
         }
         long now = System.currentTimeMillis();
+        long endTime = System.currentTimeMillis() + duration.toMillis();
         redisTemplate.opsForHash().put(attemptKey, "status", "ACTIVE");
         redisTemplate.opsForHash().put(attemptKey, "startTime", String.valueOf(now));
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", "0");
+        redisTemplate.opsForHash().put(attemptKey ,"endTime", String.valueOf(endTime));
+        return getCurrentQuestion(quizId, participantId);
+    }
 
+    public QuestionForUserDto switchQuestion(UUID quizId,
+                                             UUID participantId, int newIndex) {
+
+        String attemptKey = getAttemptKey(quizId, participantId);
+        long now = System.currentTimeMillis();
+
+        Map<Object, Object> attempt =
+                redisTemplate.opsForHash().entries(attemptKey);
+        if (!"ACTIVE".equals(attempt.get("status"))) {
+            throw new IllegalStateException("Quiz not active");
+        }
+        int currentIndex = Integer.parseInt((String) attempt.get("currentIndex"));
+        long lastTick = Long.parseLong((String) attempt.get("lastTick"));
+
+        String orderKey = getQuestionOrderKey(quizId, participantId);
+        String currentQuestionId = redisTemplate.opsForList().index(orderKey, currentIndex);
+        long delta = now - lastTick;
+        redisTemplate.opsForHash().increment(attemptKey, "q:" + currentQuestionId + ":time", delta);
+        redisTemplate.opsForHash().put(attemptKey, "currentIndex", String.valueOf(newIndex));
+        redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
+        return getCurrentQuestion(quizId, participantId);
+    }
+
+    public void submitAnswer(UUID quizId,
+                             UUID participantId,
+                             Map<String, Object> selectedOption) {
+
+        String attemptKey = getAttemptKey(quizId, participantId);
+
+        Map<Object, Object> attempt =
+                redisTemplate.opsForHash().entries(attemptKey);
+
+        if (attempt == null || attempt.isEmpty()) {
+            throw new IllegalStateException("Attempt not initialized");
+        }
+
+        if (!"ACTIVE".equals(attempt.get("status"))) {
+            throw new IllegalStateException("Quiz not active");
+        }
+
+        long now = System.currentTimeMillis();
+
+        int currentIndex = Integer.parseInt((String) attempt.get("currentIndex"));
+        String orderKey = getQuestionOrderKey(quizId, participantId);
+
+        String questionId = redisTemplate.opsForList()
+                .index(orderKey, currentIndex);
+
+        if (questionId == null) {
+            throw new IllegalStateException("Invalid question index");
+        }
+
+        String answerKey = getAnswerKey(quizId, participantId);
+
+        try {
+            String answerJson = objectMapper.writeValueAsString(selectedOption);
+            long lastTick = Long.parseLong(
+                    redisTemplate.opsForHash()
+                            .get(attemptKey, "lastTick")
+                            .toString()
+            );
+
+            long delta = now - lastTick;
+            String timeField = "q:" + questionId + ":time";
+
+            Object currentObj = redisTemplate.opsForHash()
+                    .get(attemptKey, timeField);
+
+            long currentTime = currentObj == null
+                    ? 0
+                    : Long.parseLong(currentObj.toString());
+
+            QuestionForUserDto question = getCurrentQuestion(quizId, participantId);
+            long maxMillis = question.getDuration() * 1000L;
+            long newTime = currentTime + delta;
+
+            if (newTime > maxMillis) {
+                throw new IllegalStateException("Question time exceeded. Submission rejected.");
+            }
+            redisTemplate.opsForHash()
+                    .increment(attemptKey, timeField, delta);
+            redisTemplate.opsForHash()
+                    .put(answerKey, questionId, answerJson);
+            redisTemplate.opsForHash()
+                    .put(attemptKey, "lastTick", String.valueOf(now));
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save answer", e);
+        }
     }
 }
