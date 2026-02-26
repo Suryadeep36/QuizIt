@@ -29,6 +29,7 @@ import PreQuizWaitingRoom from "./modules/exam mode/pages/PreQuizWaitingRoom.jsx
 import SecurityProvider from "./modules/exam mode/component/SecurityProvider.jsx";
 
 import ExamWaitingRoom from "./modules/exam mode/pages/ExamWaitingRoom.jsx";
+import ExamRoom from "./modules/exam mode/pages/ExamRoom.jsx";
 
 
 const router = createBrowserRouter([
@@ -144,7 +145,10 @@ const router = createBrowserRouter([
             path: "/exam/:quizId/session",
             element: <ExamWaitingRoom/>
           },
-         
+          {
+            path:"exam/:quizId/room",
+              element: <ExamRoom/>
+          }
           // You can add the actual Quiz component here too
         ]
       }
