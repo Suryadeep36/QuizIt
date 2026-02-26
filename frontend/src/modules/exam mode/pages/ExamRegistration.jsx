@@ -11,19 +11,37 @@ import {
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
 import { useParams } from "react-router";
-import { getQuizById, getQuizForParticipantById, registerExam } from "../../../services/AuthService";
+import { checkStatusForRegistered, getQuizById, getQuizForParticipantById, registerExam } from "../../../services/AuthService";
 
 export default function ExamRegistration() {
   const user = useAuth((state) => state.user);
   const { quizId, token } = useParams();
   const [quiz, setQuiz] = useState(null);
-
+const [isRegistered, setIsRegistered] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     birthDate: "",
     enrollmentId: "",
   });
+
+useEffect(() => {
+  async function checkRegistration() { // renamed for clarity
+    try {
+      const response = await checkStatusForRegistered(token);
+      // Set the state based on the response
+      if (response.registered) {
+        setIsRegistered(true);
+      }
+    } catch (error) {
+      toast.error("Unable to verify registration status");
+    }
+  }
+
+  if (token) {
+    checkRegistration();
+  }
+}, [token]);
 
   useEffect(() => {
     async function fetchQuiz() {
@@ -82,7 +100,21 @@ export default function ExamRegistration() {
       minute: "2-digit",
     });
   };
-
+if (isRegistered) {
+  return (
+    <div className=" bg-slate-50 flex items-center justify-center p-6">
+      <div className="bg-white p-12 rounded-[2.5rem] shadow-xl text-center max-w-md">
+        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ClipboardCheck className="w-10 h-10" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-800 uppercase mb-2">Already Registered</h2>
+        <p className="text-slate-500 font-medium mb-8">
+          You have already registered for <strong>{quiz?.quizName}</strong>. Please check your email for further instructions.
+        </p>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-0 md:p-6 font-sans">
       {/* Container: Full width on mobile, max-width on desktop */}

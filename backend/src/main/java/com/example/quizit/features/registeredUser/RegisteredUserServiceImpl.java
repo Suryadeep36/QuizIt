@@ -57,4 +57,15 @@ public class RegisteredUserServiceImpl implements RegisteredUserService {
         registeredUser = registeredUserRepository.save(registeredUser);
         return modelMapper.map(registeredUser, RegisteredUserDto.class);
     }
+
+    @Override
+    public CheckStatusDto checkStatus(String token, User user) {
+
+       AllowedUser allowedUser =  allowedUserRepository.findByEmailAndToken(user.getEmail(), token).orElseThrow(() -> new AccessDeniedException("User not found"));
+       CheckStatusDto checkStatusDto = CheckStatusDto.builder()
+               .registered(allowedUser.isRegistered())
+               .registrationToken(token)
+               .build();
+        return checkStatusDto ;
+    }
 }
