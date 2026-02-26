@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -92,6 +93,30 @@ public class ExamModeServiceImpl implements ExamModeService{
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
                 .participant(modelMapper.map(registeredUser.getParticipant(), ParticipantDto.class))
+                .questionList(examRedisService.getShuffledOrderQuestionList(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId()))
                 .build();
+    }
+
+    @Override
+    public ExamNavigationResponse startExam(UUID quizId, UUID participantId) {
+        Quiz quiz = quizRepository.getReferenceById(quizId);
+        Duration duration = Duration.between(quiz.getStartTime(), quiz.getEndTime());
+        QuestionForUserDto currentQuestion = examRedisService.startAttempt(quizId, participantId, duration);
+        return examRedisService.buildNavigationResponse(quizId, participantId, currentQuestion);
+    }
+
+    @Override
+    public ExamNavigationResponse switchQuestion(UUID quizId, UUID participantId, int targetIndex) {
+        int totalQuestions = examRedisService.getTotalQuestions(quizId, participantId);
+        if (targetIndex < 0 || targetIndex >= totalQuestions) {
+            return null;
+        }
+        QuestionForUserDto nextQuestion = examRedisService.switchQuestion(quizId, participantId, targetIndex);
+        return examRedisService.buildNavigationResponse(quizId, participantId, nextQuestion);
+    }
+
+    @Override
+    public void submitAnswer(UUID quizId, UUID participantId, Map<String, Object> selectedAnswer) {
+        examRedisService.submitAnswer(quizId, participantId, selectedAnswer);
     }
 }

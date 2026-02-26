@@ -1,6 +1,7 @@
 package com.example.quizit.features.examMode;
 
 import com.example.quizit.features.question.QuestionForUserDto;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -118,6 +119,19 @@ public class ExamRedisService {
 
         redisTemplate.opsForList().rightPushAll(key, ids);
         setTTL(key, duration.getSeconds());
+    }
+
+    public List<UUID> getShuffledOrderQuestionList(UUID quizId, UUID participantId) {
+        String key = getQuestionOrderKey(quizId, participantId);
+        List<String> ids = redisTemplate.opsForList().range(key, 0, -1);
+
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalStateException("Shuffled order not found for this participant.");
+        }
+
+        return ids.stream()
+                .map(UUID::fromString)
+                .toList();
     }
 
     public QuestionForUserDto getQuestionFromIndex(UUID quizId, UUID participantId, int newIndex) {
@@ -283,5 +297,49 @@ public class ExamRedisService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to save answer", e);
         }
+    }
+
+    public ExamNavigationResponse buildNavigationResponse(UUID quizId, UUID participantId, QuestionForUserDto question) {
+        String attemptKey = getAttemptKey(quizId, participantId);
+        String answerKey = getAnswerKey(quizId, participantId);
+        Map<Object, Object> attemptData = redisTemplate.opsForHash().entries(attemptKey);
+
+        long now = System.currentTimeMillis();
+        long lastTick = Long.parseLong((String) attemptData.get("lastTick"));
+        long endTime = Long.parseLong((String) attemptData.get("endTime"));
+        long globalRemainingTime = Math.max(0, endTime - now);
+
+        String timeField = "q:" + question.getQuestionId() + ":time";
+        Object timeSpentObj = attemptData.get(timeField);
+        long timeSpent = (timeSpentObj == null) ? 0 : Long.parseLong(timeSpentObj.toString());
+
+        long currentWindowDelta = now - lastTick;
+        long totalQuestionTimeSpent = timeSpent + currentWindowDelta;
+        long questionRemainingTime = Math.max(0, (question.getDuration() * 1000L) - totalQuestionTimeSpent);
+
+        Object savedAnswerJson = redisTemplate.opsForHash().get(answerKey, question.getQuestionId().toString());
+        Map<String, Object> selectedAnswer = null;
+
+        if (savedAnswerJson != null) {
+            try {
+                selectedAnswer = objectMapper.readValue(savedAnswerJson.toString(), new TypeReference<>() {});
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+
+        return ExamNavigationResponse.builder()
+                .question(question)
+                .currentIndex(Integer.parseInt((String) attemptData.get("currentIndex")))
+                .remainingTimeMillis(questionRemainingTime)
+                .globalRemainingTimeMillis(globalRemainingTime)
+                .selectedAnswer(selectedAnswer)
+                .status((String) attemptData.get("status"))
+                .build();
+    }
+    public int getTotalQuestions(UUID quizId, UUID participantId) {
+        String orderKey = getQuestionOrderKey(quizId, participantId);
+        Long size = redisTemplate.opsForList().size(orderKey);
+        return size != null ? size.intValue() : 0;
     }
 }

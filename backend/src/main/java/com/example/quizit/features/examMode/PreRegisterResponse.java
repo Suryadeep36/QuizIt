@@ -6,6 +6,9 @@ import com.example.quizit.features.registeredUser.RegisteredUser;
 import com.example.quizit.features.registeredUser.RegisteredUserDto;
 import lombok.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @Builder
 @Getter
 @Setter
@@ -14,4 +17,5 @@ import lombok.*;
 public class PreRegisterResponse {
     RegisteredUserDto registeredUser;
     ParticipantDto participant;
+    List<UUID> questionList;
 }
