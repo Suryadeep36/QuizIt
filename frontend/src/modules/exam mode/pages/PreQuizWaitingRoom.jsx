@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import toast from "react-hot-toast";
-import useAuth, { useParticipant } from "../../../stores/store";
+import useAuth, { useParticipant, useQuestionList } from "../../../stores/store";
 import {
     createParticipant,
     getQuizForParticipantById,
@@ -43,6 +43,7 @@ export default function PreQuizWaitingRoom() {
     const [birthDate, setBirthDate] = useState("");
     const [timeLeft, setTimeLeft] = useState(0);
  const isPhysicallyInStorage = useParticipant((state) => state.isPhysicallyInStorage());
+ const setQuestionIds = useQuestionList((state)=>state.setQuestionIds);
     // States for dynamic UI
     const [isEnded, setIsEnded] = useState(false);
     const [isTooEarly, setIsTooEarly] = useState(true);
@@ -116,6 +117,7 @@ export default function PreQuizWaitingRoom() {
             setSubmitting(true);
             const data = await verifyParticipant({ quizId, birthDate, email: user.email });
             console.log(data);
+            setQuestionIds(data.questionList);
             const participantData = await setParticipant({
                 id:data.participant.participantId,
                 name:data.registeredUser.name,
@@ -123,6 +125,8 @@ export default function PreQuizWaitingRoom() {
                 email:data?.registeredUser?.email,
                 enrollmentId:data.registeredUser.enrollmentId
             })
+               
+               
                 toast.success("Identity Verified! Starting...");
                 navigate(`/exam/${quizId}/session`);
         } catch (err) {

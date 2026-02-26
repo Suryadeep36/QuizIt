@@ -3,9 +3,13 @@ package com.example.quizit.features.examMode;
 import com.example.quizit.features.question.QuestionForUserDto;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
+@Setter
+@Getter
 @Data
 @Builder
 public class ExamNavigationResponse {

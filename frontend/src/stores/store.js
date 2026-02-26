@@ -9,6 +9,8 @@ import {
 // import { useNavigate } from "react-router";
 const LOCAL_KEY = "quizit_auth";
 const PARTICIPANT_KEY = "participant";
+const QUESTIONS_KEY = "question_ids"
+const NAVIGATION_DATA_KEY = "navigation_response"
 // AuthState = {
 //     accessToken :null,
 //     user:null,
@@ -106,6 +108,61 @@ const useAuth = create(
 
 export default useAuth;
 
+
+export const useQuestionList = create(
+  persist(
+    (set, get) => ({
+      questionIds: [],
+
+
+      setQuestionIds: (ids) =>
+        set((state) => ({
+          questionIds: [
+            ...new Set([...state.questionIds, ...ids])
+          ],
+        })),
+
+      clearQuestionIds: () => set({ questionIds: [] }),
+      // Get all quizIds
+      getQuizIds: () => get().questionIds,
+
+      getIndexByQuestionId: (questionId) =>
+        get().questionIds.findIndex((id) => id === questionId),
+
+    }),
+
+    {
+      name: QUESTIONS_KEY, // localStorage key
+    }
+  )
+);
+
+
+
+
+export const useNavigationStore = create(
+  persist(
+    (set, get) => ({
+
+      // 🔥 Matches ExamNavigationResponse
+      navigationData: null,
+
+      // ✅ Set full response
+      setNavigationData: (data) => set({ navigationData: data }),
+
+      // ✅ Get navigation data
+      getNavigationData: () => get().navigationData,
+
+      // ✅ Clear navigation data
+      clearNavigationData: () => set({ navigationData: null }),
+
+    }),
+    {
+      name: NAVIGATION_DATA_KEY, // localStorage key
+    }
+  )
+);
+
 export const useParticipant = create(
   persist(
     (set, get) => ({
@@ -129,31 +186,31 @@ export const useParticipant = create(
         return !!p.id && !!p.name && !!p.quizId && !!p.enrollmentId && !!p.email;
       },
 
-     isPhysicallyInStorage: () => {
-    // 1. Get the raw string using your PARTICIPANT_KEY
-    const rawData = localStorage.getItem(PARTICIPANT_KEY); 
-    
-    if (!rawData) return false;
+      isPhysicallyInStorage: () => {
+        // 1. Get the raw string using your PARTICIPANT_KEY
+        const rawData = localStorage.getItem(PARTICIPANT_KEY);
 
-    try {
-        const parsed = JSON.parse(rawData);
-        // Zustand wraps your data inside a 'state' property
-        const p = parsed.state?.participant; 
+        if (!rawData) return false;
 
-        // 2. Perform the logic check on the parsed object
-        const isValid = !!(
-            p?.id && 
-            p?.name && 
-            p?.quizId && 
-            p?.email && 
+        try {
+          const parsed = JSON.parse(rawData);
+          // Zustand wraps your data inside a 'state' property
+          const p = parsed.state?.participant;
+
+          // 2. Perform the logic check on the parsed object
+          const isValid = !!(
+            p?.id &&
+            p?.name &&
+            p?.quizId &&
+            p?.email &&
             p?.enrollmentId
-        );
+          );
 
-        return isValid;
-    } catch (error) {
-        return false;
-    }
-},
+          return isValid;
+        } catch (error) {
+          return false;
+        }
+      },
 
       setParticipant: (data) => {
         set({ participant: data });

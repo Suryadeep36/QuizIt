@@ -203,3 +203,20 @@ export const checkStatusForRegistered = async (token) => {
   return response.data;
 }
 
+export const startExamQuiz = async (quizId,participantId) => {
+  const response = await apiClient.post(`/exam-room/${quizId}/start/${participantId}`)
+  return response.data;
+}
+
+
+export const switchQuestion = async (quizId,participantId,targetIndex) => {
+  const response = await apiClient.post(`/exam-room/${quizId}/switchTo/${targetIndex}/${participantId}`)
+  return response.data;
+}
+
+
+
+export const submitAnswer = async (quizId,participantId,selectedAnswer) => {
+  const response = await apiClient.post(`/exam-room/${quizId}/submit-answer/${participantId}`,selectedAnswer)
+  return response.data;
+}
