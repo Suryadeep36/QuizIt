@@ -13,7 +13,7 @@ import {
     Users
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getAllAllowedUser, sendInvitation,sendJoinLinkToRegistered } from "../../../services/AuthService";
+import { getAllAllowedUser, sendInvitation,sendInvitationToAll,sendJoinLinkToRegistered } from "../../../services/AuthService";
 
 export default function InvitationManager({ quiz }) {
     const [isSendingAll, setIsSendingAll] = useState(false);

@@ -112,6 +112,8 @@ export const useParticipant = create(
       participant: {
         id: null,
         name: null,
+        email: null,
+        enrollmentId: null,
         status: null,
         quizId: null,
         sessionId: null,
@@ -122,11 +124,58 @@ export const useParticipant = create(
         const p = get().participant;
         return !!p.id && !!p.name && !!p.quizId;
       },
+      isParticipantForExam: () => {
+        const p = get().participant;
+        return !!p.id && !!p.name && !!p.quizId && !!p.enrollmentId && !!p.email;
+      },
+
+     isPhysicallyInStorage: () => {
+    // 1. Get the raw string using your PARTICIPANT_KEY
+    const rawData = localStorage.getItem(PARTICIPANT_KEY); 
+    
+    if (!rawData) return false;
+
+    try {
+        const parsed = JSON.parse(rawData);
+        // Zustand wraps your data inside a 'state' property
+        const p = parsed.state?.participant; 
+
+        // 2. Perform the logic check on the parsed object
+        const isValid = !!(
+            p?.id && 
+            p?.name && 
+            p?.quizId && 
+            p?.email && 
+            p?.enrollmentId
+        );
+
+        return isValid;
+    } catch (error) {
+        return false;
+    }
+},
 
       setParticipant: (data) => {
         set({ participant: data });
       },
 
+      updateParticipant: (data) =>
+        set((state) => ({
+          participant: {
+            ...state.participant,
+            ...data,
+          },
+        })),
+      clearParticipant: () => {
+        set({
+          participant: {
+            id: null, name: null, email: null, enrollmentId: null,
+            status: null, quizId: null, sessionId: null, userId: null,
+          }
+        });
+        // This physically removes it from localStorage too
+        useParticipant.persist.clearStorage();
+      },
       participantCreation: async (createData) => {
         try {
           const responseData = await createParticipant(createData);
@@ -137,6 +186,8 @@ export const useParticipant = create(
             quizId: createData.quizId,
             sessionId: createData.sessionId || null,
             userId: createData.userId || null,
+            email: createData.email || null,
+            enrollmentId: createData.enrollmentId || null
           };
           set({ participant: participantData });
           return participantData;

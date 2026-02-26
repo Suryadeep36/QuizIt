@@ -28,6 +28,8 @@ import ExamRegistration from "./modules/exam mode/pages/ExamRegistration.jsx";
 import PreQuizWaitingRoom from "./modules/exam mode/pages/PreQuizWaitingRoom.jsx";
 import SecurityProvider from "./modules/exam mode/component/SecurityProvider.jsx";
 
+import ExamWaitingRoom from "./modules/exam mode/pages/ExamWaitingRoom.jsx";
+
 
 const router = createBrowserRouter([
   // 1. NO NAVBAR ROUTES (Landing, Auth, Live Quiz Taking)
@@ -138,6 +140,11 @@ const router = createBrowserRouter([
             path: "/waiting-room/:quizId",
             element: <PreQuizWaitingRoom />
           },
+           {
+            path: "/exam/:quizId/session",
+            element: <ExamWaitingRoom/>
+          },
+         
           // You can add the actual Quiz component here too
         ]
       }
