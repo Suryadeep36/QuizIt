@@ -92,6 +92,7 @@ public class ExamModeServiceImpl implements ExamModeService{
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
                 .participant(modelMapper.map(registeredUser.getParticipant(), ParticipantDto.class))
+                .questionList(examRedisService.getShuffledOrderQuestionList(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId()))
                 .build();
     }
 }

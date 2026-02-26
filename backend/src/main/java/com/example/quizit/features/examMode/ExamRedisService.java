@@ -120,6 +120,19 @@ public class ExamRedisService {
         setTTL(key, duration.getSeconds());
     }
 
+    public List<UUID> getShuffledOrderQuestionList(UUID quizId, UUID participantId) {
+        String key = getQuestionOrderKey(quizId, participantId);
+        List<String> ids = redisTemplate.opsForList().range(key, 0, -1);
+
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalStateException("Shuffled order not found for this participant.");
+        }
+
+        return ids.stream()
+                .map(UUID::fromString)
+                .toList();
+    }
+
     public QuestionForUserDto getQuestionFromIndex(UUID quizId, UUID participantId, int newIndex) {
         String orderKey = getQuestionOrderKey(quizId, participantId);
 
