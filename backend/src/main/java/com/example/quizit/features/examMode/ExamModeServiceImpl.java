@@ -50,7 +50,7 @@ public class ExamModeServiceImpl implements ExamModeService{
                 preRegisterUserDto.getEmail(),
                 preRegisterUserDto.getQuizId()
         ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found in invite list"));
-
+    //add time here
         RegisteredUser registeredUser = registeredUserRepository.findByAllowedUser_Id(allowedUser.getId());
         if (registeredUser == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registration records not found");

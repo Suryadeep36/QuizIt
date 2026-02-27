@@ -199,6 +199,7 @@ public class ExamRedisService {
             throw new IllegalStateException("Invalid state");
         }
         long now = System.currentTimeMillis();
+        //change endTime to dynamic duration
         long endTime = System.currentTimeMillis() + duration.toMillis();
         redisTemplate.opsForHash().put(attemptKey, "status", "ACTIVE");
         redisTemplate.opsForHash().put(attemptKey, "startTime", String.valueOf(now));
@@ -211,6 +212,7 @@ public class ExamRedisService {
     public QuestionForUserDto switchQuestion(UUID quizId,
                                              UUID participantId, int newIndex) {
 
+        //don't show question once duration is over
         String attemptKey = getAttemptKey(quizId, participantId);
         long now = System.currentTimeMillis();
 
