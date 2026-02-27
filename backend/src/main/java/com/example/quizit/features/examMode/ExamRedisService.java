@@ -47,6 +47,10 @@ public class ExamRedisService {
         return ATTEMPT_KEY_PREFIX + quizId + ":participant:" + participantId + ":answers";
     }
 
+    public String getQuizDurationKey(UUID quizId){
+        return QUIZ_KEY_PREFIX + quizId + ":duration";
+    }
+
     public void initializeAttempt(UUID quizId,
                                   UUID participantId,
                                   Duration duration) {
@@ -70,9 +74,7 @@ public class ExamRedisService {
         redisTemplate.opsForHash().putAll(key, fields);
         setTTL(key, duration.getSeconds());
         String answerKey = getAnswerKey(quizId, participantId);
-        redisTemplate.expire(answerKey,
-                duration.getSeconds() + EXTRA_SECONDS,
-                TimeUnit.SECONDS);
+        setTTL(answerKey, duration.getSeconds());
     }
 
     public void cacheQuestions(UUID quizId, List<QuestionForUserDto> questions, Duration duration) {
@@ -84,8 +86,11 @@ public class ExamRedisService {
             return;
         }
         setTTL(markerKey, duration.getSeconds());
+        String quizDurationKey = getQuizDurationKey(quizId);
+        long totalDuration = 0;
         for (QuestionForUserDto q : questions) {
             String key = getQuestionMapKey(quizId, q.getQuestionId());
+            totalDuration += q.getDuration();
             try {
                 String value = objectMapper.writeValueAsString(q);
                 redisTemplate.opsForValue().set(key, value);
@@ -94,6 +99,8 @@ public class ExamRedisService {
                 throw new RuntimeException("Failed to serialize question", e);
             }
         }
+        redisTemplate.opsForValue().set(quizDurationKey, String.valueOf(totalDuration));
+        setTTL(quizDurationKey, duration.getSeconds());
     }
 
 
@@ -199,7 +206,15 @@ public class ExamRedisService {
             throw new IllegalStateException("Invalid state");
         }
         long now = System.currentTimeMillis();
-        long endTime = System.currentTimeMillis() + duration.toMillis();
+        String quizDurationKey = getQuizDurationKey(quizId);
+        String totalDurationStr = redisTemplate.opsForValue().get(quizDurationKey);
+        if (totalDurationStr == null) {
+            throw new IllegalStateException(
+                    "Total duration not cached for quiz " + quizId
+            );
+        }
+        long totalDuration = Long.parseLong(totalDurationStr);
+        long endTime = now + totalDuration * 1000L;
         redisTemplate.opsForHash().put(attemptKey, "status", "ACTIVE");
         redisTemplate.opsForHash().put(attemptKey, "startTime", String.valueOf(now));
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
@@ -211,6 +226,7 @@ public class ExamRedisService {
     public QuestionForUserDto switchQuestion(UUID quizId,
                                              UUID participantId, int newIndex) {
 
+        //don't show question once duration is over
         String attemptKey = getAttemptKey(quizId, participantId);
         long now = System.currentTimeMillis();
 
@@ -225,7 +241,29 @@ public class ExamRedisService {
         String orderKey = getQuestionOrderKey(quizId, participantId);
         String currentQuestionId = redisTemplate.opsForList().index(orderKey, currentIndex);
         long delta = now - lastTick;
-        redisTemplate.opsForHash().increment(attemptKey, "q:" + currentQuestionId + ":time", delta);
+        if (delta > (5 * 60 * 1000L)) {
+            redisTemplate.opsForHash()
+                    .put(attemptKey, "status", "KICKED");
+            throw new IllegalStateException("Disconnected too long");
+        }
+        String timeKey = "q:" + currentQuestionId + ":time";
+        Object spentObj = attempt.get(timeKey);
+        long alreadySpent = spentObj == null
+                ? 0
+                : Long.parseLong((String) spentObj);
+        QuestionForUserDto question = getCurrentQuestion(quizId, participantId);
+        long questionDurationMs = question.getDuration() * 1000L;
+        long newTotal = alreadySpent + delta;
+        long remaining = questionDurationMs - newTotal;
+        if(remaining > 0){
+            redisTemplate.opsForHash().increment(attemptKey, "q:" + currentQuestionId + ":time", delta);
+        }
+        else{
+            redisTemplate.opsForHash().put(attemptKey, timeKey, String.valueOf(questionDurationMs));
+        }
+
+
+
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", String.valueOf(newIndex));
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
         return getCurrentQuestion(quizId, participantId);
@@ -247,7 +285,6 @@ public class ExamRedisService {
         if (!"ACTIVE".equals(attempt.get("status"))) {
             throw new IllegalStateException("Quiz not active");
         }
-
         long now = System.currentTimeMillis();
 
         int currentIndex = Integer.parseInt((String) attempt.get("currentIndex"));
