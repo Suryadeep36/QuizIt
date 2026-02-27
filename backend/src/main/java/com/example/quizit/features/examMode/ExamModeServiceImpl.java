@@ -1,10 +1,7 @@
 package com.example.quizit.features.examMode;
 
-import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.allowedUser.AllowedUser;
 import com.example.quizit.features.allowedUser.AllowedUserRepository;
-import com.example.quizit.features.allowedUser.InvitationStatus;
-import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantDto;
 import com.example.quizit.features.participant.ParticipantStatus;
 import com.example.quizit.features.question.Question;
@@ -24,13 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -118,5 +112,10 @@ public class ExamModeServiceImpl implements ExamModeService{
     @Override
     public void submitAnswer(UUID quizId, UUID participantId, Map<String, Object> selectedAnswer) {
         examRedisService.submitAnswer(quizId, participantId, selectedAnswer);
+    }
+
+    @Override
+    public void submitExam(UUID quizId, UUID participantId) {
+        examRedisService.doFinalSubmit(quizId, participantId);
     }
 }

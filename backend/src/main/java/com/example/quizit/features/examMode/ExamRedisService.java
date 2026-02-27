@@ -1,6 +1,8 @@
 package com.example.quizit.features.examMode;
 
 import com.example.quizit.features.question.QuestionForUserDto;
+import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserDto;
+import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class ExamRedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final QuestionAnalyticsUserService analyticsUserService;
     private static final String ATTEMPT_KEY_PREFIX = "attempt:";
     private static final String QUIZ_KEY_PREFIX = "quiz:";
     private static final long EXTRA_SECONDS = Duration.ofHours(2).getSeconds();
@@ -261,9 +264,6 @@ public class ExamRedisService {
         else{
             redisTemplate.opsForHash().put(attemptKey, timeKey, String.valueOf(questionDurationMs));
         }
-
-
-
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", String.valueOf(newIndex));
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
         return getCurrentQuestion(quizId, participantId);
@@ -296,8 +296,12 @@ public class ExamRedisService {
         if (questionId == null) {
             throw new IllegalStateException("Invalid question index");
         }
-
         String answerKey = getAnswerKey(quizId, participantId);
+        if(selectedOption == null || selectedOption.isEmpty()){
+            redisTemplate.opsForHash()
+                    .delete(answerKey);
+            return;
+        }
 
         try {
             String answerJson = objectMapper.writeValueAsString(selectedOption);
@@ -329,7 +333,7 @@ public class ExamRedisService {
             redisTemplate.opsForHash()
                     .put(answerKey, questionId, answerJson);
             redisTemplate.opsForHash()
-                    .put(attemptKey, "lastTick", String.valueOf(now));
+.put(attemptKey, "lastTick", String.valueOf(now));
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to save answer", e);
@@ -378,5 +382,59 @@ public class ExamRedisService {
         String orderKey = getQuestionOrderKey(quizId, participantId);
         Long size = redisTemplate.opsForList().size(orderKey);
         return size != null ? size.intValue() : 0;
+    }
+
+    public void doFinalSubmit(UUID quizId, UUID participantId){
+        String attemptKey = getAttemptKey(quizId, participantId);
+        String answerKey = getAnswerKey(quizId, participantId);
+        String orderKey = getQuestionOrderKey(quizId, participantId);
+        List<UUID> questionIds = getShuffledOrderQuestionList(quizId, participantId);
+        Map<Object, Object> attemptData = redisTemplate.opsForHash().entries(attemptKey);
+        Map<Object, Object> answers = redisTemplate.opsForHash().entries(answerKey);
+        String status = (String) attemptData.get("status");
+
+        if (!"ACTIVE".equals(status)) {
+            throw new IllegalStateException("Quiz not active or already submitted");
+        }
+
+        List<QuestionAnalyticsUserDto> dtoList = new ArrayList<>();
+        for (UUID questionId : questionIds) {
+
+            String timeKey = "q:" + questionId + ":time";
+            long timeSpentMillis = attemptData.get(timeKey) == null
+                    ? 0
+                    : Long.parseLong(attemptData.get(timeKey).toString());
+
+            Map<String, Object> selectedAnswer = null;
+
+            if (answers.containsKey(questionId.toString())) {
+                try{
+                    selectedAnswer = objectMapper.readValue(
+                        answers.get(questionId.toString()).toString(),
+                        new TypeReference<>() {}
+                );
+                }
+                catch (Exception e){
+                    System.out.println(e.getMessage());
+                }
+            }
+
+            int timeSpentSeconds = (int) (timeSpentMillis / 1000);
+
+            QuestionAnalyticsUserDto dto = QuestionAnalyticsUserDto.builder()
+                    .quizId(quizId)
+                    .participantId(participantId)
+                    .questionId(questionId)
+                    .timeSpent(timeSpentSeconds)
+                    .selectedAnswer(selectedAnswer)
+                    .build();
+            dtoList.add(dto);
+        }
+        analyticsUserService.createAnalyticsInBulk(dtoList, quizId, participantId);
+        redisTemplate.opsForHash()
+                .put(attemptKey, "status", "SUBMITTED");
+        redisTemplate.delete(attemptKey);
+        redisTemplate.delete(answerKey);
+        redisTemplate.delete(orderKey);
     }
 }

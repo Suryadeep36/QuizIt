@@ -220,3 +220,7 @@ export const submitAnswer = async (quizId,participantId,selectedAnswer) => {
   const response = await apiClient.post(`/exam-room/${quizId}/submit-answer/${participantId}`,selectedAnswer)
   return response.data;
 }
+
+export const submitTest = async (quizId, participantId) => {
+  const response = await apiClient.post(`/exam-room/${quizId}/submit-test/${participantId}`)
+}

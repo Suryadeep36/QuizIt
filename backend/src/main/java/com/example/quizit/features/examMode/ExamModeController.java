@@ -57,10 +57,6 @@ public class ExamModeController {
             @RequestBody Map<String, Object> selectedAnswer,
             @PathVariable UUID participantId) {
 
-        if (selectedAnswer== null || selectedAnswer.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Answer cannot be empty"));
-        }
-
         try {
             examModeService.submitAnswer(quizId, participantId, selectedAnswer);
         } catch (IllegalStateException e) {
@@ -68,6 +64,11 @@ public class ExamModeController {
         }
 
         return ResponseEntity.ok(Map.of("message", "Answer saved successfully", "timestamp", String.valueOf(System.currentTimeMillis())));
+    }
+
+    @PostMapping("/{quizId}/submit-test/{participantId}")
+    public void submitExam(@PathVariable UUID quizId, @PathVariable UUID participantId){
+        examModeService.submitExam(quizId, participantId);
     }
 
 }
