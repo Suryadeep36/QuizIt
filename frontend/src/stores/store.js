@@ -113,7 +113,13 @@ export const useQuestionList = create(
   persist(
     (set, get) => ({
       questionIds: [],
+      statuses: {}, // { [questionId]: 'visited' | 'answered' | 'marked' }
 
+      setStatus: (id, status) => set((state) => ({
+        statuses: { ...state.statuses, [id]: status }
+      })),
+
+      getStatus: (id) => get().statuses[id] || 'not_visited',
 
       setQuestionIds: (ids) =>
         set((state) => ({

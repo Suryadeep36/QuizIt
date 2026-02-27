@@ -52,8 +52,9 @@ export default function ExamRoom() {
     /* ================= INITIAL LOAD ================= */
     useEffect(() => {
         if (navigationData) {
-            syncStateWithNavigation(navigationData);
+        //     syncStateWithNavigation(navigationData);
             setLoading(false);
+            handleNavigateToIndex(navigationData.currentIndex);
         }
     }, []);
 
@@ -72,7 +73,7 @@ export default function ExamRoom() {
     const handleNavigateToIndex = async (targetIndex) => {
         if (targetIndex < 0 || targetIndex >= questionIds.length) return;
 
-        setFetchingQuestion(true);
+        // setFetchingQuestion(true);
         try {
             //   * * SERVICE CALL LOGIC:
             const response = await switchQuestion(participant.quizId, participant.id, targetIndex);
@@ -85,7 +86,7 @@ export default function ExamRoom() {
             console.log(error)
             toast.error("Could not fetch question");
         } finally {
-            setFetchingQuestion(false);
+            // setFetchingQuestion(false);
         }
     };
 
@@ -312,7 +313,7 @@ export default function ExamRoom() {
         const qId = currentQuestion.questionId;
     
 
-        if (currentAnswer) {
+        // if (currentAnswer) {
             try {
 
                 // The 'selectedAnswer' object already matches your required Map structure
@@ -322,10 +323,16 @@ export default function ExamRoom() {
                     participantId: participant?.id,
                     selectedAnswer: currentAnswer
                 });
-            } catch (error) {
-                toast.error("Sync failed");
-            }
+                if (!currentAnswer) {
+            toast.success("Response cleared on server");
+        } else {
+            toast.success("Response saved");
         }
+            } catch (error) {
+               console.error("Sync error:", error);
+        toast.error("Failed to sync with server");
+            }
+        // }
 
         handleNavigateToIndex(currentQIndex + 1);
     };
@@ -383,7 +390,7 @@ export default function ExamRoom() {
                                 <ChevronLeft size={18} /> PREVIOUS
                             </button>
                             <div className="flex gap-4">
-                                <button onClick={() => setUserAnswers(prev => ({ ...prev, [currentQuestion.questionId]: null }))} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
+                                <button onClick={() => setCurrentAnswer(null)} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
                                 <button onClick={handleSaveAndNext} className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2">
                                     Save & Next <ChevronRight size={18} />
                                 </button>
