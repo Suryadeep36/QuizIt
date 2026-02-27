@@ -1,412 +1,428 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { 
-  Clock, Timer, User, Fingerprint, ChevronLeft, ChevronRight, 
-  Send, AlertCircle, Loader2, Maximize, Menu, X, Trash2
+import React, { useState, useEffect } from "react";
+import {
+    Clock, Timer, User, ChevronLeft, ChevronRight,
+    Send, Maximize, Menu, X, Loader2, AlertCircle,
+    ArrowRight
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
-import { useParticipant } from "../../../stores/store";
+import { useNavigationStore, useParticipant, useQuestionList } from "../../../stores/store";
 import toast from "react-hot-toast";
-
-// Dummy Data provided in prompt
-const DUMMY_EXAM_DATA = [
-  {
-    "questionId": "71f19bb9-25d4-4af0-996b-396095604bb3",
-    "content": "one : write next ",
-    "options": {},
-    "duration": 30,
-    "questionType": "SHORT_ANSWER",
-    "imageUrl": null,
-    "allowMultipleAnswers": false
-  },
-  {
-    "questionId": "ac37316e-6372-46f1-bbbf-28acabbb8d4d",
-    "content": "match respectively",
-    "options": {
-      "left": ["school", "hospital", "court"],
-      "right": ["teacher", "doctor", "lawyer"]
-    },
-    "duration": 30,
-    "questionType": "MATCH_FOLLOWING",
-    "imageUrl": null,
-    "allowMultipleAnswers": false
-  },
-  {
-    "questionId": "f5ea1322-1ae6-4fb8-8a0a-f578d20e2e68",
-    "content": "moon is black.",
-    "options": { "TRUE": "True", "FALSE": "False" },
-    "duration": 30,
-    "questionType": "TRUE_FALSE",
-    "imageUrl": null,
-    "allowMultipleAnswers": false
-  },
-  {
-    "questionId": "9599b72c-ad10-48e7-9ac4-e9b55d2f0806",
-    "content": "who is wife of jethalal? guess?",
-    "options": { "A": "maya", "B": "kaya", "C": "dya", "D": "babita" },
-    "duration": 120,
-    "questionType": "MCQ",
-    "imageUrl": null,
-    "allowMultipleAnswers": true
-  },
-  {
-    "questionId": "7f9e19b5-773f-4210-8bd1-b27562098fa2",
-    "content": "how much 5 + 6? ",
-    "options": {},
-    "duration": 30,
-    "questionType": "NUMERICAL",
-    "imageUrl": "https://plus.unsplash.com/premium_photo-1683865776032-07bf70b0add1?q=80&w=1332&auto=format&fit=crop",
-    "allowMultipleAnswers": false
-  }
-];
+import { submitAnswer, switchQuestion } from "../../../services/AuthService";
 
 export default function ExamRoom() {
-  const { quizId } = useParams();
-  const navigate = useNavigate();
-  const participant = useParticipant((s) => s.participant);
+    const { quizId } = useParams();
+    const navigate = useNavigate();
 
-  /* ================= STATES ================= */
-  const [questions, setQuestions] = useState([]);
-  const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  const [questionStatuses, setQuestionStatuses] = useState({}); // not_visited | answered | marked | not_answered
-  const [userAnswers, setUserAnswers] = useState({}); 
-  const [userMatchPairs, setUserMatchPairs] = useState([]); // Temporary state for Match Following
-  
-  const [globalTime, setGlobalTime] = useState(3600); 
-  const [questionTime, setQuestionTime] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // Store Selectors
+    const participant = useParticipant((s) => s.participant);
+    const navigationData = useNavigationStore((state) => state.getNavigationData());
+    const questionIds = useQuestionList((state) => state.getQuizIds());
+    const setNavigationData = useNavigationStore((state) => state.setNavigationData);
 
-  /* ================= INITIAL LOAD ================= */
-  useEffect(() => {
-    const initExam = async () => {
-      setLoading(true);
-      // await getQuestionsByQuizId(quizId); // Logic for later
-      setQuestions(DUMMY_EXAM_DATA);
-      
-      const initialStatus = {};
-      DUMMY_EXAM_DATA.forEach(q => initialStatus[q.questionId] = 'not_visited');
-      setQuestionStatuses(initialStatus);
+    /* ================= STATES ================= */
+    const [currentQuestion, setCurrentQuestion] = useState(null);
+    const [currentQIndex, setCurrentQIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [fetchingQuestion, setFetchingQuestion] = useState(false);
 
-      loadQuestion(0, DUMMY_EXAM_DATA);
-      setLoading(false);
+    const [globalTime, setGlobalTime] = useState(0);
+    const [questionTime, setQuestionTime] = useState(0);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // Local state for answers to ensure smooth UI before server sync
+    const [currentAnswer, setCurrentAnswer] = useState(null);
+
+
+    const [activeLeft, setActiveLeft] = useState(null);
+
+    const handleLeftClick = (index) => {
+        setActiveLeft(index === activeLeft ? null : index);
     };
-    initExam();
-  }, [quizId]);
 
-  const loadQuestion = (index, dataList = questions) => {
-    const q = dataList[index];
-    setCurrentQuestion(q);
-    setCurrentQIndex(index);
-    setQuestionTime(q.duration);
-    
-    // Reset or Load Match Pairs if applicable
-    if (q.questionType === "MATCH_FOLLOWING") {
-      setUserMatchPairs(userAnswers[q.questionId] || []);
-    }
+    const handleRightClick = (rightIndex) => {
+        if (activeLeft === null) {
+            toast.error("Select an item from Column A first");
+            return;
+        }
+        // handleMatchLink already handles the { "0": 0 } structure for your backend
+        handleMatchLink(activeLeft, rightIndex);
+        setActiveLeft(null); // Reset for next connection
+    };
 
-    if (questionStatuses[q.questionId] === 'not_visited') {
-      setQuestionStatuses(prev => ({ ...prev, [q.questionId]: 'not_answered' }));
-    }
-  };
+    /* ================= INITIAL LOAD ================= */
+    useEffect(() => {
+        if (navigationData) {
+            syncStateWithNavigation(navigationData);
+            setLoading(false);
+        }
+    }, []);
 
-  /* ================= TIMERS ================= */
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setGlobalTime(prev => (prev > 0 ? prev - 1 : 0));
-      setQuestionTime(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    const syncStateWithNavigation = (data) => {
+        setCurrentQuestion(data.question);
+        setCurrentQIndex(data.currentIndex);
+        setGlobalTime(Math.floor(data.globalRemainingTimeMillis / 1000));
+        setQuestionTime(Math.floor(data.remainingTimeMillis / 1000));
 
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
+        // Sync answer from server into local state
+        setCurrentAnswer(data.selectedAnswer || null);
+    };
 
-  /* ================= IMPROVED MCQ SELECTION LOGIC ================= */
-const handleOptionClick = (val) => {
-  const qId = currentQuestion.questionId;
-  const isMultiple = currentQuestion.allowMultipleAnswers;
+    /* ================= NAVIGATION & FETCHING ================= */
 
-  if (currentQuestion.questionType === "MCQ" && isMultiple) {
-    // Get current selection or initialize as empty array
-    const currentSelections = Array.isArray(userAnswers[qId]) ? userAnswers[qId] : [];
-    
-    // Toggle the selection: remove if exists, add if not
-    const updatedSelections = currentSelections.includes(val)
-      ? currentSelections.filter((item) => item !== val)
-      : [...currentSelections, val];
+    const handleNavigateToIndex = async (targetIndex) => {
+        if (targetIndex < 0 || targetIndex >= questionIds.length) return;
 
-    setUserAnswers((prev) => ({ 
-      ...prev, 
-      [qId]: updatedSelections 
-    }));
-  } else {
-    // Standard single-select behavior for TRUE_FALSE, NUMERICAL, or single-MCQ
-    setUserAnswers((prev) => ({ 
-      ...prev, 
-      [qId]: val 
-    }));
-  }
-};
-  const renderOptions = () => {
-    if (!currentQuestion) return null;
-    const { questionType, options, questionId } = currentQuestion;
-    const selected = userAnswers[questionId];
+        setFetchingQuestion(true);
+        try {
+            //   * * SERVICE CALL LOGIC:
+            const response = await switchQuestion(participant.quizId, participant.id, targetIndex);
+            setNavigationData(response);
+            syncStateWithNavigation(response);
+            // Temporary simulated update for UI testing
+            console.log(`Fetching question at index: ${targetIndex}`);
+            // In production: replace this with actual service call response
+        } catch (error) {
+            console.log(error)
+            toast.error("Could not fetch question");
+        } finally {
+            setFetchingQuestion(false);
+        }
+    };
 
-    switch (questionType) {
-      /* ================= UPDATED MCQ RENDER BLOCK ================= */
-// Inside the renderOptions switch statement:
-case "MCQ":
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {Object.entries(currentQuestion.options).map(([key, value]) => {
-        const selected = userAnswers[currentQuestion.questionId];
-        // Check if this specific key is active
-        const isSelected = Array.isArray(selected) 
-          ? selected.includes(key) 
-          : selected === key;
 
-        return (
-          <button
-            key={key}
-            onClick={() => handleOptionClick(key)}
-            className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
-              isSelected
-                ? "border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.01]"
-                : "border-slate-100 hover:border-slate-200"
-            }`}
-          >
-            {/* Checkbox style for Multiple, Radio style for Single */}
-            <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center font-bold transition-colors ${
-              isSelected
-                ? "bg-[#1b8599] text-white border-[#1b8599]"
-                : "text-slate-400 border-slate-200"
-            }`}>
-              {currentQuestion.allowMultipleAnswers && isSelected ? "✓" : key}
-            </div>
-            <span className={`font-semibold ${isSelected ? "text-[#1b8599]" : "text-slate-700"}`}>
-              {value}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-      case "TRUE_FALSE":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(options).map(([key, value]) => (
-              <button
-                key={key}
-                onClick={() => handleOptionClick(key)}
-                className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
-                  (Array.isArray(selected) ? selected.includes(key) : selected === key)
-                  ? "border-[#1b8599] bg-[#1b8599]/5 shadow-sm"
-                  : "border-slate-100 hover:border-slate-200"
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
-                  (Array.isArray(selected) ? selected.includes(key) : selected === key)
-                  ? "bg-[#1b8599] text-white border-[#1b8599]"
-                  : "text-slate-400 border-slate-200"
-                }`}>{key}</div>
-                <span className="font-semibold text-slate-700">{value}</span>
-              </button>
-            ))}
-          </div>
-        );
 
-      case "NUMERICAL":
-      case "SHORT_ANSWER":
-        return (
-          <div className="max-w-md mx-auto md:mx-0">
-            <input
-              type={questionType === "NUMERICAL" ? "number" : "text"}
-              value={selected || ""}
-              onChange={(e) => handleOptionClick(e.target.value)}
-              className="w-full p-5 rounded-2xl border-2 border-slate-100 focus:border-[#1b8599] outline-none text-xl font-bold text-slate-700 transition-all"
-              placeholder="Type your answer here..."
-            />
-          </div>
-        );
+    /* ================= TIMERS ================= */
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setGlobalTime(prev => (prev > 0 ? prev - 1 : 0));
+            setQuestionTime(prev => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
-      case "MATCH_FOLLOWING":
-        return (
-          <div className="space-y-6">
-             <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
-                   <p className="text-[10px] font-black uppercase text-slate-400">Column A</p>
-                   {options.left.map((item, i) => (
-                     <div key={i} className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-700 flex justify-between items-center">
-                        {item}
-                        <button onClick={() => {
-                           const right = prompt(`Match "${item}" with (index 0-${options.right.length-1}):`);
-                           if(right !== null) {
-                             const newPairs = [...userMatchPairs.filter(p => p.left !== i), {left: i, right: parseInt(right)}];
-                             setUserMatchPairs(newPairs);
-                             setUserAnswers(prev => ({...prev, [questionId]: newPairs}));
-                           }
-                        }} className="text-[10px] bg-[#1b8599] text-white px-2 py-1 rounded">Link</button>
-                     </div>
-                   ))}
-                </div>
-                <div className="space-y-3">
-                   <p className="text-[10px] font-black uppercase text-slate-400">Column B</p>
-                   {options.right.map((item, i) => (
-                     <div key={i} className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-700">
-                        <span className="text-[#1b8599] mr-2">({i})</span> {item}
-                     </div>
-                   ))}
-                </div>
-             </div>
-             {userMatchPairs.length > 0 && (
-               <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex flex-wrap gap-3">
-                  {userMatchPairs.map((p, i) => (
-                    <span key={i} className="bg-white px-3 py-1 rounded-full text-xs font-bold text-emerald-700 shadow-sm border border-emerald-100 flex items-center gap-2">
-                      {options.left[p.left]} → {options.right[p.right]}
-                      <X size={12} className="cursor-pointer" onClick={() => {
-                        const filtered = userMatchPairs.filter((_, idx) => idx !== i);
-                        setUserMatchPairs(filtered);
-                        setUserAnswers(prev => ({...prev, [questionId]: filtered}));
-                      }}/>
-                    </span>
-                  ))}
-               </div>
-             )}
-          </div>
-        );
-      default: return null;
-    }
-  };
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
 
-  /* ================= EXAM ACTIONS ================= */
-  const saveAndNext = () => {
-    const qId = currentQuestion.questionId;
-    if (userAnswers[qId]) {
-      setQuestionStatuses(prev => ({ ...prev, [qId]: 'answered' }));
-    }
-    if (currentQIndex < questions.length - 1) {
-      loadQuestion(currentQIndex + 1);
-    }
-  };
+    const renderOptions = () => {
+        if (!currentQuestion) return null;
+        const { questionType, options, questionId, allowMultipleAnswers } = currentQuestion;
+        const selected = currentAnswer; // This is now an object like { value: ... } or { keys: [...] }
 
-  const markForReview = () => {
-    setQuestionStatuses(prev => ({ ...prev, [currentQuestion.questionId]: 'marked' }));
-    saveAndNext();
-  };
-
-  const handleSubmitFinal = () => {
-    // await submitAnswer(userAnswers); // Logic for later
-    if (confirm("Are you sure you want to end the test?")) {
-      navigate(`/afterQuizAnalytics/${quizId}`);
-    }
-  };
-
-  if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-[#1b8599]" size={40}/></div>;
-
-  return (
-    <div className="h-screen w-full bg-slate-100 flex flex-col overflow-hidden select-none">
-      {/* HEADER */}
-      <header className="bg-[#1b8599] text-white px-6 py-4 flex justify-between items-center z-20">
-        <div className="flex items-center gap-4">
-          <h1 className="font-black uppercase tracking-tighter text-xl">QuizIt Live</h1>
-          <div className="h-6 w-px bg-white/20" />
-          <span className="text-sm font-bold opacity-80">{quizId || "Assessment Portal"}</span>
-        </div>
-        <div className="flex items-center gap-8">
-          <div className="text-right">
-            <p className="text-[9px] font-black uppercase opacity-60 leading-none mb-1">Total Remaining</p>
-            <p className="text-xl font-mono font-black text-orange-300">{formatTime(globalTime)}</p>
-          </div>
-          <button onClick={() => document.documentElement.requestFullscreen()} className="p-2 hover:bg-white/10 rounded-full"><Maximize size={20}/></button>
-        </div>
-      </header>
-
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* MAIN AREA */}
-        <main className="flex-1 flex flex-col bg-white overflow-y-auto p-6 md:p-12">
-          <div className="max-w-4xl w-full mx-auto flex flex-col h-full">
-            <div className="flex justify-between items-center mb-8 border-b pb-4">
-              <div className="flex items-center gap-4">
-                <span className="bg-slate-900 text-white px-4 py-1 rounded-lg font-black text-sm">Question {currentQIndex + 1}</span>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentQuestion.questionType.replace('_', ' ')}</span>
-              </div>
-              <div className={`flex items-center gap-2 font-mono font-bold ${questionTime < 10 ? 'text-red-500 animate-bounce' : 'text-slate-500'}`}>
-                <Timer size={18}/> {formatTime(questionTime)}
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-800 leading-tight">{currentQuestion.content}</h2>
-              
-              {currentQuestion.imageUrl && (
-                <div className="rounded-2xl overflow-hidden border border-slate-100 max-w-lg">
-                   <img src={currentQuestion.imageUrl} alt="Context" className="w-full h-auto object-cover"/>
-                </div>
-              )}
-
-              <div className="mt-10">{renderOptions()}</div>
-            </div>
-
-            <footer className="mt-12 pt-8 border-t flex flex-wrap gap-4 justify-between">
-              <div className="flex gap-3">
-                <button onClick={() => currentQIndex > 0 && loadQuestion(currentQIndex - 1)} className="px-6 py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-500 hover:bg-slate-50 transition-all flex items-center gap-2"><ChevronLeft size={18}/> Previous</button>
-                <button onClick={markForReview} className="px-6 py-3 rounded-xl border-2 border-orange-100 bg-orange-50 text-orange-600 font-bold hover:bg-orange-100 transition-all">Mark for Review</button>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setUserAnswers(prev => ({...prev, [currentQuestion.questionId]: null}))} className="px-6 py-3 rounded-xl font-bold text-slate-400 hover:text-slate-600">Clear</button>
-                <button onClick={saveAndNext} className="px-8 py-3 rounded-xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] transition-all flex items-center gap-2">Save & Next <ChevronRight size={18}/></button>
-              </div>
-            </footer>
-          </div>
-        </main>
-
-        {/* SIDEBAR PALETTE */}
-        <aside className={`${isSidebarOpen ? 'w-80' : 'w-0'} bg-slate-50 border-l transition-all duration-300 overflow-hidden flex flex-col`}>
-          <div className="p-6 bg-white border-b">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-[#1b8599]"><User size={24}/></div>
-              <div className="flex-1 truncate">
-                <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Candidate</p>
-                <h3 className="font-black text-slate-800 truncate">{participant?.name || "Parth"}</h3>
-                <p className="text-[9px] font-bold text-slate-400 uppercase">{participant?.enrollmentId || "Student"}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 p-6 overflow-y-auto">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Question Palette</h4>
-            <div className="grid grid-cols-5 gap-3">
-              {questions.map((q, idx) => {
-                const status = questionStatuses[q.questionId];
-                const isActive = currentQIndex === idx;
-                let bg = "bg-slate-200 text-slate-400";
-                if(status === 'answered') bg = "bg-emerald-500 text-white";
-                if(status === 'marked') bg = "bg-orange-400 text-white";
-                if(status === 'not_answered') bg = "bg-red-500 text-white";
-
+        switch (questionType) {
+            case "MCQ":
                 return (
-                  <button key={q.questionId} onClick={() => loadQuestion(idx)} className={`h-10 w-10 rounded-lg text-xs font-black transition-all ${bg} ${isActive ? 'ring-2 ring-[#1b8599] ring-offset-2' : ''}`}>
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(options).map(([key, value]) => {
+                            // Updated: Access keys from the object structure
+                            const isSelected = selected?.keys?.includes(key);
 
-          <div className="p-6 bg-white border-t space-y-4">
-             <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 text-[8px] font-black uppercase text-slate-400"><div className="w-2 h-2 bg-emerald-500 rounded-full"/> Answered</div>
-                <div className="flex items-center gap-2 text-[8px] font-black uppercase text-slate-400"><div className="w-2 h-2 bg-red-500 rounded-full"/> Not Answered</div>
-             </div>
-             <button onClick={handleSubmitFinal} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-800 transition-all">Submit Test <Send size={14}/></button>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => handleOptionClick(key)}
+                                    className={`p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${isSelected ? "border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.01]" : "border-slate-100 hover:border-slate-200"
+                                        }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold transition-colors ${isSelected ? "bg-[#1b8599] text-white border-[#1b8599]" : "text-slate-400 border-slate-200"
+                                        }`}>
+                                        {allowMultipleAnswers && isSelected ? "✓" : key}
+                                    </div>
+                                    <span className={`font-bold text-lg ${isSelected ? "text-slate-900" : "text-slate-600"}`}>
+                                        {value}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                );
+
+            case "SHORT_ANSWER":
+            case "NUMERICAL":
+                return (
+                    <div className="max-w-md">
+                        <input
+                            type={questionType === "NUMERICAL" ? "number" : "text"}
+                            // Updated: Access value from { value: "hello" }
+                            value={selected?.value || ""}
+                            onChange={(e) => handleOptionClick(e.target.value)}
+                            className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-[#1b8599] outline-none text-xl font-black text-slate-800 transition-all"
+                            placeholder="Enter your response..."
+                        />
+                    </div>
+                );
+
+            case "MATCH_FOLLOWING":
+                return (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="grid grid-cols-2 gap-10 relative">
+                            {/* Column A */}
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Column A</p>
+                                {options.left.map((item, i) => {
+                                    const matchObj = selected?.matchPairs?.find(p => Object.keys(p)[0] === String(i));
+                                    const isMatched = !!matchObj;
+                                    const isActive = activeLeft === i;
+
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleLeftClick(i)}
+                                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex justify-between items-center group
+                  ${isActive ? 'border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.02]' :
+                                                    isMatched ? 'border-emerald-100 bg-emerald-50/50 opacity-80' : 'border-slate-100 bg-white hover:border-slate-200'}
+                `}
+                                        >
+                                            <span className={`font-bold ${isActive ? 'text-[#1b8599]' : 'text-slate-700'}`}>{item}</span>
+                                            <div className={`w-2 h-2 rounded-full transition-all ${isActive ? 'bg-[#1b8599] scale-150' : isMatched ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Column B */}
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Column B</p>
+                                {options.right.map((item, i) => {
+                                    const isMatchedToCurrentLeft = activeLeft !== null &&
+                                        selected?.matchPairs?.some(p => p[String(activeLeft)] === i);
+
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleRightClick(i)}
+                                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group
+                  ${activeLeft !== null ? 'hover:border-[#1b8599] hover:bg-[#1b8599]/5 border-slate-200 cursor-pointer' : 'border-slate-100 bg-slate-50 cursor-default'}
+                `}
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-[#1b8599] group-hover:border-[#1b8599]">
+                                                {i}
+                                            </div>
+                                            <span className="font-bold text-slate-600">{item}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* ACTIVE CONNECTIONS SUMMARY: Best for UX Clarity */}
+                        {selected?.matchPairs?.length > 0 && (
+                            <div className="mt-10 p-6 bg-slate-50 rounded-[2rem] border border-slate-200">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Connections</h5>
+                                    <button
+                                        onClick={() => setUserAnswers(prev => ({ ...prev, [questionId]: { matchPairs: [] } }))}
+                                        className="text-[10px] font-bold text-red-500 hover:underline"
+                                    >
+                                        Clear All
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                    {selected.matchPairs.map((pair, idx) => {
+                                        const leftIdx = Object.keys(pair)[0];
+                                        const rightIdx = pair[leftIdx];
+                                        return (
+                                            <div key={idx} className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3 animate-in zoom-in-95">
+                                                <span className="text-sm font-bold text-slate-700">{options.left[leftIdx]}</span>
+                                                <ArrowRight size={14} className="text-[#1b8599]" />
+                                                <span className="text-sm font-bold text-[#1b8599]">{options.right[rightIdx]}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        const filtered = selected.matchPairs.filter((_, i) => i !== idx);
+                                                        setUserAnswers(prev => ({ ...prev, [questionId]: { matchPairs: filtered } }));
+                                                    }}
+                                                    className="ml-2 text-slate-300 hover:text-red-500 transition-colors"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            case "TRUE_FALSE":
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        {Object.entries(options).map(([key, value]) => {
+                            // Updated: Map "TRUE" key to boolean true, "FALSE" to boolean false
+                            const isSelected = selected?.value === (key === "TRUE");
+
+                            return (
+                                <button key={key} onClick={() => handleOptionClick(key)}
+                                    className={`p-6 rounded-2xl border-2 transition-all flex items-center gap-4 ${isSelected ? "border-[#1b8599] bg-[#1b8599]/5" : "border-slate-100"}`}>
+                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isSelected ? "bg-[#1b8599] text-white" : "text-slate-300"}`}>{key[0]}</div>
+                                    <span className="font-bold">{value}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                );
+
+            default:
+                return <AlertCircle className="text-slate-200" />;
+        }
+    };
+
+    /* ================= UPDATED SELECTION LOGIC ================= */
+    const handleOptionClick = (val) => {
+        if (!currentQuestion) return;
+        const { questionType, allowMultipleAnswers } = currentQuestion;
+        let updated;
+
+        if (questionType === "MCQ") {
+            if (allowMultipleAnswers) {
+                // Updated to use currentAnswer state
+                const currentKeys = currentAnswer?.keys || [];
+                const updatedKeys = currentKeys.includes(val)
+                    ? currentKeys.filter((k) => k !== val)
+                    : [...currentKeys, val];
+                updated = { keys: updatedKeys };
+            } else {
+                updated = { keys: [val] };
+            }
+        } else if (questionType === "TRUE_FALSE") {
+            updated = { value: val === "TRUE" };
+        } else if (questionType === "NUMERICAL") {
+            updated = { value: Number(val) };
+        } else {
+            updated = { value: val };
+        }
+
+        setCurrentAnswer(updated);
+    };
+
+    /* ================= MATCH FOLLOWING SPECIAL HANDLING ================= */
+  const handleMatchLink = (leftIndex, rightIndex) => {
+    const currentPairs = currentAnswer?.matchPairs || [];
+    const updatedPairs = [
+        ...currentPairs.filter(p => Object.keys(p)[0] !== String(leftIndex)),
+        { [String(leftIndex)]: rightIndex }
+    ];
+    
+    setCurrentAnswer({ matchPairs: updatedPairs });
+    setActiveLeft(null); 
+};
+    /* ================= SERVICE SUBMISSION ================= */
+    const handleSaveAndNext = async () => {
+        const qId = currentQuestion.questionId;
+    
+
+        if (currentAnswer) {
+            try {
+
+                // The 'selectedAnswer' object already matches your required Map structure
+                await submitAnswer(participant.quizId, participant.id, currentAnswer)
+                console.log("Submitting to Backend:", {
+                    quizId: quizId,
+                    participantId: participant?.id,
+                    selectedAnswer: currentAnswer
+                });
+            } catch (error) {
+                toast.error("Sync failed");
+            }
+        }
+
+        handleNavigateToIndex(currentQIndex + 1);
+    };
+
+    if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-[#1b8599]" size={40} /></div>;
+
+    return (
+        <div className="h-screen w-full bg-slate-100 flex flex-col overflow-hidden select-none">
+            {/* HEADER */}
+            <header className="bg-[#1b8599] text-white px-6 py-4 flex justify-between items-center z-20 shadow-md">
+                <div className="flex items-center gap-4">
+                    <h1 className="font-black uppercase tracking-tighter text-xl italic">QuizIt Live</h1>
+                    <div className="h-6 w-px bg-white/20" />
+                    <span className="text-xs font-bold opacity-80 uppercase tracking-widest">{quizId}</span>
+                </div>
+                <div className="flex items-center gap-8">
+                    <div className="text-right">
+                        <p className="text-[9px] font-black uppercase opacity-60 leading-none mb-1">Time Left</p>
+                        <p className="text-xl font-mono font-black text-orange-300">{formatTime(globalTime)}</p>
+                    </div>
+                    <button onClick={() => document.documentElement.requestFullscreen()} className="p-2 hover:bg-white/10 rounded-full transition-all"><Maximize size={20} /></button>
+                </div>
+            </header>
+
+            <div className="flex flex-1 overflow-hidden relative">
+                {/* MAIN AREA */}
+                <main className="flex-1 flex flex-col bg-white overflow-y-auto p-6 md:p-12 lg:p-16">
+                    <div className="max-w-4xl w-full mx-auto flex flex-col h-full">
+                        <div className="flex justify-between items-center mb-8 border-b pb-4">
+                            <div className="flex items-center gap-4">
+                                <span className="bg-slate-900 text-white px-4 py-1.5 rounded-xl font-black text-xs">Question {currentQIndex + 1}</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentQuestion?.questionType.replace('_', ' ')}</span>
+                            </div>
+                            <div className={`flex items-center gap-2 font-mono font-bold text-lg ${questionTime < 10 ? 'text-red-500 animate-pulse' : 'text-slate-500'}`}>
+                                <Timer size={18} /> {formatTime(questionTime)}
+                            </div>
+                        </div>
+
+                        {fetchingQuestion ? (
+                            <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-slate-200" size={48} /></div>
+                        ) : (
+                            <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <h2 className="text-2xl md:text-4xl font-black text-slate-800 leading-tight">{currentQuestion?.content}</h2>
+                                {currentQuestion?.imageUrl && (
+                                    <div className="rounded-3xl overflow-hidden border border-slate-100 max-w-lg shadow-xl">
+                                        <img src={currentQuestion.imageUrl} alt="Context" className="w-full h-auto object-cover" />
+                                    </div>
+                                )}
+                                <div className="mt-10">{renderOptions()}</div>
+                            </div>
+                        )}
+
+                        <footer className="mt-12 pt-8 border-t flex flex-wrap gap-4 justify-between">
+                            <button onClick={() => handleNavigateToIndex(currentQIndex - 1)} className="px-8 py-4 rounded-2xl border-2 border-slate-100 font-black text-slate-500 hover:bg-slate-50 flex items-center gap-2">
+                                <ChevronLeft size={18} /> PREVIOUS
+                            </button>
+                            <div className="flex gap-4">
+                                <button onClick={() => setUserAnswers(prev => ({ ...prev, [currentQuestion.questionId]: null }))} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
+                                <button onClick={handleSaveAndNext} className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2">
+                                    Save & Next <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </footer>
+                    </div>
+                </main>
+
+                {/* SIDEBAR PALETTE */}
+                <aside className={`${isSidebarOpen ? 'w-80' : 'w-0'} bg-slate-50 border-l transition-all duration-300 overflow-hidden flex flex-col shadow-2xl`}>
+                    <div className="p-8 bg-white border-b">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-[#1b8599]"><User size={28} /></div>
+                            <div className="flex-1 truncate">
+                                <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1 text-slate-400">Candidate</p>
+                                <h3 className="font-black text-slate-800 truncate">{participant?.name || "Parth"}</h3>
+                                <p className="text-[10px] font-bold text-[#1b8599] uppercase">{participant?.enrollmentId || "Student"}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 p-8 overflow-y-auto">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Question Palette</h4>
+                        <div className="grid grid-cols-4 gap-3">
+                            {questionIds.map((id, idx) => (
+                                <button key={id} onClick={() => handleNavigateToIndex(idx)} className={`h-12 w-12 rounded-xl text-xs font-black transition-all ${currentQIndex === idx ? 'bg-[#1b8599] text-white ring-4 ring-[#1b8599]/20 shadow-lg' : 'bg-white border-2 border-slate-100 text-slate-400'}`}>
+                                    {idx + 1}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="p-8 bg-white border-t">
+                        <button onClick={() => confirm("Submit Test?") && navigate('/')} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl">
+                            Submit Test <Send size={16} />
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    );
 }

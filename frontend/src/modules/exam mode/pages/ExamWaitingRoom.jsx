@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { useParams, useNavigate, Navigate } from "react-router";
 import toast from "react-hot-toast";
-import useAuth, { useParticipant } from "../../../stores/store";
+import useAuth, { useNavigationStore, useParticipant } from "../../../stores/store";
 // Ensure path is correct
-import { getQuizForParticipantById } from "../../../services/AuthService";
+import { getQuizForParticipantById, startExamQuiz } from "../../../services/AuthService";
 
 export default function ExamWaitingRoom() {
     const { quizId } = useParams();
@@ -28,7 +28,6 @@ export default function ExamWaitingRoom() {
     // Zustand Store Selectors
     const participant = useParticipant((state) => state.participant);
     const isParticipantForExam = useParticipant((state) => state.isParticipantForExam());
-
  const isPhysicallyInStorage = useParticipant((state) => state.isPhysicallyInStorage());
     const [quiz, setQuiz] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -91,10 +90,22 @@ export default function ExamWaitingRoom() {
     const minutesLeft = Math.floor(timeLeft / (1000 * 60));
     const secondsLeft = Math.floor((timeLeft / 1000) % 60);
 
-    const handleBeginAssessment = () => {
-        toast.success("Initializing Environment...");
-        navigate(`/exam/${quizId}/session`);
-    };
+   const setNavigationData = useNavigationStore((state)=>state.setNavigationData);
+const handleBeginAssessment = async () => {
+  try {
+    const data = await startExamQuiz(participant.quizId,participant.id);
+    toast.dismiss();
+    setNavigationData(data);
+    console.log(data);
+    toast.success("Exam Started 🚀");
+    navigate(`/exam/${quizId}/room`)
+  } catch (error) {
+    toast.dismiss();
+    toast.error("Failed to start exam ❌");
+    console.error(error);
+  }
+};
+   
 
     if (loading) {
         return (

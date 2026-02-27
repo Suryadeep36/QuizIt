@@ -31,19 +31,19 @@ public class ExamModeController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{quizId}/start")
+    @PostMapping("/{quizId}/start/{participantId}")
     public ResponseEntity<ExamNavigationResponse> startQuiz(
             @PathVariable UUID quizId,
-            @RequestAttribute UUID participantId) {
+            @PathVariable UUID participantId) {
         ExamNavigationResponse response = examModeService.startExam(quizId, participantId);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{quizId}/switch")
+    @PostMapping("/{quizId}/switchTo/{targetIndex}/{participantId}")
     public ResponseEntity<ExamNavigationResponse> switchQuestion(
             @PathVariable UUID quizId,
-            @RequestParam int targetIndex,
-            @RequestAttribute UUID participantId) {
+            @PathVariable int targetIndex,
+            @PathVariable UUID participantId) {
 
         ExamNavigationResponse response = examModeService.switchQuestion(quizId, participantId, targetIndex);
         if(response != null)
@@ -51,11 +51,11 @@ public class ExamModeController {
         return ResponseEntity.badRequest().build();
     }
 
-    @PostMapping("/{quizId}/submit-answer")
+    @PostMapping("/{quizId}/submit-answer/{participantId}")
     public ResponseEntity<Map<String, String>> submitAnswer(
             @PathVariable UUID quizId,
             @RequestBody Map<String, Object> selectedAnswer,
-            @RequestAttribute UUID participantId) {
+            @PathVariable UUID participantId) {
 
         if (selectedAnswer == null || selectedAnswer.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Answer cannot be empty"));

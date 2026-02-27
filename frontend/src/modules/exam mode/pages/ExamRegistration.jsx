@@ -25,7 +25,6 @@ const [isRegistered, setIsRegistered] = useState(false);
     enrollmentId: "",
   });
 
-useEffect(() => {
   async function checkRegistration() { // renamed for clarity
     try {
       const response = await checkStatusForRegistered(token);
@@ -37,7 +36,7 @@ useEffect(() => {
       toast.error("Unable to verify registration status");
     }
   }
-
+useEffect(() => {
   if (token) {
     checkRegistration();
   }
@@ -74,6 +73,7 @@ useEffect(() => {
       const registrateredData = await registerExam(registrationData);
       console.log(registrateredData);
       toast.success("Details saved successfully!");
+      checkRegistration()
     } catch (err) {
       console.log(err);
       toast.error(err.response?.data?.message || err.message || "Send failed");
