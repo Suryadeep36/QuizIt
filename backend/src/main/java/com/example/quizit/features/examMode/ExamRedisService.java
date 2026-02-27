@@ -299,7 +299,7 @@ public class ExamRedisService {
         String answerKey = getAnswerKey(quizId, participantId);
         if(selectedOption == null || selectedOption.isEmpty()){
             redisTemplate.opsForHash()
-                    .delete(answerKey);
+                    .delete(answerKey, questionId);
             return;
         }
 
@@ -433,8 +433,8 @@ public class ExamRedisService {
         analyticsUserService.createAnalyticsInBulk(dtoList, quizId, participantId);
         redisTemplate.opsForHash()
                 .put(attemptKey, "status", "SUBMITTED");
-        redisTemplate.delete(attemptKey);
-        redisTemplate.delete(answerKey);
-        redisTemplate.delete(orderKey);
+//        redisTemplate.delete(attemptKey);
+//        redisTemplate.delete(answerKey);
+//        redisTemplate.delete(orderKey);
     }
 }

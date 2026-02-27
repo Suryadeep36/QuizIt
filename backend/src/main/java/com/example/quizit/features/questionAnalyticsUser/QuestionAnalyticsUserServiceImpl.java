@@ -11,6 +11,7 @@ import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.question.QuestionRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -80,6 +81,7 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
     }
 
     @Override
+    @Transactional
     public List<QuestionAnalyticsUserDto> createAnalyticsInBulk(List<QuestionAnalyticsUserDto> dtos, UUID quizId, UUID participantId) {
         if(dtos == null || dtos.isEmpty()){
             throw new ResourceNotFoundException("list is empty");

@@ -54,7 +54,7 @@ public class ExamModeController {
     @PostMapping("/{quizId}/submit-answer/{participantId}")
     public ResponseEntity<Map<String, String>> submitAnswer(
             @PathVariable UUID quizId,
-            @RequestBody Map<String, Object> selectedAnswer,
+            @RequestBody(required = false) Map<String, Object> selectedAnswer,
             @PathVariable UUID participantId) {
 
         try {
