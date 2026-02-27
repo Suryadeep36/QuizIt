@@ -13,7 +13,7 @@ export default function ExamRoom() {
     const { quizId } = useParams();
     const navigate = useNavigate();
     /* ================= STATES ================= */
-    const [quizEnded, setQuizEnded] = useState(true);
+    const [quizEnded, setQuizEnded] = useState(false);
     // Store Selectors
     const participant = useParticipant((s) => s.participant);
     const navigationData = useNavigationStore((state) => state.getNavigationData());
@@ -90,12 +90,12 @@ export default function ExamRoom() {
         setGlobalTime(globalRemTime);
         const remTime = Math.floor(data.remainingTimeMillis / 1000);
         setQuestionTime(remTime);
-        
+
         const qId = data.question.questionId;
         if (remTime <= 0) {
             setStatus(qId, 'time_up');
         }
-        if(globalRemTime<=0)
+        if (globalRemTime <= 0)
             setQuizEnded(true);
 
         // Sync answer from server into local state
@@ -111,6 +111,17 @@ export default function ExamRoom() {
     /* ================= NAVIGATION & FETCHING ================= */
 
     const handleNavigateToIndex = async (targetIndex) => {
+         // 2. CHECK STATUS: Get the ID of the target question
+    const targetQuestionId = questionIds[targetIndex];
+    const targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
+
+    // 3. BLOCK NAVIGATION: If time is up, don't let them enter
+    if (targetStatus === 'time_up') {
+        toast.error("This question has expired and cannot be re-opened.");
+        return; 
+    }
+        
+
         if (targetIndex < 0 || targetIndex >= questionIds.length) return;
 
         // setFetchingQuestion(true);
@@ -135,28 +146,28 @@ export default function ExamRoom() {
 
 
     /* ================= TIMERS ================= */
-  useEffect(() => {
-    const timer = setInterval(() => {
-        setGlobalTime(prev => {
-            if (prev <= 1 && prev >=0) {
-                setQuizEnded(true);
-                toast.error("The quiz has ended!", { duration: 5000 });
-                return 0;
-            }
-            return prev > 0 ? prev - 1 : 0;
-        });
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setGlobalTime(prev => {
+                if (prev <= 1 && prev >= 0) {
+                    setQuizEnded(true);
+                    toast.error("The quiz has ended!", { duration: 5000 });
+                    return 0;
+                }
+                return prev > 0 ? prev - 1 : 0;
+            });
 
-        setQuestionTime(prev => {
-            if (prev === 1) {
-                const qId = currentQuestion?.questionId;
-                if (qId) setStatus(qId, 'time_up');
-                return 0;
-            }
-            return prev > 0 ? prev - 1 : 0;
-        });
-    }, 1000);
-    return () => clearInterval(timer);
-}, [currentQuestion]);
+            setQuestionTime(prev => {
+                if (prev === 1) {
+                    const qId = currentQuestion?.questionId;
+                    if (qId) setStatus(qId, 'time_up');
+                    return 0;
+                }
+                return prev > 0 ? prev - 1 : 0;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [currentQuestion]);
 
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
@@ -400,41 +411,41 @@ export default function ExamRoom() {
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-[#1b8599]" size={40} /></div>;
 
-   if (quizEnded) {
-    return (
-        <div className="h-screen w-full bg-slate-100 flex items-center justify-center p-6 select-none">
-            <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100">
-                {/* Visual Icon */}
-                <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-red-50/50">
-                    <Clock size={48} className="animate-pulse" />
-                </div>
+    if (quizEnded) {
+        return (
+            <div className="h-screen w-full bg-slate-100 flex items-center justify-center p-6 select-none">
+                <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100">
+                    {/* Visual Icon */}
+                    <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-red-50/50">
+                        <Clock size={48} className="animate-pulse" />
+                    </div>
 
-                {/* Text Content */}
-                <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">
-                    Quiz Ended
-                </h2>
-                <p className="text-slate-500 font-medium leading-relaxed mb-10">
-                    The time limit has been reached or the quiz is no longer active. 
-                    All your saved responses have been securely submitted.
-                </p>
-
-                {/* Action Buttons */}
-                <div className="space-y-4">
-                    <button 
-                        onClick={() => navigate('/')}
-                        className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3"
-                    >
-                        Return to Dashboard <Send size={16} />
-                    </button>
-                    
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                        Quiz ID: {quizId}
+                    {/* Text Content */}
+                    <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">
+                        Quiz Ended
+                    </h2>
+                    <p className="text-slate-500 font-medium leading-relaxed mb-10">
+                        The time limit has been reached or the quiz is no longer active.
+                        All your saved responses have been securely submitted.
                     </p>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-4">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3"
+                        >
+                            Return to Dashboard <Send size={16} />
+                        </button>
+
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                            Quiz ID: {quizId}
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
     return (
         <div className="h-screen w-full bg-slate-100 flex flex-col overflow-hidden select-none">
             {/* HEADER */}
@@ -456,7 +467,9 @@ export default function ExamRoom() {
             <div className="flex flex-1 overflow-hidden relative">
                 {/* MAIN AREA */}
                 <main className="flex-1 flex flex-col bg-white overflow-y-auto p-6 md:p-12 lg:p-16">
+                    {/* ... inside main ... */}
                     <div className="max-w-4xl w-full mx-auto flex flex-col h-full">
+                        {/* Question Header */}
                         <div className="flex justify-between items-center mb-8 border-b pb-4">
                             <div className="flex items-center gap-4">
                                 <span className="bg-slate-900 text-white px-4 py-1.5 rounded-xl font-black text-xs">Question {currentQIndex + 1}</span>
@@ -469,7 +482,19 @@ export default function ExamRoom() {
 
                         {fetchingQuestion ? (
                             <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-slate-200" size={48} /></div>
+                        ) : useQuestionList.getState().getStatus(currentQuestion?.questionId) === 'time_up' ? (
+                            /* TIME EXPIRED VIEW for CURRENT QUESTION */
+                            <div className="flex-1 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+                                <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center mb-6">
+                                    <Timer size={40} />
+                                </div>
+                                <h2 className="text-2xl font-black text-slate-800 mb-2">Time Expired</h2>
+                                <p className="text-slate-500 max-w-xs font-medium">
+                                    The time limit for this specific question has reached zero. You can no longer modify or view this response.
+                                </p>
+                            </div>
                         ) : (
+                            /* NORMAL QUESTION CONTENT */
                             <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <h2 className="text-2xl md:text-4xl font-black text-slate-800 leading-tight">{currentQuestion?.content}</h2>
                                 {currentQuestion?.imageUrl && (
@@ -481,22 +506,28 @@ export default function ExamRoom() {
                             </div>
                         )}
 
+                        {/* Footer buttons should also be disabled or modified if time_up */}
                         <footer className="mt-12 pt-8 border-t flex flex-wrap gap-4 justify-between">
                             <button onClick={() => handleNavigateToIndex(currentQIndex - 1)} className="px-8 py-4 rounded-2xl border-2 border-slate-100 font-black text-slate-500 hover:bg-slate-50 flex items-center gap-2">
                                 <ChevronLeft size={18} /> PREVIOUS
                             </button>
                             <div className="flex gap-4">
-                                {/* NEW BUTTON */}
-                                <button
-                                    onClick={handleMarkForReview}
-                                    className="px-6 py-4 rounded-2xl border-2 border-orange-200 text-orange-600 font-black uppercase text-xs tracking-widest hover:bg-orange-50"
-                                >
-                                    Mark for Review
-                                </button>
-                                <button onClick={() => setCurrentAnswer(null)} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
-                                <button onClick={handleSaveAndNext} className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2">
-                                    Save & Next <ChevronRight size={18} />
-                                </button>
+                                {useQuestionList.getState().getStatus(currentQuestion?.questionId) !== 'time_up' && (
+                                    <>
+                                        <button onClick={handleMarkForReview} className="px-6 py-4 rounded-2xl border-2 border-orange-200 text-orange-600 font-black uppercase text-xs tracking-widest hover:bg-orange-50">
+                                            Mark for Review
+                                        </button>
+                                        <button onClick={() => setCurrentAnswer(null)} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
+                                        <button onClick={handleSaveAndNext} className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2">
+                                            Save & Next <ChevronRight size={18} />
+                                        </button>
+                                    </>
+                                )}
+                                {useQuestionList.getState().getStatus(currentQuestion?.questionId) === 'time_up' && (
+                                    <button onClick={() => handleNavigateToIndex(currentQIndex + 1)} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest flex items-center gap-2">
+                                        SKIP TO NEXT <ChevronRight size={18} />
+                                    </button>
+                                )}
                             </div>
                         </footer>
                     </div>
