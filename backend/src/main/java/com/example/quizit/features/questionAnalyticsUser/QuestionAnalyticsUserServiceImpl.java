@@ -4,7 +4,7 @@ import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.question.Question;
 import com.example.quizit.exceptions.ResourceNotFoundException;
-import com.example.quizit.features.question.QuestionType;
+import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.features.participant.ParticipantRepository;
@@ -27,6 +27,7 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
     private final QuestionAnalyticsUserRepository questionAnalyticsUserRepository;
     private final ModelMapper modelMapper;
     private final QuizRepository quizRepository;
+    private List<QuestionAnalyticsUserDto> dtos;
 
     @Override
     public QuestionAnalyticsUserDto createQuestionAnalyticsUser(QuestionAnalyticsUserDto dto) {
@@ -76,6 +77,41 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
         QuestionAnalyticsUser saved = questionAnalyticsUserRepository.save(analytics);
 
         return modelMapper.map(saved, QuestionAnalyticsUserDto.class);
+    }
+
+    @Override
+    public List<QuestionAnalyticsUserDto> createAnalyticsInBulk(List<QuestionAnalyticsUserDto> dtos, UUID quizId, UUID participantId) {
+        if(dtos == null || dtos.isEmpty()){
+            throw new ResourceNotFoundException("list is empty");
+        }
+        Participant participant = participantRepository
+                .findById(participantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
+
+        Quiz quiz = quizRepository.getReferenceById(quizId);
+        List<Question> questionList = questionRepository.findByQuiz_QuizId(quizId);
+        Map<UUID, Question> questionMap = questionList.stream()
+                .collect(Collectors.toMap(Question::getQuestionId, question -> question));
+        List<QuestionAnalyticsUser> list = new ArrayList<>();
+        for(QuestionAnalyticsUserDto dto : dtos){
+            QuestionAnalyticsUser analytics = modelMapper.map(dto, QuestionAnalyticsUser.class);
+            analytics.setQuiz(quiz);
+            analytics.setParticipant(participant);
+            Question question = questionMap.get(dto.getQuestionId());
+            analytics.setQuestion(question);
+            boolean isCorrect = validateAnswer(question ,analytics.getSelectedAnswer(), question.getCorrectAnswer());
+            System.out.println("Validate for " + question.getContent());
+            System.out.println(isCorrect);
+            analytics.setIsCorrect(isCorrect);
+            if (analytics.getTabSwitchCount() == null) {
+                analytics.setTabSwitchCount(0);
+            }
+            list.add(analytics);
+        }
+        questionAnalyticsUserRepository.saveAll(list);
+        return list.stream()
+                .map(user -> modelMapper.map(user, QuestionAnalyticsUserDto.class))
+                .toList();
     }
 
     private boolean validateAnswer(Question question, Map<String, Object> selectedAnswer, List<AnswerKey> correctAnswer){

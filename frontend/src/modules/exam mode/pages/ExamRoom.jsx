@@ -7,7 +7,7 @@ import {
 import { useParams, useNavigate } from "react-router";
 import { useNavigationStore, useParticipant, useQuestionList } from "../../../stores/store";
 import toast from "react-hot-toast";
-import { submitAnswer, switchQuestion } from "../../../services/AuthService";
+import { submitAnswer, submitTest, switchQuestion } from "../../../services/AuthService";
 
 export default function ExamRoom() {
     const { quizId } = useParams();
@@ -409,6 +409,17 @@ export default function ExamRoom() {
         handleNavigateToIndex(currentQIndex + 1);
     };
 
+    const handleSubmitTest = async () => {
+        try{
+            await submitTest(quizId, participant?.id);
+            navigate(`/afterQuizAnalytics/${msg.payload.quizId}`);
+        }
+        catch(error){
+            console.error("final submit error:", error);
+            toast.error("final test submit failed")
+        }
+    }
+
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-[#1b8599]" size={40} /></div>;
 
     if (quizEnded) {
@@ -600,7 +611,7 @@ export default function ExamRoom() {
 
 
                     <div className="p-4 bg-white border-t">
-                        <button onClick={() => confirm("Submit Test?") && navigate('/')} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl">
+                        <button onClick={handleSubmitTest} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl">
                             Submit Test <Send size={16} />
                         </button>
                     </div>

@@ -8,4 +8,5 @@ public interface ExamModeService {
     public ExamNavigationResponse startExam(UUID quizId, UUID participantId);
     public ExamNavigationResponse switchQuestion(UUID quizId, UUID participantId, int targetIndex);
     public void submitAnswer(UUID quizId, UUID participantId, Map<String, Object>  selectedAnswer);
+    public void submitExam(UUID quizId, UUID participantId);
 }

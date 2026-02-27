@@ -67,6 +67,8 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
         return modelMapper.map(savedAnalytics, QuestionAnalyticsQuizDto.class);
     }
 
+
+
     @Override
     public QuestionAnalyticsQuizDto getQuestionAnalyticsByQuestionId(String questionId) {
         UUID questionUUID = UUID.fromString(questionId);
@@ -142,6 +144,8 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
             questionAnalyticsQuizRepository.saveAll(analyticsList);
         }
     }
+
+
 
     @Override
     @Transactional
@@ -276,7 +280,6 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
                 })
                 .toList();
     }
-
 
 
 }
