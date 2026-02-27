@@ -57,7 +57,7 @@ public class ExamModeController {
             @RequestBody Map<String, Object> selectedAnswer,
             @PathVariable UUID participantId) {
 
-        if (selectedAnswer == null || selectedAnswer.isEmpty()) {
+        if (selectedAnswer== null || selectedAnswer.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Answer cannot be empty"));
         }
 

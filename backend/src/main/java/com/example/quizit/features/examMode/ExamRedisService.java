@@ -241,6 +241,11 @@ public class ExamRedisService {
         String orderKey = getQuestionOrderKey(quizId, participantId);
         String currentQuestionId = redisTemplate.opsForList().index(orderKey, currentIndex);
         long delta = now - lastTick;
+        if (delta > (5 * 60 * 1000L)) {
+            redisTemplate.opsForHash()
+                    .put(attemptKey, "status", "KICKED");
+            throw new IllegalStateException("Disconnected too long");
+        }
         String timeKey = "q:" + currentQuestionId + ":time";
         Object spentObj = attempt.get(timeKey);
         long alreadySpent = spentObj == null
@@ -250,18 +255,15 @@ public class ExamRedisService {
         long questionDurationMs = question.getDuration() * 1000L;
         long newTotal = alreadySpent + delta;
         long remaining = questionDurationMs - newTotal;
-        long overtime = Math.abs(remaining);
         if(remaining > 0){
             redisTemplate.opsForHash().increment(attemptKey, "q:" + currentQuestionId + ":time", delta);
         }
         else{
             redisTemplate.opsForHash().put(attemptKey, timeKey, String.valueOf(questionDurationMs));
         }
-        if(overtime > (5 * 60 * 1000L)){
-            redisTemplate.opsForHash()
-                    .put(attemptKey, "status", "KICKED");
-            throw new IllegalStateException("Disconnected too long");
-        }
+
+
+
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", String.valueOf(newIndex));
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
         return getCurrentQuestion(quizId, participantId);
