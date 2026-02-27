@@ -12,7 +12,8 @@ import { submitAnswer, switchQuestion } from "../../../services/AuthService";
 export default function ExamRoom() {
     const { quizId } = useParams();
     const navigate = useNavigate();
-
+    /* ================= STATES ================= */
+    const [quizEnded, setQuizEnded] = useState(true);
     // Store Selectors
     const participant = useParticipant((s) => s.participant);
     const navigationData = useNavigationStore((state) => state.getNavigationData());
@@ -28,6 +29,8 @@ export default function ExamRoom() {
     const [globalTime, setGlobalTime] = useState(0);
     const [questionTime, setQuestionTime] = useState(0);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    const setStatus = useQuestionList((s) => s.setStatus);
 
     // Local state for answers to ensure smooth UI before server sync
     const [currentAnswer, setCurrentAnswer] = useState(null);
@@ -52,22 +55,59 @@ export default function ExamRoom() {
     /* ================= INITIAL LOAD ================= */
     useEffect(() => {
         if (navigationData) {
-        //     syncStateWithNavigation(navigationData);
+            //     syncStateWithNavigation(navigationData);
             setLoading(false);
             handleNavigateToIndex(navigationData.currentIndex);
         }
     }, []);
 
+    const currentIndexRef = React.useRef(currentQIndex);
+
+    // 2. Keep the ref updated whenever the index changes
+    useEffect(() => {
+        currentIndexRef.current = currentQIndex;
+    }, [currentQIndex]);
+
+    useEffect(() => {
+        // We only start the interval if we have the necessary data
+
+
+        const autoSync = setInterval(async () => {
+            const targetIndex = currentIndexRef.current;
+            const response = await switchQuestion(participant.quizId, participant.id, targetIndex);
+            setNavigationData(response);
+            syncStateWithNavigation(response);
+            console.log("Background sync: Refreshing question data...", targetIndex);
+        }, 15000);
+
+        return () => clearInterval(autoSync);
+    }, []);
+
     const syncStateWithNavigation = (data) => {
         setCurrentQuestion(data.question);
         setCurrentQIndex(data.currentIndex);
-        setGlobalTime(Math.floor(data.globalRemainingTimeMillis / 1000));
-        setQuestionTime(Math.floor(data.remainingTimeMillis / 1000));
+        const globalRemTime = Math.floor(data.globalRemainingTimeMillis / 1000);
+        setGlobalTime(globalRemTime);
+        const remTime = Math.floor(data.remainingTimeMillis / 1000);
+        setQuestionTime(remTime);
+        
+        const qId = data.question.questionId;
+        if (remTime <= 0) {
+            setStatus(qId, 'time_up');
+        }
+        if(globalRemTime<=0)
+            setQuizEnded(true);
 
         // Sync answer from server into local state
         setCurrentAnswer(data.selectedAnswer || null);
     };
 
+    const handleMarkForReview = () => {
+        const qId = currentQuestion.questionId;
+        setStatus(qId, 'marked');
+        toast.success("Marked for review");
+        handleNavigateToIndex(currentQIndex + 1);
+    };
     /* ================= NAVIGATION & FETCHING ================= */
 
     const handleNavigateToIndex = async (targetIndex) => {
@@ -79,6 +119,8 @@ export default function ExamRoom() {
             const response = await switchQuestion(participant.quizId, participant.id, targetIndex);
             setNavigationData(response);
             syncStateWithNavigation(response);
+
+            setStatus(questionIds[targetIndex], 'visited');
             // Temporary simulated update for UI testing
             console.log(`Fetching question at index: ${targetIndex}`);
             // In production: replace this with actual service call response
@@ -93,13 +135,28 @@ export default function ExamRoom() {
 
 
     /* ================= TIMERS ================= */
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setGlobalTime(prev => (prev > 0 ? prev - 1 : 0));
-            setQuestionTime(prev => (prev > 0 ? prev - 1 : 0));
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
+  useEffect(() => {
+    const timer = setInterval(() => {
+        setGlobalTime(prev => {
+            if (prev <= 1 && prev >=0) {
+                setQuizEnded(true);
+                toast.error("The quiz has ended!", { duration: 5000 });
+                return 0;
+            }
+            return prev > 0 ? prev - 1 : 0;
+        });
+
+        setQuestionTime(prev => {
+            if (prev === 1) {
+                const qId = currentQuestion?.questionId;
+                if (qId) setStatus(qId, 'time_up');
+                return 0;
+            }
+            return prev > 0 ? prev - 1 : 0;
+        });
+    }, 1000);
+    return () => clearInterval(timer);
+}, [currentQuestion]);
 
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
@@ -298,40 +355,44 @@ export default function ExamRoom() {
     };
 
     /* ================= MATCH FOLLOWING SPECIAL HANDLING ================= */
-  const handleMatchLink = (leftIndex, rightIndex) => {
-    const currentPairs = currentAnswer?.matchPairs || [];
-    const updatedPairs = [
-        ...currentPairs.filter(p => Object.keys(p)[0] !== String(leftIndex)),
-        { [String(leftIndex)]: rightIndex }
-    ];
-    
-    setCurrentAnswer({ matchPairs: updatedPairs });
-    setActiveLeft(null); 
-};
+    const handleMatchLink = (leftIndex, rightIndex) => {
+        const currentPairs = currentAnswer?.matchPairs || [];
+        const updatedPairs = [
+            ...currentPairs.filter(p => Object.keys(p)[0] !== String(leftIndex)),
+            { [String(leftIndex)]: rightIndex }
+        ];
+
+        setCurrentAnswer({ matchPairs: updatedPairs });
+        setActiveLeft(null);
+    };
     /* ================= SERVICE SUBMISSION ================= */
     const handleSaveAndNext = async () => {
         const qId = currentQuestion.questionId;
-    
+
 
         // if (currentAnswer) {
-            try {
+        try {
 
-                // The 'selectedAnswer' object already matches your required Map structure
-                await submitAnswer(participant.quizId, participant.id, currentAnswer)
-                console.log("Submitting to Backend:", {
-                    quizId: quizId,
-                    participantId: participant?.id,
-                    selectedAnswer: currentAnswer
-                });
-                if (!currentAnswer) {
-            toast.success("Response cleared on server");
-        } else {
-            toast.success("Response saved");
-        }
-            } catch (error) {
-               console.error("Sync error:", error);
-        toast.error("Failed to sync with server");
+            // The 'selectedAnswer' object already matches your required Map structure
+            await submitAnswer(participant.quizId, participant.id, currentAnswer)
+
+
+            console.log("Submitting to Backend:", {
+                quizId: quizId,
+                participantId: participant?.id,
+                selectedAnswer: currentAnswer
+            });
+            if (!currentAnswer) {
+                setStatus(qId, 'visited');
+                toast.success("Response cleared on server");
+            } else {
+                setStatus(qId, 'answered');
+                toast.success("Response saved");
             }
+        } catch (error) {
+            console.error("Sync error:", error);
+            toast.error("Failed to sync with server");
+        }
         // }
 
         handleNavigateToIndex(currentQIndex + 1);
@@ -339,6 +400,41 @@ export default function ExamRoom() {
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-[#1b8599]" size={40} /></div>;
 
+   if (quizEnded) {
+    return (
+        <div className="h-screen w-full bg-slate-100 flex items-center justify-center p-6 select-none">
+            <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100">
+                {/* Visual Icon */}
+                <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-red-50/50">
+                    <Clock size={48} className="animate-pulse" />
+                </div>
+
+                {/* Text Content */}
+                <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">
+                    Quiz Ended
+                </h2>
+                <p className="text-slate-500 font-medium leading-relaxed mb-10">
+                    The time limit has been reached or the quiz is no longer active. 
+                    All your saved responses have been securely submitted.
+                </p>
+
+                {/* Action Buttons */}
+                <div className="space-y-4">
+                    <button 
+                        onClick={() => navigate('/')}
+                        className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3"
+                    >
+                        Return to Dashboard <Send size={16} />
+                    </button>
+                    
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                        Quiz ID: {quizId}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
     return (
         <div className="h-screen w-full bg-slate-100 flex flex-col overflow-hidden select-none">
             {/* HEADER */}
@@ -390,6 +486,13 @@ export default function ExamRoom() {
                                 <ChevronLeft size={18} /> PREVIOUS
                             </button>
                             <div className="flex gap-4">
+                                {/* NEW BUTTON */}
+                                <button
+                                    onClick={handleMarkForReview}
+                                    className="px-6 py-4 rounded-2xl border-2 border-orange-200 text-orange-600 font-black uppercase text-xs tracking-widest hover:bg-orange-50"
+                                >
+                                    Mark for Review
+                                </button>
                                 <button onClick={() => setCurrentAnswer(null)} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
                                 <button onClick={handleSaveAndNext} className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2">
                                     Save & Next <ChevronRight size={18} />
@@ -415,15 +518,57 @@ export default function ExamRoom() {
                     <div className="flex-1 p-8 overflow-y-auto">
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Question Palette</h4>
                         <div className="grid grid-cols-4 gap-3">
-                            {questionIds.map((id, idx) => (
-                                <button key={id} onClick={() => handleNavigateToIndex(idx)} className={`h-12 w-12 rounded-xl text-xs font-black transition-all ${currentQIndex === idx ? 'bg-[#1b8599] text-white ring-4 ring-[#1b8599]/20 shadow-lg' : 'bg-white border-2 border-slate-100 text-slate-400'}`}>
-                                    {idx + 1}
-                                </button>
-                            ))}
+                            {/* In the Sidebar Palette map */}
+                            {questionIds.map((id, idx) => {
+                                const status = useQuestionList.getState().getStatus(id); // Simple way to get status
+
+                                // Status-based colors
+                                const statusClasses = {
+                                    answered: 'bg-emerald-500 text-white border-emerald-500',
+                                    marked: 'bg-orange-500 text-white border-orange-500',
+                                    visited: 'bg-white border-slate-400 text-slate-700',
+                                    not_visited: 'bg-white border-slate-100 text-slate-300',
+                                    time_up: 'bg-slate-200 text-slate-400 border-slate-200 cursor-not-allowed' // Greyed out
+                                };
+                                const isLocked = status === 'time_up';
+
+                                return (
+                                    <button
+                                        key={id}
+                                        disabled={isLocked}
+                                        onClick={() => handleNavigateToIndex(idx)}
+                                        className={`h-12 w-12 rounded-xl text-xs font-black transition-all border-2 
+                ${currentQIndex === idx ? 'ring-4 ring-[#1b8599]/20 shadow-lg scale-110 z-10' : ''} 
+                ${statusClasses[status]}`}
+                                    >
+                                        {idx + 1}
+                                    </button>
+                                );
+                            })}
+                        </div>  </div>
+                    <div className="mt-6 px-5 pt-2 pb-2 border-t border-slate-200">
+                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Answered</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3  rounded-full bg-orange-500" />
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Review</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3  rounded-full border border-slate-400 bg-white" />
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Visited</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full border border-slate-200 bg-white" />
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Not Open</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="p-8 bg-white border-t">
+
+                    <div className="p-4 bg-white border-t">
                         <button onClick={() => confirm("Submit Test?") && navigate('/')} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl">
                             Submit Test <Send size={16} />
                         </button>

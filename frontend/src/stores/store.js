@@ -108,38 +108,35 @@ const useAuth = create(
 
 export default useAuth;
 
-
 export const useQuestionList = create(
   persist(
     (set, get) => ({
       questionIds: [],
-      statuses: {}, // { [questionId]: 'visited' | 'answered' | 'marked' }
+      statuses: {}, // { [questionId]: 'answered' | 'marked' | 'visited' | 'not_visited' }
 
-      setStatus: (id, status) => set((state) => ({
-        statuses: { ...state.statuses, [id]: status }
-      })),
+      setStatus: (id, status) => set((state) => {
+        const currentStatus = state.statuses[id];
+        
+        // Priority Logic: Answered and Marked should stay unless explicitly cleared or updated
+        if (currentStatus === 'answered' && status === 'visited') return state;
+        if (currentStatus === 'marked' && status === 'visited') return state;
+
+        return {
+          statuses: { ...state.statuses, [id]: status }
+        };
+      }),
 
       getStatus: (id) => get().statuses[id] || 'not_visited',
 
-      setQuestionIds: (ids) =>
-        set((state) => ({
-          questionIds: [
-            ...new Set([...state.questionIds, ...ids])
-          ],
-        })),
+      setQuestionIds: (ids) => set((state) => ({
+          questionIds: [...new Set([...state.questionIds, ...ids])],
+      })),
 
-      clearQuestionIds: () => set({ questionIds: [] }),
-      // Get all quizIds
+      clearQuestionIds: () => set({ questionIds: [], statuses: {} }),
       getQuizIds: () => get().questionIds,
-
-      getIndexByQuestionId: (questionId) =>
-        get().questionIds.findIndex((id) => id === questionId),
-
+      getIndexByQuestionId: (questionId) => get().questionIds.findIndex((id) => id === questionId),
     }),
-
-    {
-      name: QUESTIONS_KEY, // localStorage key
-    }
+    { name: QUESTIONS_KEY }
   )
 );
 
