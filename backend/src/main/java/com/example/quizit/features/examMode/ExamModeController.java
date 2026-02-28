@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,7 +22,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ExamModeController {
     private final ExamModeService examModeService;
-
+    @Value("${security.jwt.cookie-secure}")
+    private boolean isCookieSecure;
     @PostMapping("/verify")
     public ResponseEntity<PreRegisterResponse> verifyParticipant(
             @RequestBody PreRegisterUserDto userDto,
@@ -32,9 +35,10 @@ public class ExamModeController {
         PreRegisterResponse preRegisterResponse = examModeService.preRegisterParticipant(userDto, user.getId(), userAgent, ipAddress);
 
 
+
         Cookie cookie = new Cookie("participantId", preRegisterResponse.participant.getParticipantId().toString());
         cookie.setHttpOnly(true);        // cannot access via JS
-        cookie.setSecure(false);          // true in production (HTTPS)
+        cookie.setSecure(isCookieSecure);          // true in production (HTTPS)
         cookie.setPath("/");
         cookie.setMaxAge(5 * 60 + 60);
         response.addCookie(cookie);
@@ -52,7 +56,7 @@ public class ExamModeController {
 
         Cookie cookie = new Cookie("participantId", participantId);
         cookie.setHttpOnly(true);  // 🔥 always keep this
-        cookie.setSecure(false);   // true in production
+        cookie.setSecure(isCookieSecure);   // true in production
         cookie.setPath("/");
 
         long seconds = Math.max(examResponse.getGlobalRemainingTimeMillis() / 1000, 1) + 300;
