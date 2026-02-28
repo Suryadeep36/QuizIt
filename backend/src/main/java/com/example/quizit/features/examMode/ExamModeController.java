@@ -25,7 +25,6 @@ public class ExamModeController {
     public ResponseEntity<PreRegisterResponse> verifyParticipant(
             @RequestBody PreRegisterUserDto userDto,
             Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
-        //only allow before 5 mins of start time
         System.out.println("Verify");
         User user = (User) authentication.getPrincipal();
         String userAgent = request.getHeader("User-Agent");
@@ -50,7 +49,6 @@ public class ExamModeController {
             HttpServletResponse httpResponse) {
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-        //allow between start time and end time
         ExamNavigationResponse examResponse = examModeService.startExam(quizId, pid);
 
         Cookie cookie = new Cookie("participantId", participantId);
@@ -99,7 +97,6 @@ public class ExamModeController {
     public void submitExam(@PathVariable UUID quizId,  @CookieValue(value = "participantId") String participantId){
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-
         examModeService.submitExam(quizId, pid);
     }
 

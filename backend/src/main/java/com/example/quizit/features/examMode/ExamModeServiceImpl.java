@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ExamModeServiceImpl implements ExamModeService{
+public class ExamModeServiceImpl implements ExamModeService {
     private final RegisteredUserRepository registeredUserRepository;
     private final AllowedUserRepository allowedUserRepository;
     private final ModelMapper modelMapper;
@@ -38,13 +39,13 @@ public class ExamModeServiceImpl implements ExamModeService{
     private final QuizRepository quizRepository;
     private final ExamRedisService examRedisService;
     private final QuestionToQuestionUserMapper mapper;
+
     @Override
     public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId, String userAgent, String ipAddress) {
         AllowedUser allowedUser = allowedUserRepository.findByEmailAndQuiz_QuizId(
                 preRegisterUserDto.getEmail(),
                 preRegisterUserDto.getQuizId()
         ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found in invite list"));
-    //add time here
         RegisteredUser registeredUser = registeredUserRepository.findByAllowedUser_Id(allowedUser.getId());
         if (registeredUser == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registration records not found");
@@ -63,11 +64,17 @@ public class ExamModeServiceImpl implements ExamModeService{
         if (!allowedUser.isRegistered()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not registered");
         }
+        Quiz quiz = quizRepository.getReferenceById(preRegisterUserDto.getQuizId());
+        Instant now = Instant.now();
+        Duration untilStart = Duration.between(now, quiz.getStartTime());
+        if (untilStart.toSeconds() > 300) {
+            throw new ResponseStatusException(HttpStatus.TOO_EARLY, "You can only pre-register 5 minutes before the quiz starts");
+        }
         registeredUser.setUserAgent(userAgent);
         registeredUser.setIpAddress(ipAddress);
         registeredUser.getParticipant().setStatus(ParticipantStatus.READY);
         registeredUserRepository.save(registeredUser);
-        Quiz quiz = quizRepository.getReferenceById(preRegisterUserDto.getQuizId());
+
         List<Question> questionList = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(preRegisterUserDto.getQuizId());
         List<QuestionForUserDto> questionDtos = questionList.stream()
                 .map((q) -> modelMapper.map(q, QuestionDto.class))
@@ -81,10 +88,8 @@ public class ExamModeServiceImpl implements ExamModeService{
                 .map(Question::getQuestionId)
                 .collect(Collectors.toList());
 
-        examRedisService.storeShuffledOrderIfAbsent(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId() ,questionIds, duration);
+        examRedisService.storeShuffledOrderIfAbsent(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), questionIds, duration);
         examRedisService.initializeAttempt(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), duration);
-
-        
 
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
@@ -96,8 +101,18 @@ public class ExamModeServiceImpl implements ExamModeService{
     @Override
     public ExamNavigationResponse startExam(UUID quizId, UUID participantId) {
         Quiz quiz = quizRepository.getReferenceById(quizId);
-        Duration duration = Duration.between(quiz.getStartTime(), quiz.getEndTime());
-        QuestionForUserDto currentQuestion = examRedisService.startAttempt(quizId, participantId, duration);
+        Instant now = Instant.now();
+        Instant startTime = quiz.getStartTime();
+        Instant endTime = quiz.getEndTime();
+        if (now.isBefore(startTime)) {
+            throw new ResponseStatusException(HttpStatus.TOO_EARLY, "Exam has not started yet");
+        }
+        if (!now.isBefore(endTime)) {
+            throw new ResponseStatusException(HttpStatus.GONE, "Exam has already ended");
+        }
+        Duration duration = Duration.between(startTime, endTime);
+        QuestionForUserDto currentQuestion =
+                examRedisService.startAttempt(quizId, participantId, duration);
         return examRedisService.buildNavigationResponse(quizId, participantId, currentQuestion);
     }
 
