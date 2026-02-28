@@ -70,7 +70,6 @@ public class ExamModeController {
             @CookieValue(value = "participantId") String participantId) {
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-
         ExamNavigationResponse response = examModeService.switchQuestion(quizId, pid, targetIndex);
         if(response != null)
             return ResponseEntity.ok(response);
@@ -84,7 +83,6 @@ public class ExamModeController {
             @CookieValue(value = "participantId") String participantId) {
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-
         try {
             examModeService.submitAnswer(quizId, pid, selectedAnswer);
         } catch (IllegalStateException e) {
@@ -98,7 +96,6 @@ public class ExamModeController {
     public void submitExam(@PathVariable UUID quizId,  @CookieValue(value = "participantId") String participantId){
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-
         examModeService.submitExam(quizId, pid);
     }
 

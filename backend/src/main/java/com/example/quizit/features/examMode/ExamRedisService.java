@@ -7,7 +7,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.util.*;
@@ -223,13 +225,13 @@ public class ExamRedisService {
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", "0");
         redisTemplate.opsForHash().put(attemptKey ,"endTime", String.valueOf(endTime));
+        redisTemplate.opsForHash().put(attemptKey, "disconnect_time", "0");
         return getCurrentQuestion(quizId, participantId);
     }
 
     public QuestionForUserDto switchQuestion(UUID quizId,
                                              UUID participantId, int newIndex) {
 
-        //don't show question once duration is over
         String attemptKey = getAttemptKey(quizId, participantId);
         long now = System.currentTimeMillis();
 
@@ -244,10 +246,29 @@ public class ExamRedisService {
         String orderKey = getQuestionOrderKey(quizId, participantId);
         String currentQuestionId = redisTemplate.opsForList().index(orderKey, currentIndex);
         long delta = now - lastTick;
-        if (delta > (5 * 60 * 1000L)) {
+        long HEARTBEAT_INTERVAL_MS = 20 * 1000L;
+        long disconnectTime = attempt.get("disconnect_time") == null
+                ? 0
+                : Long.parseLong(attempt.get("disconnect_time").toString());
+        long actualDisconnect = 0;
+
+        if (delta > HEARTBEAT_INTERVAL_MS + 5000) {
+            actualDisconnect = delta - HEARTBEAT_INTERVAL_MS;
+        }
+
+        long updatedDisconnectTime = disconnectTime + actualDisconnect;
+
+        redisTemplate.opsForHash()
+                .put(attemptKey, "disconnect_time",
+                        String.valueOf(updatedDisconnectTime));
+
+        long MAX_DISCONNECT_MS = 5 * 60 * 1000L;
+
+        if (updatedDisconnectTime > MAX_DISCONNECT_MS) {
             redisTemplate.opsForHash()
                     .put(attemptKey, "status", "KICKED");
-            throw new IllegalStateException("Disconnected too long");
+
+            throw new IllegalStateException("Disconnected too long. You have been removed from the exam.");
         }
         String timeKey = "q:" + currentQuestionId + ":time";
         Object spentObj = attempt.get(timeKey);
@@ -397,6 +418,16 @@ public class ExamRedisService {
             throw new IllegalStateException("Quiz not active or already submitted");
         }
 
+        long now = System.currentTimeMillis();
+        long endTime = Long.parseLong(attemptData.get("endTime").toString());
+
+        if (now > endTime) {
+            throw new ResponseStatusException(
+                    HttpStatus.GONE,
+                    "Your attempt time has expired. Submission not allowed."
+            );
+        }
+
         List<QuestionAnalyticsUserDto> dtoList = new ArrayList<>();
         for (UUID questionId : questionIds) {
 
@@ -433,8 +464,8 @@ public class ExamRedisService {
         analyticsUserService.createAnalyticsInBulk(dtoList, quizId, participantId);
         redisTemplate.opsForHash()
                 .put(attemptKey, "status", "SUBMITTED");
-//        redisTemplate.delete(attemptKey);
-//        redisTemplate.delete(answerKey);
-//        redisTemplate.delete(orderKey);
+        redisTemplate.delete(attemptKey);
+        redisTemplate.delete(answerKey);
+        redisTemplate.delete(orderKey);
     }
 }
