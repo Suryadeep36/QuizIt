@@ -38,7 +38,6 @@ public class ExamModeController {
         cookie.setPath("/");
         cookie.setMaxAge(5 * 60 + 60);
         response.addCookie(cookie);
-
         return ResponseEntity.ok(preRegisterResponse);
     }
 

@@ -13,6 +13,8 @@ import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,6 +78,15 @@ public class ProjectConfig {
         @Bean
         public ObjectMapper objectMapper() {
             return new ObjectMapper();
+        }
+    }
+
+    @Configuration
+    public class SchedulerConfig {
+
+        @Bean
+        public TaskScheduler taskScheduler() {
+            return new ThreadPoolTaskScheduler();
         }
     }
 }

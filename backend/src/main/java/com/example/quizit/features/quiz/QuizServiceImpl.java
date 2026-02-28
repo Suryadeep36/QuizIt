@@ -9,6 +9,7 @@ import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.participantPerformance.ParticipantPerformance;
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.participantPerformance.ParticipantPerformanceRepository;
+import com.example.quizit.features.question.Question;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRepository;
 import com.example.quizit.features.quizSession.QuizSession;
 import com.example.quizit.features.quizSession.QuizSessionRepository;
@@ -20,6 +21,8 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +45,21 @@ public class QuizServiceImpl implements QuizService {
     private final QuizAntiCheatService quizAntiCheatService;
     private final AllowedUserSerivce allowedUserSerivce;
     private final AllowedUserRepository allowedUserRepository;
+
+    private final TaskScheduler taskScheduler;
+
+    public void scheduleQuizEnd(Quiz quiz) {
+
+        Instant executionTime = quiz.getEndTime().plusSeconds(quizRepository.getTotalDurationByQuizId(quiz.getQuizId()));
+
+        //CHECKING PURPOSE
+//        Instant executionTime = quiz.getEndTime();
+
+        taskScheduler.schedule(() -> {
+            quiz.setStatus(QuizStatus.ENDED);
+            quizRepository.save(quiz);
+        }, executionTime);
+    }
 
     private void validateQuizTimeWindow(Instant startTime, Instant endTime) {
 
@@ -111,7 +129,6 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     public QuizDto updateQuiz(String quizId, QuizDto quizDto,UUID userId) {
-
         if (quizDto == null) {
             throw new IllegalArgumentException("Quiz data is required");
         }
@@ -129,6 +146,7 @@ public class QuizServiceImpl implements QuizService {
                 .orElseThrow(() ->
                         new AccessDeniedException("Quiz Not Found!")
                 );
+
 
 
         Instant start = quizDto.getStartTime() != null
@@ -187,8 +205,10 @@ public class QuizServiceImpl implements QuizService {
                 quizUUID,
                 usersToRemove.stream().toList()
         );
-
         Quiz savedQuiz = quizRepository.save(existingQuiz);
+
+        //CHECKING PURPOSE
+//        scheduleQuizEnd(savedQuiz);
 
         return modelMapper.map(savedQuiz, QuizDto.class);
     }
@@ -332,6 +352,8 @@ public class QuizServiceImpl implements QuizService {
         // 🔥 ONE ranking query
         participantPerformanceRepository.assignRanksByQuizId(quizId);
     }
+
+
 
 }
 
