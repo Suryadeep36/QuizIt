@@ -1,6 +1,7 @@
 package com.example.quizit.features.quiz;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,4 +16,11 @@ public interface QuizRepository extends JpaRepository<Quiz, UUID> {
     boolean existsByQuizIdAndHostId(UUID quizId, UUID hostId);
 
     boolean existsByHostId(UUID hostId);
-}
+
+    @Query("""
+SELECT COALESCE(SUM(q.duration), 0)
+FROM Question q
+WHERE q.quiz.quizId = :quizId
+""")
+    Integer getTotalDurationByQuizId(UUID quizId);
+    }

@@ -13,4 +13,5 @@ public interface QuizService {
     List<QuizDto> getAllQuizzes();
     void deleteQuiz(String quizId ,UUID userId);
     public void endQuiz(UUID quizId);
+    void scheduleQuizEnd(Quiz quiz);
   }
