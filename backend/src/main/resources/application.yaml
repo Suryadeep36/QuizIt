@@ -4,7 +4,7 @@ spring:
       host: ${REDIS_HOST}
       username: ${REDIS_USERNAME}
       password: ${REDIS_PASSWORD}
-      port: 12131
+      port: 15997
       connect-timeout: 3000
       lettuce:
         pool:
@@ -64,8 +64,8 @@ spring:
        mail.smtp.auth: true
        mail.smtp.starttls.enable: true
 server:
-  port: ${PORT:3000}
-
+  port: ${PORT:8080}
+  address: 0.0.0.0
 # JVM args (NOTE: ths is usually NOT read from application.yml)
 
 # ===============================
