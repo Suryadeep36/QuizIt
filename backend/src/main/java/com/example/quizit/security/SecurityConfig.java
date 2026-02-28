@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(AppConstraint.AUTH_PUBLIC_URLS).permitAll()
                         .requestMatchers(AppConstraint.QUIZIT_PUBLIC_URLS).permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/quizit/health").permitAll()
                         //CHECKING PURPOSE, ALSO CHECK AT @GetMapping("/quiz/host/{hostId}") TO SEE EXAMPLE OF PreAuthorize
                         //.requestMatchers("/quizit/quiz/host/{hostId}").hasRole(AppConstraint.ADMIN_ROLE)
                         .requestMatchers("/quizit/users").hasRole(AppConstraint.ADMIN_ROLE)
