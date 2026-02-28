@@ -1,12 +1,14 @@
 package com.example.quizit;
 
 import com.example.quizit.features.emailService.EmailService;
+import com.example.quizit.features.examMode.ExamModeService;
 import com.example.quizit.features.examMode.ExamRedisService;
 import com.example.quizit.features.role.Role;
 import com.example.quizit.features.role.RoleRepository;
 import com.example.quizit.security.AppConstraint;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -31,6 +33,7 @@ public class QuizItApplication implements CommandLineRunner {
 
 
     @Override
+
     public void run(String... args) throws Exception {
         //UNCOMMENT THIS PART TO ADD ROLE IN DATABASE
 //        roleRepository.findByName("ROLE_" + AppConstraint.ADMIN_ROLE).ifPresentOrElse(role -> {

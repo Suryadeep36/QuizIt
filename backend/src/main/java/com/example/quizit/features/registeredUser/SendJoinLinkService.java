@@ -5,6 +5,7 @@ import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.emailService.EmailService;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
+import com.example.quizit.features.quiz.QuizService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ public class SendJoinLinkService {
     private final QuizRepository quizRepository;
     private final AllowedUserRepository allowedUserRepository;
     private final EmailService emailService;
+    private final QuizService quizService;
     @Value("${app.auth.frontend.base-url}")
     private String registerUrl;
 
@@ -40,6 +42,7 @@ public class SendJoinLinkService {
         for (AllowedUser user : users) {
             sendJoinLinkInternal(quiz, user);
         }
+        quizService.scheduleQuizEnd(quiz);
     }
     private void sendJoinLinkInternal(Quiz quiz, AllowedUser user) {
         String link = registerUrl + "/waiting-room/" + quiz.getQuizId();

@@ -302,7 +302,7 @@ public class QuizServiceImpl implements QuizService {
                 quizAntiCheatService.consumeSession(quizSession.getSessionId());
 
         if (cheatStates == null)
-            cheatStates = Map.of();        
+            cheatStates = Map.of();
         quizRepository.save(quiz);
         Map<UUID, Participant> participantMap =
                 participantRepository.findAllByQuiz_QuizId(quizId)
@@ -342,53 +342,55 @@ public class QuizServiceImpl implements QuizService {
         participantPerformanceRepository.assignRanksByQuizId(quizId);
     }
 
+
     public void scheduleQuizEnd(Quiz quiz) {
+        if(quiz.getStatus().equals(QuizStatus.CREATED)){
+            Instant executionTime = quiz.getEndTime().plusSeconds(quizRepository.getTotalDurationByQuizId(quiz.getQuizId()));
+            quiz.setStatus(QuizStatus.STARTED);
+            //CHECKING PURPOSE
+            //        Instant executionTime = quiz.getEndTime();
 
+            taskScheduler.schedule(() -> {
+                quiz.setStatus(QuizStatus.ENDED);
+                quizRepository.save(quiz);
 
+                UUID quizId = quiz.getQuizId();
+                Map<UUID, Participant> participantMap =
+                        participantRepository.findAllByQuiz_QuizId(quizId)
+                                .stream()
+                                .collect(Collectors.toMap(
+                                        Participant::getParticipantId,
+                                        p -> p
+                                ));
 
-        Instant executionTime = quiz.getEndTime().plusSeconds(quizRepository.getTotalDurationByQuizId(quiz.getQuizId())+60);
+                List<Object[]> stats =
+                        questionAnalyticsUserRepository.getParticipantStats(quizId);
 
-        //CHECKING PURPOSE
-//        Instant executionTime = quiz.getEndTime();
+                List<ParticipantPerformance> performances = new ArrayList<>();
 
-        taskScheduler.schedule(() -> {
-            quiz.setStatus(QuizStatus.ENDED);
+                for (Object[] row : stats) {
+                    UUID participantId = (UUID) row[0];
+                    Integer score = ((Long) row[1]).intValue();
+                    Long totalTime = (Long) row[2];
+                    performances.add(
+                            ParticipantPerformance.builder()
+                                    .participant(participantMap.get(participantId))
+                                    .quiz(quiz)
+                                    .score(score)
+                                    .totalTimeSpent(totalTime)
+                                    .build()
+                    );
+
+                    // 🔥 BULK INSERT
+                    participantPerformanceRepository.saveAll(performances);
+
+                    // 🔥 ONE ranking query
+                    participantPerformanceRepository.assignRanksByQuizId(quizId);
+                }
+            }, executionTime);
             quizRepository.save(quiz);
-          UUID quizId = quiz.getQuizId();
-
-            Map<UUID, Participant> participantMap =
-                    participantRepository.findAllByQuiz_QuizId(quizId)
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    Participant::getParticipantId,
-                                    p -> p
-                            ));
-
-            List<Object[]> stats =
-                    questionAnalyticsUserRepository.getParticipantStats(quizId);
-
-            List<ParticipantPerformance> performances = new ArrayList<>();
-
-            for (Object[] row : stats) {
-                UUID participantId = (UUID) row[0];
-                Integer score = ((Long) row[1]).intValue();
-                Long totalTime = (Long) row[2];
-
-                performances.add(
-                        ParticipantPerformance.builder()
-                                .participant(participantMap.get(participantId))
-                                .quiz(quiz)
-                                .score(score)
-                                .totalTimeSpent(totalTime)
-                                .build()
-                );
-            }
-            participantPerformanceRepository.saveAll(performances);
-
-            participantPerformanceRepository.assignRanksByQuizId(quizId);
-        }, executionTime);
+        }
     }
-
 
 }
 

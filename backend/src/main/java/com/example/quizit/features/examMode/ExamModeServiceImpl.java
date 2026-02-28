@@ -41,9 +41,6 @@ public class ExamModeServiceImpl implements ExamModeService {
     private final ExamRedisService examRedisService;
     private final QuestionToQuestionUserMapper mapper;
 
-    private final QuizService quizService;
-
-
     @Override
     public PreRegisterResponse preRegisterParticipant(PreRegisterUserDto preRegisterUserDto, UUID userId, String userAgent, String ipAddress) {
         AllowedUser allowedUser = allowedUserRepository.findByEmailAndQuiz_QuizId(
@@ -94,10 +91,6 @@ public class ExamModeServiceImpl implements ExamModeService {
 
         examRedisService.storeShuffledOrderIfAbsent(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), questionIds, duration);
         examRedisService.initializeAttempt(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), duration);
-
-
-        quizService.scheduleQuizEnd(quiz);
-
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
                 .participant(modelMapper.map(registeredUser.getParticipant(), ParticipantDto.class))
