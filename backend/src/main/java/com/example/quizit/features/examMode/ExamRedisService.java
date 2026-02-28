@@ -243,6 +243,7 @@ public class ExamRedisService {
 
         String orderKey = getQuestionOrderKey(quizId, participantId);
         String currentQuestionId = redisTemplate.opsForList().index(orderKey, currentIndex);
+        //add global penalty here instead of just one time
         long delta = now - lastTick;
         if (delta > (5 * 60 * 1000L)) {
             redisTemplate.opsForHash()

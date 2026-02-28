@@ -23,6 +23,7 @@ public class ExamModeController {
     public ResponseEntity<PreRegisterResponse> verifyParticipant(
             @RequestBody PreRegisterUserDto userDto,
             Authentication authentication, HttpServletRequest request) {
+        //only allow before 5 mins of start time
         System.out.println("Verify");
         User user = (User) authentication.getPrincipal();
         String userAgent = request.getHeader("User-Agent");
@@ -35,6 +36,7 @@ public class ExamModeController {
     public ResponseEntity<ExamNavigationResponse> startQuiz(
             @PathVariable UUID quizId,
             @PathVariable UUID participantId) {
+        //allow between start time and end time
         ExamNavigationResponse response = examModeService.startExam(quizId, participantId);
         return ResponseEntity.ok(response);
     }
@@ -44,7 +46,6 @@ public class ExamModeController {
             @PathVariable UUID quizId,
             @PathVariable int targetIndex,
             @PathVariable UUID participantId) {
-
         ExamNavigationResponse response = examModeService.switchQuestion(quizId, participantId, targetIndex);
         if(response != null)
             return ResponseEntity.ok(response);
@@ -56,7 +57,6 @@ public class ExamModeController {
             @PathVariable UUID quizId,
             @RequestBody(required = false) Map<String, Object> selectedAnswer,
             @PathVariable UUID participantId) {
-
         try {
             examModeService.submitAnswer(quizId, participantId, selectedAnswer);
         } catch (IllegalStateException e) {
