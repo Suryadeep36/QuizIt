@@ -37,10 +37,10 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
-        format_sql: false
+        format_sql: true
 
   jvm:
     arguments: --add-opens=java.base/sun.misc=ALL-UNNAMED
@@ -99,9 +99,3 @@ groq:
   api:
     key: ${GROQ_API_KEY}
     url: https://api.groq.com/openai/v1/chat/completions
-
-logging:
-  level:
-    org:
-      springframework:
-        security: DEBUG

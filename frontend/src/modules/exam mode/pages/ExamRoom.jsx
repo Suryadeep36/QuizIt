@@ -431,7 +431,7 @@ export default function ExamRoom() {
     const handleSubmitTest = async () => {
         try{
             await submitTest(quizId, participant?.id);
-            navigate(`/afterQuizAnalytics/${msg.payload.quizId}`);
+            navigate(`/afterQuizAnalytics/${quizId}`);
         }
         catch(error){
             console.error("final submit error:", error);
@@ -547,7 +547,7 @@ export default function ExamRoom() {
                                         <button onClick={handleMarkForReview} className="px-6 py-4 rounded-2xl border-2 border-orange-200 text-orange-600 font-black uppercase text-xs tracking-widest hover:bg-orange-50">
                                             Mark for Review
                                         </button>
-                                        <button onClick={() => setCurrentAnswer(null)} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
+                                        <button onClick={() => setCurrentAnswer({})} className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Clear</button>
                                         <button onClick={handleSaveAndNext} className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2">
                                             Save & Next <ChevronRight size={18} />
                                         </button>

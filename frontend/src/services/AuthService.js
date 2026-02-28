@@ -15,9 +15,9 @@ export const logoutUser = async () => {
   return;
 };
 
-export const refreshToken= async ()=>{
-   const response =  await apiClient.post("/refresh");
-   return response.data;
+export const refreshToken = async () => {
+  const response = await apiClient.post("/refresh");
+  return response.data;
 }
 
 export const createQuiz = async (quizData) => {
@@ -95,7 +95,7 @@ export const getQuizSessionBySessionId = async (sessionId) => {
 }
 
 export const createQuestionAnalyticsUser = async (QuestionAnalyticsUserData) => {
-  const response = await apiClient.post(`/question-analytics-user`,QuestionAnalyticsUserData)
+  const response = await apiClient.post(`/question-analytics-user`, QuestionAnalyticsUserData)
   return response.data;
 }
 
@@ -108,7 +108,7 @@ export const deleteQuiz = async (quizId) => {
   return response.data;
 }
 
-export const addUserToParticipant = async (participantId,userId) => {
+export const addUserToParticipant = async (participantId, userId) => {
   const response = await apiClient.put(`/participant/${participantId}/user/${userId}`);
   return response.data;
 }
@@ -128,7 +128,7 @@ export const getParticipantHistory = async (userId) => {
 
 export const updateProfile = async (newUserProfile) => {
   console.log(newUserProfile)
-  const response = await apiClient.put(`users`,newUserProfile);
+  const response = await apiClient.put(`users`, newUserProfile);
   return response.data;
 }
 
@@ -137,8 +137,8 @@ export const getQuizIdSessionIdByCode = async (joinCode) => {
   return response.data;
 };
 
-export const AIGenQuestions = async (quizId,promptData) => {
-  const response = await apiClient.post(`quizzes/generate-with-ai/${quizId}`,promptData);
+export const AIGenQuestions = async (quizId, promptData) => {
+  const response = await apiClient.post(`quizzes/generate-with-ai/${quizId}`, promptData);
   return response.data;
 };
 
@@ -156,13 +156,13 @@ export const getParticipantSessionByParticipantIdAndSessionId = async (participa
   return response.data;
 }
 
-export const updateQuizById = async (quizId,quizData) => {
-  const response = await apiClient.put(`/quiz/${quizId}`,quizData);
+export const updateQuizById = async (quizId, quizData) => {
+  const response = await apiClient.put(`/quiz/${quizId}`, quizData);
   return response.data;
 };
 
 export const verifyEmail = async (VerificationData) => {
-  const response = await apiClient.post(`/verify-otp`,VerificationData);
+  const response = await apiClient.post(`/verify-otp`, VerificationData);
   return response.data;
 };
 
@@ -177,14 +177,14 @@ export const sendInvitationToAll = async (quizId) => {
   return response.data;
 };
 
-export const sendInvitation = async (quizId,allowedUserId) => {
+export const sendInvitation = async (quizId, allowedUserId) => {
   const response = await apiClient.post(`/quiz/${quizId}/invitations/${allowedUserId}/send`);
   return response.data;
 };
 
 export const registerExam = async (registrationData) => {
   console.log(registrationData)
-  const response = await apiClient.post(`/exam/register`,registrationData);
+  const response = await apiClient.post(`/exam/register`, registrationData);
   return response.data;
 };
 
@@ -203,21 +203,21 @@ export const checkStatusForRegistered = async (token) => {
   return response.data;
 }
 
-export const startExamQuiz = async (quizId,participantId) => {
+export const startExamQuiz = async (quizId, participantId) => {
   const response = await apiClient.post(`/exam-room/${quizId}/start`)
   return response.data;
 }
 
 
-export const switchQuestion = async (quizId,participantId,targetIndex) => {
+export const switchQuestion = async (quizId, participantId, targetIndex) => {
   const response = await apiClient.post(`/exam-room/${quizId}/switchTo/${targetIndex}`)
   return response.data;
 }
 
 
 
-export const submitAnswer = async (quizId,participantId,selectedAnswer) => {
-  const response = await apiClient.post(`/exam-room/${quizId}/submit-answer`,selectedAnswer)
+export const submitAnswer = async (quizId, participantId, selectedAnswer) => {
+  const response = await apiClient.post(`/exam-room/${quizId}/submit-answer`, selectedAnswer)
   return response.data;
 }
 

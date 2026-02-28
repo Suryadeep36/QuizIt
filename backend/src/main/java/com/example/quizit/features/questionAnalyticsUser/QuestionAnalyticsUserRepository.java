@@ -18,6 +18,9 @@ public interface QuestionAnalyticsUserRepository extends JpaRepository<QuestionA
     Optional<QuestionAnalyticsUser> findByParticipant_ParticipantIdAndQuestion_QuestionId(UUID participantId, UUID questionId);
     List<QuestionAnalyticsUser> findAllByParticipant(Participant participant);
 
+    @Override
+    <S extends QuestionAnalyticsUser> List<S> saveAll(Iterable<S> entities);
+
     @Query("""
         SELECT
             q.participant.participantId,
