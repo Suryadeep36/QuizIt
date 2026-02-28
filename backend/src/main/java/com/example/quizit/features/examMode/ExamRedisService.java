@@ -134,11 +134,11 @@ public class ExamRedisService {
     public List<UUID> getShuffledOrderQuestionList(UUID quizId, UUID participantId) {
         String key = getQuestionOrderKey(quizId, participantId);
         List<String> ids = redisTemplate.opsForList().range(key, 0, -1);
+        System.out.println(ids);
 
         if (ids == null || ids.isEmpty()) {
             throw new IllegalStateException("Shuffled order not found for this participant.");
         }
-
         return ids.stream()
                 .map(UUID::fromString)
                 .toList();

@@ -204,23 +204,23 @@ export const checkStatusForRegistered = async (token) => {
 }
 
 export const startExamQuiz = async (quizId,participantId) => {
-  const response = await apiClient.post(`/exam-room/${quizId}/start/${participantId}`)
+  const response = await apiClient.post(`/exam-room/${quizId}/start`)
   return response.data;
 }
 
 
 export const switchQuestion = async (quizId,participantId,targetIndex) => {
-  const response = await apiClient.post(`/exam-room/${quizId}/switchTo/${targetIndex}/${participantId}`)
+  const response = await apiClient.post(`/exam-room/${quizId}/switchTo/${targetIndex}`)
   return response.data;
 }
 
 
 
 export const submitAnswer = async (quizId,participantId,selectedAnswer) => {
-  const response = await apiClient.post(`/exam-room/${quizId}/submit-answer/${participantId}`,selectedAnswer)
+  const response = await apiClient.post(`/exam-room/${quizId}/submit-answer`,selectedAnswer)
   return response.data;
 }
 
 export const submitTest = async (quizId, participantId) => {
-  const response = await apiClient.post(`/exam-room/${quizId}/submit-test/${participantId}`)
+  const response = await apiClient.post(`/exam-room/${quizId}/submit-test`)
 }

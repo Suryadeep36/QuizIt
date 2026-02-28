@@ -44,6 +44,7 @@ export default function PreQuizWaitingRoom() {
     const [timeLeft, setTimeLeft] = useState(0);
  const isPhysicallyInStorage = useParticipant((state) => state.isPhysicallyInStorage());
  const setQuestionIds = useQuestionList((state)=>state.setQuestionIds);
+ const clearQuestionIds =useQuestionList((state)=>state.clearQuestionIds); 
     // States for dynamic UI
     const [isEnded, setIsEnded] = useState(false);
     const [isTooEarly, setIsTooEarly] = useState(true);
@@ -117,6 +118,7 @@ export default function PreQuizWaitingRoom() {
             setSubmitting(true);
             const data = await verifyParticipant({ quizId, birthDate, email: user.email });
             console.log(data);
+            clearQuestionIds()
             setQuestionIds(data.questionList);
             const participantData = await setParticipant({
                 id:data.participant.participantId,
