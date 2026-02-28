@@ -112,12 +112,14 @@ export default function ExamRoom() {
 
     const handleNavigateToIndex = async (targetIndex) => {
          // 2. CHECK STATUS: Get the ID of the target question
-    const targetQuestionId = questionIds[targetIndex];
-    const targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
+    let targetQuestionId = questionIds[targetIndex];
+    let targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
 
     // 3. BLOCK NAVIGATION: If time is up, don't let them enter
-    if (targetStatus === 'time_up') {
-        toast.error("This question has expired and cannot be re-opened.");
+     while(targetStatus === 'time_up') {
+        targetIndex++;
+        targetQuestionId = questionIds[targetIndex];
+        targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
         return; 
     }
         
@@ -149,21 +151,21 @@ export default function ExamRoom() {
     useEffect(() => {
         const timer = setInterval(() => {
             setGlobalTime(prev => {
-                if (prev <= 1 && prev >= 0) {
+                if (!quizEnded && prev <= 1 && prev > 0) {
                     setQuizEnded(true);
-                    toast.error("The quiz has ended!", { duration: 5000 });
+                    toast.error("The quiz has ended!");
                     return 0;
                 }
                 return prev > 0 ? prev - 1 : 0;
             });
 
             setQuestionTime(prev => {
-                if (prev === 1) {
+               const  rem = prev > 0 ? prev - 1 : 0;
+                if (rem <= 0) {
                     const qId = currentQuestion?.questionId;
                     if (qId) setStatus(qId, 'time_up');
-                    return 0;
                 }
-                return prev > 0 ? prev - 1 : 0;
+                return rem;
             });
         }, 1000);
         return () => clearInterval(timer);
@@ -409,6 +411,23 @@ export default function ExamRoom() {
         handleNavigateToIndex(currentQIndex + 1);
     };
 
+   const handlePrevious = () => {
+    let targetIndex = currentQIndex - 1;
+    // Loop backwards to find the first question that is NOT 'time_up'
+    while (targetIndex >= 0) {
+        const targetId = questionIds[targetIndex];
+        const targetStatus = useQuestionList.getState().getStatus(targetId);
+        if (targetStatus !== 'time_up') {
+            // Found a valid question!
+            handleNavigateToIndex(targetIndex);
+            return;
+        }
+        targetIndex--;
+    }
+    // If the loop finishes without returning, no previous valid questions exist
+    toast.error("No previous accessible questions available");
+};
+
     const handleSubmitTest = async () => {
         try{
             await submitTest(quizId, participant?.id);
@@ -519,7 +538,7 @@ export default function ExamRoom() {
 
                         {/* Footer buttons should also be disabled or modified if time_up */}
                         <footer className="mt-12 pt-8 border-t flex flex-wrap gap-4 justify-between">
-                            <button onClick={() => handleNavigateToIndex(currentQIndex - 1)} className="px-8 py-4 rounded-2xl border-2 border-slate-100 font-black text-slate-500 hover:bg-slate-50 flex items-center gap-2">
+                            <button onClick={handlePrevious} className="px-8 py-4 rounded-2xl border-2 border-slate-100 font-black text-slate-500 hover:bg-slate-50 flex items-center gap-2">
                                 <ChevronLeft size={18} /> PREVIOUS
                             </button>
                             <div className="flex gap-4">
