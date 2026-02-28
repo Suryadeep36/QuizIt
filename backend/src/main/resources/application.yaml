@@ -1,9 +1,20 @@
 spring:
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      port: 12131
       connect-timeout: 3000
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 2
+      ssl:
+        enabled: false
+
+
   config:
     import: optional:file:.env[.properties]
   application:
