@@ -45,6 +45,5 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Good practice: Ensure the file exists before restarting
             sudo mv /home/ec2-user/app.jar /opt/myapp/app.jar 
             sudo systemctl restart myapp
