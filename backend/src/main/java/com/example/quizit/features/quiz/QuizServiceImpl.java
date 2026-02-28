@@ -49,16 +49,18 @@ public class QuizServiceImpl implements QuizService {
     private final TaskScheduler taskScheduler;
 
     public void scheduleQuizEnd(Quiz quiz) {
+        if(quiz.getStatus().equals(QuizStatus.CREATED)){
+            Instant executionTime = quiz.getEndTime().plusSeconds(quizRepository.getTotalDurationByQuizId(quiz.getQuizId()));
+            quiz.setStatus(QuizStatus.STARTED);
+            //CHECKING PURPOSE
+    //        Instant executionTime = quiz.getEndTime();
 
-        Instant executionTime = quiz.getEndTime().plusSeconds(quizRepository.getTotalDurationByQuizId(quiz.getQuizId()));
-
-        //CHECKING PURPOSE
-//        Instant executionTime = quiz.getEndTime();
-
-        taskScheduler.schedule(() -> {
-            quiz.setStatus(QuizStatus.ENDED);
+            taskScheduler.schedule(() -> {
+                quiz.setStatus(QuizStatus.ENDED);
+                quizRepository.save(quiz);
+            }, executionTime);
             quizRepository.save(quiz);
-        }, executionTime);
+        }
     }
 
     private void validateQuizTimeWindow(Instant startTime, Instant endTime) {
@@ -313,7 +315,7 @@ public class QuizServiceImpl implements QuizService {
                 quizAntiCheatService.consumeSession(quizSession.getSessionId());
 
         if (cheatStates == null)
-            cheatStates = Map.of();        
+            cheatStates = Map.of();
         quizRepository.save(quiz);
         Map<UUID, Participant> participantMap =
                 participantRepository.findAllByQuiz_QuizId(quizId)
