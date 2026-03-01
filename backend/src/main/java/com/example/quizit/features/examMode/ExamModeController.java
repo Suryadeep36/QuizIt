@@ -24,46 +24,95 @@ public class ExamModeController {
     private final ExamModeService examModeService;
     @Value("${security.jwt.cookie-secure}")
     private boolean isCookieSecure;
+
+    @Value("${security.jwt.cookie-same-site}")
+    private String sameSite;
     @PostMapping("/verify")
     public ResponseEntity<PreRegisterResponse> verifyParticipant(
             @RequestBody PreRegisterUserDto userDto,
-            Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
+            Authentication authentication,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+
         System.out.println("Verify");
+
         User user = (User) authentication.getPrincipal();
+
         String userAgent = request.getHeader("User-Agent");
         String ipAddress = request.getRemoteAddr();
-        PreRegisterResponse preRegisterResponse = examModeService.preRegisterParticipant(userDto, user.getId(), userAgent, ipAddress);
 
+        PreRegisterResponse preRegisterResponse =
+                examModeService.preRegisterParticipant(
+                        userDto,
+                        user.getId(),
+                        userAgent,
+                        ipAddress
+                );
 
+        Cookie cookie = new Cookie(
+                "participantId",
+                preRegisterResponse.participant.getParticipantId().toString()
+        );
 
-        Cookie cookie = new Cookie("participantId", preRegisterResponse.participant.getParticipantId().toString());
-        cookie.setHttpOnly(true);        // cannot access via JS
-        cookie.setSecure(isCookieSecure);          // true in production (HTTPS)
+        cookie.setHttpOnly(true);
+        cookie.setSecure(isCookieSecure);
         cookie.setPath("/");
         cookie.setMaxAge(5 * 60 + 60);
+
+        // ✅ add cookie normally
         response.addCookie(cookie);
+
+        // ⭐ MINIMUM CHANGE → add SameSite manually
+        response.setHeader(
+                "Set-Cookie",
+                String.format(
+                        "participantId=%s; Max-Age=%d; Path=/; HttpOnly; %s; SameSite=%s",
+                        preRegisterResponse.participant.getParticipantId(),
+                        5 * 60 + 60,
+                        isCookieSecure ? "Secure" : "",
+                        sameSite
+                )
+        );
+
         return ResponseEntity.ok(preRegisterResponse);
     }
-
     @PostMapping("/{quizId}/start")
     public ResponseEntity<ExamNavigationResponse> startQuiz(
             @PathVariable UUID quizId,
             @CookieValue(value = "participantId") String participantId,
             HttpServletResponse httpResponse) {
+
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-        ExamNavigationResponse examResponse = examModeService.startExam(quizId, pid);
+
+        ExamNavigationResponse examResponse =
+                examModeService.startExam(quizId, pid);
 
         Cookie cookie = new Cookie("participantId", participantId);
-        cookie.setHttpOnly(true);  // 🔥 always keep this
-        cookie.setSecure(isCookieSecure);   // true in production
+        cookie.setHttpOnly(true);
+        cookie.setSecure(isCookieSecure);
         cookie.setPath("/");
 
-        long seconds = Math.max(examResponse.getGlobalRemainingTimeMillis() / 1000, 1) + 300;
+        long seconds =
+                Math.max(examResponse.getGlobalRemainingTimeMillis() / 1000, 1) + 300;
 
         cookie.setMaxAge((int) seconds);
 
-        httpResponse.addCookie(cookie);   // ✅ VERY IMPORTANT
+        // ✅ normal cookie
+        httpResponse.addCookie(cookie);
+
+        // ⭐ MINIMUM CHANGE → SameSite fix
+        httpResponse.setHeader(
+                "Set-Cookie",
+                String.format(
+                        "participantId=%s; Max-Age=%d; Path=/; HttpOnly; %s; SameSite=%s",
+                        participantId,
+                        (int) seconds,
+                        isCookieSecure ? "Secure" : "",
+                        sameSite
+                )
+        );
+
         return ResponseEntity.ok(examResponse);
     }
 
