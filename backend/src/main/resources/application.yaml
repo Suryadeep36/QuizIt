@@ -61,8 +61,13 @@ spring:
     username: ${EMAIL_SERVICE_EMAIL}
     password: ${EMAIL_SERVICE_PASSWORD}
     properties:
-       mail.smtp.auth: true
-       mail.smtp.starttls.enable: true
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: smtp.gmail.com
 server:
   port: ${PORT:3000}
 
