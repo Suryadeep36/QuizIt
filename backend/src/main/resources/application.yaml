@@ -55,19 +55,25 @@ spring:
 
   jvm:
     arguments: --add-opens=java.base/sun.misc=ALL-UNNAMED
+
   mail:
     host: smtp.gmail.com
     port: 587
     username: ${EMAIL_SERVICE_EMAIL}
     password: ${EMAIL_SERVICE_PASSWORD}
+    protocol: smtp
+
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-          ssl:
-            trust: smtp.gmail.com
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 server:
   port: ${PORT:8080}
   address: 0.0.0.0
