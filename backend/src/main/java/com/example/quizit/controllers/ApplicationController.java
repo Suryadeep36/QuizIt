@@ -15,4 +15,9 @@ public class ApplicationController {
         System.out.printf("HELLO WORLD");
         return ResponseEntity.ok("Application Controller Running!");
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<String> getHealth(){
+        return ResponseEntity.ok("QuizIt is running!");
+    }
 }

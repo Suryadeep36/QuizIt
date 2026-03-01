@@ -349,8 +349,9 @@ public class QuizServiceImpl implements QuizService {
             quiz.setStatus(QuizStatus.STARTED);
             //CHECKING PURPOSE
             //        Instant executionTime = quiz.getEndTime();
-
+            System.out.println("Exection time " + executionTime.toString());
             taskScheduler.schedule(() -> {
+                System.out.println("Start execting task");
                 quiz.setStatus(QuizStatus.ENDED);
                 quizRepository.save(quiz);
 
