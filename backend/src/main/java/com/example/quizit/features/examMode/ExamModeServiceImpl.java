@@ -89,7 +89,18 @@ public class ExamModeServiceImpl implements ExamModeService {
                 .map(Question::getQuestionId)
                 .collect(Collectors.toList());
 
-        examRedisService.storeShuffledOrderIfAbsent(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), questionIds, duration);
+        if (questionIds.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Quiz has no questions configured"
+            );
+        }
+
+        examRedisService.storeShuffledOrderIfAbsent(preRegisterUserDto.getQuizId()
+                ,registeredUser.getParticipant().getParticipantId()
+                ,questionIds
+                ,duration
+        );
         examRedisService.initializeAttempt(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), duration);
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
