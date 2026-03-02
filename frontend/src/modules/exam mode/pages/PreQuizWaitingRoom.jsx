@@ -28,7 +28,8 @@ export default function PreQuizWaitingRoom() {
     const setParticipant = useParticipant(
         (state) => state.setParticipant
     );
-    const isParticipant = useParticipant((state) => state.isParticipant);
+    const isParticipantForExam = useParticipant((state) => state.isParticipantForExam);
+    const participant = useParticipant((state) => state.participant);
     const [quiz, setQuiz] = useState({
         quizId: "ef7d764a-a550-429a-8dc4-79d19722dbbe",
         quizName: "bhul tari che",
@@ -64,7 +65,7 @@ export default function PreQuizWaitingRoom() {
 
        useEffect(() => {
             // console.log("running...")
-            if (isPhysicallyInStorage ) {
+            if (isPhysicallyInStorage && isParticipantForExam && quizId === participant.quizId ) {
        
                 console.log(isPhysicallyInStorage);
                 navigate(`/exam/${quizId}/session`);
@@ -116,8 +117,10 @@ export default function PreQuizWaitingRoom() {
         e.preventDefault();
         try {
             setSubmitting(true);
-            const data = await verifyParticipant({ quizId, birthDate, email: user.email });
-            console.log(data);
+            const input = { quizId, birthDate, email: user.email };
+            console.log(input);
+            const data = await verifyParticipant(input);
+            console.log("hqllo",data);
             clearQuestionIds()
             setQuestionIds(data.questionList);
             const participantData = await setParticipant({

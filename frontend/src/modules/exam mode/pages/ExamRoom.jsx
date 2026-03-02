@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import {
     Clock, Timer, User, ChevronLeft, ChevronRight,
     Send, Maximize, Menu, X, Loader2, AlertCircle,
-    ArrowRight
+    ArrowRight,
+    ClipboardCheck
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { useNavigationStore, useParticipant, useQuestionList } from "../../../stores/store";
 import toast from "react-hot-toast";
 import { submitAnswer, submitTest, switchQuestion } from "../../../services/AuthService";
+import Arrow from "../../landing/components/Arrow";
 
 export default function ExamRoom() {
     const { quizId } = useParams();
@@ -16,6 +18,8 @@ export default function ExamRoom() {
     const [quizEnded, setQuizEnded] = useState(false);
     // Store Selectors
     const participant = useParticipant((s) => s.participant);
+    const clearNavigationData = useNavigationStore((state)=>state.clearNavigationData) 
+    const clearQuestionIds = useQuestionList((state)=>state.clearQuestionIds) 
     const navigationData = useNavigationStore((state) => state.getNavigationData());
     const questionIds = useQuestionList((state) => state.getQuizIds());
     const setNavigationData = useNavigationStore((state) => state.setNavigationData);
@@ -23,7 +27,7 @@ export default function ExamRoom() {
     /* ================= STATES ================= */
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [currentQIndex, setCurrentQIndex] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [fetchingQuestion, setFetchingQuestion] = useState(false);
 
     const [globalTime, setGlobalTime] = useState(0);
@@ -144,7 +148,12 @@ export default function ExamRoom() {
             // setFetchingQuestion(false);
         }
     };
-
+   
+    const handleQuizEnd = ()=>{
+             setQuizEnded(true);
+             clearNavigationData()
+             clearQuestionIds()
+    }
 
 
     /* ================= TIMERS ================= */
@@ -152,7 +161,7 @@ export default function ExamRoom() {
         const timer = setInterval(() => {
             setGlobalTime(prev => {
                 if (!quizEnded && prev <= 1 && prev > 0) {
-                    setQuizEnded(true);
+                    handleQuizEnd()
                     toast.error("The quiz has ended!");
                     return 0;
                 }
@@ -333,7 +342,6 @@ export default function ExamRoom() {
                         })}
                     </div>
                 );
-
             default:
                 return <AlertCircle className="text-slate-200" />;
         }
@@ -431,7 +439,8 @@ export default function ExamRoom() {
     const handleSubmitTest = async () => {
         try{
             await submitTest(quizId, participant?.id);
-            navigate(`/afterQuizAnalytics/${quizId}`);
+            setQuizEnded(true);
+            // navigate(`/afterQuizAnalytics/${quizId}`);
         }
         catch(error){
             console.error("final submit error:", error);
@@ -441,41 +450,83 @@ export default function ExamRoom() {
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-[#1b8599]" size={40} /></div>;
 
-    if (quizEnded) {
-        return (
-            <div className="h-screen w-full bg-slate-100 flex items-center justify-center p-6 select-none">
-                <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100">
-                    {/* Visual Icon */}
-                    <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-red-50/50">
-                        <Clock size={48} className="animate-pulse" />
+    if (quizEnded || !questionIds || !navigationData) {
+    return (
+        <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-6 select-none font-sans">
+            <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100 relative overflow-hidden">
+                
+                {/* Decorative Background Element */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#1b8599]/5 rounded-full" />
+
+                {/* Visual Icon Section */}
+                <div className="relative">
+                    <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-emerald-50/50 transition-transform hover:scale-110 duration-500">
+                        <ClipboardCheck size={48} />
                     </div>
+                    {/* Floating check badge */}
+                    <div className="absolute top-0 right-[35%] bg-[#1b8599] text-white p-1.5 rounded-full border-4 border-white shadow-lg">
+                        <Send size={12} />
+                    </div>
+                </div>
 
-                    {/* Text Content */}
-                    <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">
-                        Quiz Ended
-                    </h2>
-                    <p className="text-slate-500 font-medium leading-relaxed mb-10">
-                        The time limit has been reached or the quiz is no longer active.
-                        All your saved responses have been securely submitted.
-                    </p>
+                {/* Text Content */}
+                <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight uppercase">
+                    Assessment Complete
+                </h2>
+                <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
+                    Your responses have been successfully synced with our servers. 
+                    You can now review your performance or return to the main portal.
+                </p>
 
-                    {/* Action Buttons */}
-                    <div className="space-y-4">
+                {/* Action Buttons: The Three-Way Navigation */}
+                <div className="space-y-4">
+                    
+                    {/* 1. PRIMARY: Navigate to User Analytics */}
+                    <button
+                        onClick={() => navigate(`/afterQuizAnalytics/${quizId}`)}
+                        className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/30 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3 group"
+                    >
+                        <span>View Detailed Analytics</span>
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+
+                    {/* Secondary Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        
+                        {/* 2. SECONDARY: Navigate to Dashboard */}
                         <button
-                            onClick={() => navigate('/')}
-                            className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3"
+                            onClick={() => navigate('/dashboard')}
+                            className="py-4 bg-slate-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-slate-950"
                         >
-                            Return to Dashboard <Send size={16} />
+                            <Menu size={14} />
+                            Dashboard
                         </button>
 
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                            Quiz ID: {quizId}
+                        {/* 3. TERTIARY: Navigate Home */}
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="py-4 bg-white border-2 border-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+<ChevronLeft size={14} />
+                            Back
+                        </button>
+                    </div>
+
+                    {/* Meta Info */}
+                    <div className="pt-6 mt-6 border-t border-slate-50 flex items-center justify-between opacity-40">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                            Session ID: {quizId?.substring(0, 8)}...
                         </p>
+                        <div className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                            <span className="text-[9px] font-black text-slate-400 uppercase">Securely Submitted</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        );
-    }
+        </div>
+    );
+}
     return (
         <div className="h-screen w-full bg-slate-100 flex flex-col overflow-hidden select-none">
             {/* HEADER */}
