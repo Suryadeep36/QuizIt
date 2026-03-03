@@ -1,5 +1,8 @@
 package com.example.quizit.security;
 
+import com.example.quizit.features.GoogleCredential.EncryptionService;
+import com.example.quizit.features.GoogleCredential.GoogleCredential;
+import com.example.quizit.features.GoogleCredential.GoogleCredentialRepository;
 import com.example.quizit.features.role.Role;
 import com.example.quizit.features.role.RoleRepository;
 import com.example.quizit.features.user.Provider;
@@ -8,13 +11,13 @@ import com.example.quizit.features.user.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -22,8 +25,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,10 +42,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final RoleRepository roleRepository;
     Logger logger = LoggerFactory.getLogger(OAuth2SuccessHandler.class);
 
+    private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserRepository userRepository;
     private final JwtService  jwtService;
     private final CookieService cookieService;
-
+    private final GoogleCredentialRepository googleCredentialRepository;
+    private final EncryptionService encryptionService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
@@ -106,6 +109,33 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 refreshTokenRepository.save(refreshTokenOb);
                 cookieService.attachRefreshCookie(response,refreshToken,(int) jwtService.getRefreshTokenValiditySeconds());
 
+                OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+
+                OAuth2AuthorizedClient client =
+                        authorizedClientService.loadAuthorizedClient(
+                                oauthToken.getAuthorizedClientRegistrationId(),
+                                oauthToken.getName()
+                        );
+
+                String googleAccessToken = client.getAccessToken().getTokenValue();
+                String googleRefreshToken = client.getRefreshToken() != null
+                        ? client.getRefreshToken().getTokenValue()
+                        : null;
+
+                if (googleRefreshToken != null) {
+
+                    String encryptedRefreshToken = encryptionService.encrypt(googleRefreshToken);
+
+                    googleCredentialRepository.save(
+                            GoogleCredential.builder()
+                                    .user(user)
+                                    .refreshToken(encryptedRefreshToken)
+                                    .createdAt(Instant.now())
+                                    .build()
+                    );
+                }
+
+
                 break;
 
                  case "unknown":
@@ -113,6 +143,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         }
 
+
+        //FOR GOOGLE FORMS
 
         String redirectUrl = frontendBaseUrl + successPath;
         response.sendRedirect(redirectUrl);
