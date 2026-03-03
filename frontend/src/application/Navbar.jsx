@@ -333,7 +333,7 @@ export default function Navbar() {
                   >
                     <Avatar 
                       alt={user.username} 
-                      src={ user.image ||"/static/images/avatar/2.jpg" }
+                      src={ "/static/images/avatar/2.jpg" }
                       sx={{ bgcolor: colors.cyanText }}
                     >
                       {user.username ? user.username.charAt(0).toUpperCase() : 'U'}

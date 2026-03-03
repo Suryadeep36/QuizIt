@@ -19,6 +19,7 @@ import {
   ImageIcon,
   ListChecks,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { useParams } from "react-router";
 import {
@@ -29,13 +30,15 @@ import {
   getQuestionsByQuizId,
   getQuizById,
   getQuizsByHostId,
+  importGoogleForm,
   updateQuestionById,
 } from "../../../services/AuthService";
 import toast from "react-hot-toast";
 import AiPromptModal from "../components/AiPromptModal";
-import { Chip } from "@mui/material";
+import { Button, Chip } from "@mui/material";
 import QuizSettings from "../components/QuizSettings";
 import InvitationManager from "../components/InvitationManager";
+import FormImportModal from "../components/FormImportModal";
 
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
@@ -45,6 +48,8 @@ export default function QuizManagementDashboard() {
   const [questions, setQuestions] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [generating, setGenerating] = useState(false);
+    const [importing, setImporting] = useState(false);
+  const [openImportModal, setOpenImportModal] = useState(false);
   const normalizeQuestionFromApi = (q) => {
     const baseQuestion = {
       questionId: q.questionId,
@@ -252,6 +257,27 @@ export default function QuizManagementDashboard() {
     );
   }
 
+const handleFormImport = async (formUrl) => {
+  try {
+    setImporting(true); 
+    // Call the service
+    await importGoogleForm(quizId, formUrl);
+
+    // Refresh the local questions list
+    await fetchData();
+    toast.success("Questions imported from Google Form! 📝");
+  } catch (err) {
+    console.error("Import Error:", err);
+    toast.error(
+      err.response?.data?.message ||
+      err.message ||
+      "Failed to import from Google Form"
+    );
+  } finally {
+    setImporting(false);
+  }
+};
+
   const handleAiGen = async (prompt) => {
     try {
       // setLoading(true);
@@ -369,7 +395,20 @@ export default function QuizManagementDashboard() {
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
-
+                  <button
+                   disabled={importing}
+                    onClick={() => setOpenImportModal(true)}
+                    className="flex items-center gap-2 px-5 py-2 rounded-full border border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 transition-all active:scale-95 shadow-md"
+                  >
+                    {importing ? (
+                      <span className="animate-spin">🌀</span>
+                    ) : (
+                         <FileText className="w-4 h-4 text-white" />
+                    )}
+                 
+                     {importing ? "Importing..." : "Import from Forms"}
+                    {/* <span>Import from Forms</span> */}
+                  </button>
                   {/* Ai Gen Button */}
                   <button
                     disabled={generating}
@@ -390,6 +429,12 @@ export default function QuizManagementDashboard() {
                     onClose={() => setOpenModal(false)}
                     onGenerate={handleAiGen}
                   />
+
+                  <FormImportModal
+  open={openImportModal}
+  onClose={() => setOpenImportModal(false)}
+  onImport={handleFormImport}
+/>
                   {/* Add Question Dropdown */}
                   <div className="relative group">
                     <button className="bg-white text-[#4a9cb0] px-5 py-3 rounded-2xl font-bold flex items-center gap-2 hover:shadow-xl transition-all">
