@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -109,6 +110,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 refreshTokenRepository.save(refreshTokenOb);
                 cookieService.attachRefreshCookie(response,refreshToken,(int) jwtService.getRefreshTokenValiditySeconds());
 
+
+                //FOR GOOGLE FORM
                 OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
 
                 OAuth2AuthorizedClient client =
@@ -121,19 +124,28 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 String googleRefreshToken = client.getRefreshToken() != null
                         ? client.getRefreshToken().getTokenValue()
                         : null;
-
+                System.out.println(googleRefreshToken);
                 if (googleRefreshToken != null) {
 
                     String encryptedRefreshToken = encryptionService.encrypt(googleRefreshToken);
+                    Optional<GoogleCredential> existing =
+                            googleCredentialRepository.findByUserId(user.getId());
 
-                    googleCredentialRepository.save(
-                            GoogleCredential.builder()
-                                    .user(user)
-                                    .refreshToken(encryptedRefreshToken)
-                                    .createdAt(Instant.now())
-                                    .build()
-                    );
+                    if (existing.isPresent()) {
+                        GoogleCredential credential = existing.get();
+                        credential.setRefreshToken(encryptedRefreshToken);
+                        googleCredentialRepository.save(credential);
+                    } else {
+                        googleCredentialRepository.save(
+                                GoogleCredential.builder()
+                                        .user(user)
+                                        .refreshToken(encryptedRefreshToken)
+                                        .createdAt(Instant.now())
+                                        .build()
+                        );
+                    }
                 }
+
 
 
                 break;
