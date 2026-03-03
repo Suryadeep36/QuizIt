@@ -64,9 +64,18 @@ public class SecurityConfig {
 
                 //Google Login
                 .oauth2Login(oauth2 ->
-                        oauth2.successHandler(successHandler)
-                                .failureHandler(null)
-                        )
+                        oauth2
+                                .authorizationEndpoint(endpoint ->
+                                        endpoint.authorizationRequestResolver(
+                                                authorizationRequestResolver(
+                                                        http.getSharedObject(ClientRegistrationRepository.class)
+                                                )
+                                        )
+                                )
+                                .successHandler(oAuth2SuccessHandler)
+                )
+
+
                 .logout(AbstractHttpConfigurer::disable)
 
                 .exceptionHandling(ex->
@@ -125,22 +134,6 @@ public class SecurityConfig {
         return resolver;
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   ClientRegistrationRepository clientRegistrationRepository)
-            throws Exception {
-        http
-                .oauth2Login(oauth -> oauth
-                        .authorizationEndpoint(endpoint ->
-                                endpoint.authorizationRequestResolver(
-                                        authorizationRequestResolver(clientRegistrationRepository)
-                                )
-                        )
-                        .successHandler(oAuth2SuccessHandler)
-                );
-
-        return http.build();
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
