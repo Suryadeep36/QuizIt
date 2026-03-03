@@ -29,7 +29,9 @@ spring:
             scope:
               - email
               - profile
-              - openidx
+              - openid
+              - https://www.googleapis.com/auth/forms.body.readonly
+              - https://www.googleapis.com/auth/drive.readonly
 
 
   datasource:
@@ -97,9 +99,15 @@ security:
     cookie-domain: ${JWT_COOKIE_DOMAIN}
     cookie-same-site: ${JWT_COOKIE_SAME_SITE}
 
+  encryption:
+    google-token-secret: ${GOOGLE_TOKEN_SECRET}
+
+
 # ===============================
 # OAuth
 # ===============================
+
+
 
 app:
   auth:
