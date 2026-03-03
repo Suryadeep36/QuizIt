@@ -24,6 +24,7 @@ spring:
       client:
         registration:
           google:
+            redirect-uri: ${GOOGLE_CLIENT_REDIRECT}
             client-id: ${GOOGLE_CLIENT_ID:test-client-id}
             client-secret: ${GOOGLE_CLIENT_SECRET:test-client-server}
             scope:
