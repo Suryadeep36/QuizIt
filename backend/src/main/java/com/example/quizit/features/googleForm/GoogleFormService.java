@@ -119,7 +119,9 @@ public class GoogleFormService {
                         }
                     }
                     dto.setOptions(optionMap);
-                    dto.setAllowMultipleAnswers("CHECKBOX".equalsIgnoreCase(choice.type));
+                    if(choice.type.equals("CHECKBOX") || choice.type.equals("DROP_DOWN")){
+                        dto.setAllowMultipleAnswers(true);
+                    }
                     if (question.grading != null &&
                             question.grading.correctAnswers != null &&
                             question.grading.correctAnswers.answers != null) {
