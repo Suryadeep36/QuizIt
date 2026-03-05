@@ -69,7 +69,7 @@ public class Question {
     @Column(name = "display_order", nullable = true)
     private Integer displayOrder;
 
-    @Column(name = "points", nullable = false)
+    @Column(name = "points", nullable = true)
     private Integer points = 0;
 
 }
