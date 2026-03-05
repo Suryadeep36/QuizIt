@@ -226,7 +226,7 @@ export const submitTest = async (quizId, participantId) => {
 }
 
 export const importGoogleForm = async (quizId,formUrl) => {
-  const response = await apiClient.post(`/google-form-import`,{formUrl})
+  const response = await apiClient.post(`/google-form-import`,{formUrl, quizId})
   console.log(response.data)
     return response.data;
 }

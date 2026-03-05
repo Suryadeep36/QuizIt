@@ -179,7 +179,6 @@ public class QuestionServiceImpl implements QuestionService {
             question.setQuiz(quiz);
             question.setIsAIGenerated(false);
             question.setDisplayOrder(nextOrder);
-
             nextOrder += 10;
 
             questionEntities.add(question);

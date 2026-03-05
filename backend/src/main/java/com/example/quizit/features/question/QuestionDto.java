@@ -13,7 +13,6 @@ import java.util.UUID;
 @Setter
 @Getter
 public class QuestionDto {
-
     private UUID questionId;
     private UUID quizId;
     private String content;
@@ -29,5 +28,5 @@ public class QuestionDto {
     private Boolean allowMultipleAnswers;
     private Boolean isAIGenerated;
     private Integer displayOrder;
-
+    private Integer points;
 }
