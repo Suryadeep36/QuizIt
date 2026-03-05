@@ -245,6 +245,38 @@ public class GoogleFormService {
             }
             questionDtoList.add(dto);
         }
+        for (QuestionDto q : questionDtoList) {
+
+            System.out.println("--------------------------------------------------");
+            System.out.println("Question ID       : " + q.getQuestionId());
+            System.out.println("Quiz ID           : " + q.getQuizId());
+            System.out.println("Content           : " + q.getContent());
+            System.out.println("Type              : " + q.getQuestionType());
+            System.out.println("Difficulty        : " + q.getDifficultyLevel());
+            System.out.println("Duration          : " + q.getDuration());
+            System.out.println("Display Order     : " + q.getDisplayOrder());
+            System.out.println("Points            : " + q.getPoints());
+            System.out.println("AI Generated      : " + q.getIsAIGenerated());
+            System.out.println("Case Sensitive    : " + q.getCaseSensitive());
+            System.out.println("Allow Multiple    : " + q.getAllowMultipleAnswers());
+            System.out.println("Max Answer Length : " + q.getMaxAnswerLength());
+            System.out.println("Image URL         : " + q.getImageUrl());
+
+            System.out.println("Options           : " + q.getOptions());
+            System.out.println("Acceptable Answers: " + q.getAcceptableAnswers());
+
+            if (q.getCorrectAnswer() != null) {
+                for (AnswerKey key : q.getCorrectAnswer()) {
+                    System.out.println("  -> Correct Key  : " + key.getKey());
+                    System.out.println("  -> Match Pairs  : " + key.getMatchPairs());
+                }
+            }
+            else {
+                System.out.println("Correct answer is null");
+            }
+
+            System.out.println("--------------------------------------------------");
+        }
         return questionService.createQuestion(questionDtoList, userId);
     }
 }
