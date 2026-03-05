@@ -243,7 +243,8 @@ public class GoogleFormService {
             } else {
                 continue;
             }
-            questionDtoList.add(dto);
+            if(dto.getCorrectAnswer() != null)
+                questionDtoList.add(dto);
         }
         for (QuestionDto q : questionDtoList) {
 
