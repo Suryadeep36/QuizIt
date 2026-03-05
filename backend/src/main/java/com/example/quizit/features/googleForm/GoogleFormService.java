@@ -95,11 +95,9 @@ public class GoogleFormService {
             dto.setAllowMultipleAnswers(false);
             dto.setPoints(0);
 
-            if (item.imageItem != null &&
-                    item.imageItem.image != null &&
-                    item.imageItem.image.contentUri != null) {
-
-                dto.setImageUrl(item.imageItem.image.contentUri);
+            if (item.image != null &&
+                    item.image.contentUri != null ) {
+                dto.setImageUrl(item.image.contentUri);
             }
 
             if (item.questionItem != null && item.questionItem.question != null) {
