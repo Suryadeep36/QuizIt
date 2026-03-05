@@ -95,9 +95,14 @@ public class GoogleFormService {
             dto.setAllowMultipleAnswers(false);
             dto.setPoints(0);
 
-            if (item.image != null &&
-                    item.image.contentUri != null ) {
-                dto.setImageUrl(item.image.contentUri);
+            if (item.questionItem != null && item.questionItem.image != null &&
+                    item.questionItem.image.contentUri != null ) {
+                dto.setImageUrl(item.questionItem.image.contentUri);
+            }
+
+            if (item.questionGroupItem != null && item.questionGroupItem.image != null &&
+                    item.questionGroupItem.image.contentUri != null ) {
+                dto.setImageUrl(item.questionGroupItem.image.contentUri);
             }
 
             if (item.questionItem != null && item.questionItem.question != null) {
