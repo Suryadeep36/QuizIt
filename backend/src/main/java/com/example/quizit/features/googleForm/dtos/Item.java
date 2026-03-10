@@ -6,5 +6,4 @@ public class Item{
     public QuestionItem questionItem;
     public ImageItem imageItem;
     public QuestionGroupItem questionGroupItem;
-    public Image image;
 }

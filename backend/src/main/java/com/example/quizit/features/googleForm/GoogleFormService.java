@@ -95,9 +95,14 @@ public class GoogleFormService {
             dto.setAllowMultipleAnswers(false);
             dto.setPoints(0);
 
-            if (item.image != null &&
-                    item.image.contentUri != null ) {
-                dto.setImageUrl(item.image.contentUri);
+            if (item.questionItem != null && item.questionItem.image != null &&
+                    item.questionItem.image.contentUri != null ) {
+                dto.setImageUrl(item.questionItem.image.contentUri);
+            }
+
+            if (item.questionGroupItem != null && item.questionGroupItem.image != null &&
+                    item.questionGroupItem.image.contentUri != null ) {
+                dto.setImageUrl(item.questionGroupItem.image.contentUri);
             }
 
             if (item.questionItem != null && item.questionItem.question != null) {
@@ -176,6 +181,7 @@ public class GoogleFormService {
                                 Map<String, Object> option = new LinkedHashMap<>();
                                 option.put("TRUE", "True");
                                 option.put("FALSE", "False");
+                                dto.getCorrectAnswer().getFirst().setKey(dto.getCorrectAnswer().getFirst().getKey().toUpperCase());
                                 dto.setOptions(option);
                             }
                         }
@@ -212,8 +218,8 @@ public class GoogleFormService {
                         }
                     }
                 }
-                options.put("LEFT", new ArrayList<>(leftMap.keySet()));
-                options.put("RIGHT", new ArrayList<>(rightMap.keySet()));
+                options.put("left", new ArrayList<>(leftMap.keySet()));
+                options.put("right", new ArrayList<>(rightMap.keySet()));
                 dto.setOptions(options);
                 Map<String, String> matchPairs = new LinkedHashMap<>();
                 if (item.questionGroupItem.questions != null) {

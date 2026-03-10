@@ -261,4 +261,3 @@ export const useParticipant = create(
   ),
 );
 
-export const getAccessToken = () => useAuth.getState().accessToken;
