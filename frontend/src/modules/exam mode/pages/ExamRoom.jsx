@@ -10,6 +10,7 @@ import { useNavigationStore, useParticipant, useQuestionList } from "../../../st
 import toast from "react-hot-toast";
 import { submitAnswer, submitTest, switchQuestion } from "../../../services/AuthService";
 import Arrow from "../../landing/components/Arrow";
+import MobileExamRoom from "./MobileExamRoom";
 
 export default function ExamRoom() {
     const { quizId } = useParams();
@@ -18,8 +19,8 @@ export default function ExamRoom() {
     const [quizEnded, setQuizEnded] = useState(false);
     // Store Selectors
     const participant = useParticipant((s) => s.participant);
-    const clearNavigationData = useNavigationStore((state)=>state.clearNavigationData) 
-    const clearQuestionIds = useQuestionList((state)=>state.clearQuestionIds) 
+    const clearNavigationData = useNavigationStore((state) => state.clearNavigationData)
+    const clearQuestionIds = useQuestionList((state) => state.clearQuestionIds)
     const navigationData = useNavigationStore((state) => state.getNavigationData());
     const questionIds = useQuestionList((state) => state.getQuizIds());
     const setNavigationData = useNavigationStore((state) => state.setNavigationData);
@@ -115,18 +116,18 @@ export default function ExamRoom() {
     /* ================= NAVIGATION & FETCHING ================= */
 
     const handleNavigateToIndex = async (targetIndex) => {
-         // 2. CHECK STATUS: Get the ID of the target question
-    let targetQuestionId = questionIds[targetIndex];
-    let targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
+        // 2. CHECK STATUS: Get the ID of the target question
+        let targetQuestionId = questionIds[targetIndex];
+        let targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
 
-    // 3. BLOCK NAVIGATION: If time is up, don't let them enter
-     while(targetStatus === 'time_up') {
-        targetIndex++;
-        targetQuestionId = questionIds[targetIndex];
-        targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
-        return; 
-    }
-        
+        // 3. BLOCK NAVIGATION: If time is up, don't let them enter
+        while (targetStatus === 'time_up') {
+            targetIndex++;
+            targetQuestionId = questionIds[targetIndex];
+            targetStatus = useQuestionList.getState().getStatus(targetQuestionId);
+            return;
+        }
+
 
         if (targetIndex < 0 || targetIndex >= questionIds.length) return;
 
@@ -148,11 +149,11 @@ export default function ExamRoom() {
             // setFetchingQuestion(false);
         }
     };
-   
-    const handleQuizEnd = ()=>{
-             setQuizEnded(true);
-             clearNavigationData()
-             clearQuestionIds()
+
+    const handleQuizEnd = () => {
+        setQuizEnded(true);
+        clearNavigationData()
+        clearQuestionIds()
     }
 
 
@@ -169,7 +170,7 @@ export default function ExamRoom() {
             });
 
             setQuestionTime(prev => {
-               const  rem = prev > 0 ? prev - 1 : 0;
+                const rem = prev > 0 ? prev - 1 : 0;
                 if (rem <= 0) {
                     const qId = currentQuestion?.questionId;
                     if (qId) setStatus(qId, 'time_up');
@@ -188,14 +189,19 @@ export default function ExamRoom() {
 
     const renderOptions = () => {
         if (!currentQuestion) return null;
-        const { questionType, options, questionId, allowMultipleAnswers } = currentQuestion;
+        const {
+            questionType,
+            options = {},
+            questionId,
+            allowMultipleAnswers
+        } = currentQuestion;
         const selected = currentAnswer; // This is now an object like { value: ... } or { keys: [...] }
 
         switch (questionType) {
             case "MCQ":
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(options).map(([key, value]) => {
+                        {Object.entries(options || {}).map(([key, value]) => {
                             // Updated: Access keys from the object structure
                             const isSelected = selected?.keys?.includes(key);
 
@@ -235,100 +241,112 @@ export default function ExamRoom() {
                 );
 
             case "MATCH_FOLLOWING":
-                return (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="grid grid-cols-2 gap-10 relative">
-                            {/* Column A */}
-                            <div className="space-y-3">
-                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Column A</p>
-                                {options.left.map((item, i) => {
-                                    const matchObj = selected?.matchPairs?.find(p => Object.keys(p)[0] === String(i));
-                                    const isMatched = !!matchObj;
-                                    const isActive = activeLeft === i;
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Mobile: grid-cols-1 (stacked) 
+          Laptop: md:grid-cols-2 (side-by-side) 
+      */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 relative">
+        
+        {/* Column A */}
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Column A</p>
+          {options.left.map((item, i) => {
+            const matchObj = selected?.matchPairs?.find(p => Object.keys(p)[0] === String(i));
+            const isMatched = !!matchObj;
+            const isActive = activeLeft === i;
 
-                                    return (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleLeftClick(i)}
-                                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex justify-between items-center group
-                  ${isActive ? 'border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.02]' :
-                                                    isMatched ? 'border-emerald-100 bg-emerald-50/50 opacity-80' : 'border-slate-100 bg-white hover:border-slate-200'}
+            return (
+              <button
+                key={i}
+                onClick={() => handleLeftClick(i)}
+                className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex justify-between items-center group
+                  ${isActive ? 'border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.01]' :
+                  isMatched ? 'border-emerald-100 bg-emerald-50/50 opacity-80' : 'border-slate-100 bg-white hover:border-slate-200'}
                 `}
-                                        >
-                                            <span className={`font-bold ${isActive ? 'text-[#1b8599]' : 'text-slate-700'}`}>{item}</span>
-                                            <div className={`w-2 h-2 rounded-full transition-all ${isActive ? 'bg-[#1b8599] scale-150' : isMatched ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                                        </button>
-                                    );
-                                })}
-                            </div>
+              >
+                <span className={`font-bold text-sm md:text-base ${isActive ? 'text-[#1b8599]' : 'text-slate-700'}`}>
+                  {item}
+                </span>
+                <div className={`w-2.5 h-2.5 rounded-full transition-all ${isActive ? 'bg-[#1b8599] scale-125' : isMatched ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+              </button>
+            );
+          })}
+        </div>
 
-                            {/* Column B */}
-                            <div className="space-y-3">
-                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Column B</p>
-                                {options.right.map((item, i) => {
-                                    const isMatchedToCurrentLeft = activeLeft !== null &&
-                                        selected?.matchPairs?.some(p => p[String(activeLeft)] === i);
+        {/* Column B */}
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Column B</p>
+          {options.right.map((item, i) => {
+            const isMatchedToCurrentLeft = activeLeft !== null &&
+              selected?.matchPairs?.some(p => p[String(activeLeft)] === i);
 
-                                    return (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleRightClick(i)}
-                                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group
-                  ${activeLeft !== null ? 'hover:border-[#1b8599] hover:bg-[#1b8599]/5 border-slate-200 cursor-pointer' : 'border-slate-100 bg-slate-50 cursor-default'}
+            return (
+              <button
+                key={i}
+                onClick={() => handleRightClick(i)}
+                className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group
+                  ${activeLeft !== null ? 'hover:border-[#1b8599] hover:bg-[#1b8599]/5 border-slate-200 cursor-pointer active:scale-[0.98]' : 'border-slate-100 bg-slate-50 cursor-default'}
                 `}
-                                        >
-                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-[#1b8599] group-hover:border-[#1b8599]">
-                                                {i}
-                                            </div>
-                                            <span className="font-bold text-slate-600">{item}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
+              >
+                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-[#1b8599] group-hover:border-[#1b8599]">
+                  {String.fromCharCode(65 + i)}
+                </div>
+                <span className="font-bold text-sm md:text-base text-slate-600">{item}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                        {/* ACTIVE CONNECTIONS SUMMARY: Best for UX Clarity */}
-                        {selected?.matchPairs?.length > 0 && (
-                            <div className="mt-10 p-6 bg-slate-50 rounded-[2rem] border border-slate-200">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Connections</h5>
-                                    <button
-                                        onClick={() => setUserAnswers(prev => ({ ...prev, [questionId]: { matchPairs: [] } }))}
-                                        className="text-[10px] font-bold text-red-500 hover:underline"
-                                    >
-                                        Clear All
-                                    </button>
-                                </div>
-                                <div className="flex flex-wrap gap-3">
-                                    {selected.matchPairs.map((pair, idx) => {
-                                        const leftIdx = Object.keys(pair)[0];
-                                        const rightIdx = pair[leftIdx];
-                                        return (
-                                            <div key={idx} className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3 animate-in zoom-in-95">
-                                                <span className="text-sm font-bold text-slate-700">{options.left[leftIdx]}</span>
-                                                <ArrowRight size={14} className="text-[#1b8599]" />
-                                                <span className="text-sm font-bold text-[#1b8599]">{options.right[rightIdx]}</span>
-                                                <button
-                                                    onClick={() => {
-                                                        const filtered = selected.matchPairs.filter((_, i) => i !== idx);
-                                                        setUserAnswers(prev => ({ ...prev, [questionId]: { matchPairs: filtered } }));
-                                                    }}
-                                                    className="ml-2 text-slate-300 hover:text-red-500 transition-colors"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
+      {/* ACTIVE CONNECTIONS SUMMARY */}
+      {selected?.matchPairs?.length > 0 && (
+        <div className="mt-6 md:mt-10 p-5 md:p-6 bg-slate-50 rounded-2xl md:rounded-[2rem] border border-slate-200">
+          <div className="flex justify-between items-center mb-4">
+            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Connections</h5>
+            <button
+              onClick={() => setCurrentAnswer({ matchPairs: [] })}
+              className="text-[10px] font-bold text-red-500 hover:underline"
+            >
+              Clear All
+            </button>
+          </div>
+          
+          {/* Mobile: flex-col (vertical list) 
+              Laptop: md:flex-row (wrapped chips) 
+          */}
+          <div className="flex flex-col md:flex-row md:flex-wrap gap-3">
+            {selected.matchPairs.map((pair, idx) => {
+              const leftIdx = Object.keys(pair)[0];
+              const rightIdx = pair[leftIdx];
+              return (
+                <div key={idx} className="bg-white px-4 py-3 md:py-2 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between md:justify-start gap-3 animate-in zoom-in-95">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs md:text-sm font-bold text-slate-700">{options.left[leftIdx]}</span>
+                    <ArrowRight size={14} className="text-[#1b8599]" />
+                    <span className="text-xs md:text-sm font-bold text-[#1b8599]">{options.right[rightIdx]}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const filtered = selected.matchPairs.filter((_, i) => i !== idx);
+                      setCurrentAnswer({ matchPairs: filtered });
+                    }}
+                    className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
             case "TRUE_FALSE":
                 return (
                     <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(options).map(([key, value]) => {
+                        {Object.entries(options || {}).map(([key, value]) => {
                             // Updated: Map "TRUE" key to boolean true, "FALSE" to boolean false
                             const isSelected = selected?.value === (key === "TRUE");
 
@@ -419,30 +437,30 @@ export default function ExamRoom() {
         handleNavigateToIndex(currentQIndex + 1);
     };
 
-   const handlePrevious = () => {
-    let targetIndex = currentQIndex - 1;
-    // Loop backwards to find the first question that is NOT 'time_up'
-    while (targetIndex >= 0) {
-        const targetId = questionIds[targetIndex];
-        const targetStatus = useQuestionList.getState().getStatus(targetId);
-        if (targetStatus !== 'time_up') {
-            // Found a valid question!
-            handleNavigateToIndex(targetIndex);
-            return;
+    const handlePrevious = () => {
+        let targetIndex = currentQIndex - 1;
+        // Loop backwards to find the first question that is NOT 'time_up'
+        while (targetIndex >= 0) {
+            const targetId = questionIds[targetIndex];
+            const targetStatus = useQuestionList.getState().getStatus(targetId);
+            if (targetStatus !== 'time_up') {
+                // Found a valid question!
+                handleNavigateToIndex(targetIndex);
+                return;
+            }
+            targetIndex--;
         }
-        targetIndex--;
-    }
-    // If the loop finishes without returning, no previous valid questions exist
-    toast.error("No previous accessible questions available");
-};
+        // If the loop finishes without returning, no previous valid questions exist
+        toast.error("No previous accessible questions available");
+    };
 
     const handleSubmitTest = async () => {
-        try{
+        try {
             await submitTest(quizId, participant?.id);
             setQuizEnded(true);
             // navigate(`/afterQuizAnalytics/${quizId}`);
         }
-        catch(error){
+        catch (error) {
             console.error("final submit error:", error);
             toast.error("final test submit failed")
         }
@@ -451,83 +469,85 @@ export default function ExamRoom() {
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-[#1b8599]" size={40} /></div>;
 
     if (quizEnded || !questionIds || !navigationData) {
-    return (
-        <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-6 select-none font-sans">
-            <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100 relative overflow-hidden">
-                
-                {/* Decorative Background Element */}
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#1b8599]/5 rounded-full" />
+        return (
+            <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-6 select-none font-sans">
+                <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl shadow-slate-200 text-center animate-in zoom-in-95 duration-500 border border-slate-100 relative overflow-hidden">
 
-                {/* Visual Icon Section */}
-                <div className="relative">
-                    <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-emerald-50/50 transition-transform hover:scale-110 duration-500">
-                        <ClipboardCheck size={48} />
+                    {/* Decorative Background Element */}
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#1b8599]/5 rounded-full" />
+
+                    {/* Visual Icon Section */}
+                    <div className="relative">
+                        <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-emerald-50/50 transition-transform hover:scale-110 duration-500">
+                            <ClipboardCheck size={48} />
+                        </div>
+                        {/* Floating check badge */}
+                        <div className="absolute top-0 right-[35%] bg-[#1b8599] text-white p-1.5 rounded-full border-4 border-white shadow-lg">
+                            <Send size={12} />
+                        </div>
                     </div>
-                    {/* Floating check badge */}
-                    <div className="absolute top-0 right-[35%] bg-[#1b8599] text-white p-1.5 rounded-full border-4 border-white shadow-lg">
-                        <Send size={12} />
-                    </div>
-                </div>
 
-                {/* Text Content */}
-                <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight uppercase">
-                    Assessment Complete
-                </h2>
-                <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
-                    Your responses have been successfully synced with our servers. 
-                    You can now review your performance or return to the main portal.
-                </p>
+                    {/* Text Content */}
+                    <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight uppercase">
+                        Assessment Complete
+                    </h2>
+                    <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
+                        Your responses have been successfully synced with our servers.
+                        You can now review your performance or return to the main portal.
+                    </p>
 
-                {/* Action Buttons: The Three-Way Navigation */}
-                <div className="space-y-4">
-                    
-                    {/* 1. PRIMARY: Navigate to User Analytics */}
-                    <button
-                        onClick={() => navigate(`/afterQuizAnalytics/${quizId}`)}
-                        className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/30 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3 group"
-                    >
-                        <span>View Detailed Analytics</span>
-                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                    </button>
+                    {/* Action Buttons: The Three-Way Navigation */}
+                    <div className="space-y-4">
 
-                    {/* Secondary Grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                        
-                        {/* 2. SECONDARY: Navigate to Dashboard */}
+                        {/* 1. PRIMARY: Navigate to User Analytics */}
                         <button
-                            onClick={() => navigate('/dashboard')}
-                            className="py-4 bg-slate-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-slate-950"
+                            onClick={() => navigate(`/afterQuizAnalytics/${quizId}`)}
+                            className="w-full py-5 bg-[#1b8599] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#1b8599]/30 hover:bg-[#166d7d] transition-all active:scale-95 flex items-center justify-center gap-3 group"
                         >
-                            <Menu size={14} />
-                            Dashboard
+                            <span>View Detailed Analytics</span>
+                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                         </button>
 
-                        {/* 3. TERTIARY: Navigate Home */}
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="py-4 bg-white border-2 border-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2"
-                        >
-<ChevronLeft size={14} />
-                            Back
-                        </button>
-                    </div>
+                        {/* Secondary Grid */}
+                        <div className="grid grid-cols-2 gap-4">
 
-                    {/* Meta Info */}
-                    <div className="pt-6 mt-6 border-t border-slate-50 flex items-center justify-between opacity-40">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                            Session ID: {quizId?.substring(0, 8)}...
-                        </p>
-                        <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                            <span className="text-[9px] font-black text-slate-400 uppercase">Securely Submitted</span>
+                            {/* 2. SECONDARY: Navigate to Dashboard */}
+                            <button
+                                onClick={() => navigate('/dashboard')}
+                                className="py-4 bg-slate-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-slate-950"
+                            >
+                                <Menu size={14} />
+                                Dashboard
+                            </button>
+
+                            {/* 3. TERTIARY: Navigate Home */}
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="py-4 bg-white border-2 border-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <ChevronLeft size={14} />
+                                Back
+                            </button>
+                        </div>
+
+                        {/* Meta Info */}
+                        <div className="pt-6 mt-6 border-t border-slate-50 flex items-center justify-between opacity-40">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                Session ID: {quizId?.substring(0, 8)}...
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                <span className="text-[9px] font-black text-slate-400 uppercase">Securely Submitted</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
     return (
+<>
+<div className="hidden md:block">
         <div className="h-screen w-full bg-slate-100 flex flex-col overflow-hidden select-none">
             {/* HEADER */}
             <header className="bg-[#1b8599] text-white px-6 py-4 flex justify-between items-center z-20 shadow-md">
@@ -688,5 +708,27 @@ export default function ExamRoom() {
                 </aside>
             </div>
         </div>
+</div>
+ <div className="block md:hidden">
+<MobileExamRoom 
+                currentQuestion={currentQuestion}
+                currentQIndex={currentQIndex}
+                questionTime={questionTime}
+                globalTime={globalTime}
+                formatTime={formatTime}
+                renderOptions={renderOptions}
+                handlePrevious={handlePrevious}
+                handleSaveAndNext={handleSaveAndNext}
+                handleMarkForReview={handleMarkForReview}
+                questionIds={questionIds}
+                handleNavigateToIndex={handleNavigateToIndex}
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                participant={participant}
+                quizId={quizId}
+                handleSubmitTest={handleSubmitTest}
+            />
+            </div>
+        </>
     );
 }

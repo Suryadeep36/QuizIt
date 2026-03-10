@@ -167,12 +167,7 @@ if (isRegistered) {
                     Duration
                   </p>
                   <p className="font-bold">
-                    {quiz.startTime && quiz.endTime
-                      ? Math.round(
-                          (new Date(quiz.endTime) - new Date(quiz.startTime)) /
-                            60000,
-                        ) + " Mins"
-                      : "N/A"}
+                     {quiz?.duration ? quiz.duration/60 + " Minutes" : "N/A"}
                   </p>
                 </div>
               </div>

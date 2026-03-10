@@ -403,6 +403,7 @@ export default function HostLiveQuiz() {
     //    } 
     client.publish({
       destination: `/app/quiz/start/${sessionId}`,
+    
       body: "",
     });
   };

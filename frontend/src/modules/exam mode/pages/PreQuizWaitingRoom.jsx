@@ -214,7 +214,7 @@ export default function PreQuizWaitingRoom() {
                                     <p className="text-[10px] font-bold uppercase opacity-60">
                                         Duration
                                     </p>
-                                    <p className="font-bold">60 Minutes</p>
+                                    {quiz?.duration ? quiz.duration/60 + " Minutes" : "N/A"}
                                 </div>
                             </div>
                         </div>

@@ -18,4 +18,5 @@ public class QuizDtoForParticipant{
     private QuizMode mode;
     private Instant startTime;
     private Instant endTime;
+    private Integer duration;
 }

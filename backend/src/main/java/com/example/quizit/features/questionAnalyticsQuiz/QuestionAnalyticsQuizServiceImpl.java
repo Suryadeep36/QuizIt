@@ -35,7 +35,6 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
     private final UserRepository userRepository;
     private final ParticipantRepository participantRepository;
     private final ModelMapper modelMapper;
-    private final QuizService quizService;
     private final QuestionService questionService;
 
     @Override
