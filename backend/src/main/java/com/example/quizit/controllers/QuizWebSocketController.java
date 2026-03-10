@@ -32,11 +32,11 @@ public class QuizWebSocketController {
     private final QuizTimerService quizTimerService;
     private final QuizAntiCheatService quizAntiCheatService;
 
-    @MessageMapping("/quiz/start/{sessionId}")
-    public void startQuiz(@DestinationVariable UUID sessionId, Principal principal) {
-        Authentication authentication = (Authentication) principal;
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        QuestionDetailResponse session = quizSessionService.startQuiz(sessionId, userPrincipal.getId());
+    @MessageMapping("/quiz/start/{sessionId}/{hostId}")
+    public void startQuiz(@DestinationVariable UUID sessionId, @DestinationVariable UUID hostId) {
+//        Authentication authentication = (Authentication) principal;
+//        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        QuestionDetailResponse session = quizSessionService.startQuiz(sessionId, hostId);
         WsMessageDto<QuestionDetailResponse> msg = WsMessageDto.<QuestionDetailResponse>builder()
                 .messageType("START_QUIZ")
                 .payload(session)
@@ -45,11 +45,11 @@ public class QuizWebSocketController {
         quizTimerService.startTimer(sessionId, session.getQuestionForUserDto().getDuration());
     }
 
-    @MessageMapping("/quiz/next/{sessionId}")
-    public void nextQuestion(@DestinationVariable UUID sessionId, Principal principal) {
-        Authentication authentication = (Authentication) principal;
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        QuestionDetailResponse nextQuestion = quizSessionService.moveToNextQuestion(sessionId, userPrincipal.getId());
+    @MessageMapping("/quiz/next/{sessionId}/{hostId}")
+    public void nextQuestion(@DestinationVariable UUID sessionId, @DestinationVariable UUID hostId) {
+//        Authentication authentication = (Authentication) principal;
+//        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        QuestionDetailResponse nextQuestion = quizSessionService.moveToNextQuestion(sessionId, hostId);
         quizTimerService.stopTimer(sessionId);
         if (nextQuestion == null) {
             UUID quizId = quizSessionService.getQuizIdBySessionId(sessionId);
@@ -84,11 +84,11 @@ public class QuizWebSocketController {
         simpMessagingTemplate.convertAndSend("/topic/quiz/" + sessionId, msg);
     }
 
-    @MessageMapping("/quiz/reveal/{sessionId}")
-    public void revealAnswer(@DestinationVariable UUID sessionId, Principal principal) {
-        Authentication authentication = (Authentication) principal;
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        List<AnswerKey> correctAnswer = quizSessionService.revealAnswer(sessionId, userPrincipal.getId());
+    @MessageMapping("/quiz/reveal/{sessionId}/{hostId}")
+    public void revealAnswer(@DestinationVariable UUID sessionId, @DestinationVariable UUID hostId) {
+//        Authentication authentication = (Authentication) principal;
+//        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        List<AnswerKey> correctAnswer = quizSessionService.revealAnswer(sessionId, hostId);
         quizTimerService.stopTimer(sessionId);
         WsMessageDto<List<AnswerKey>> msg = WsMessageDto.<List<AnswerKey>>builder()
                 .messageType("REVEAL_ANSWER")

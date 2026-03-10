@@ -402,21 +402,21 @@ export default function HostLiveQuiz() {
     //      );
     //    } 
     client.publish({
-      destination: `/app/quiz/start/${sessionId}`,
+      destination: `/app/quiz/start/${sessionId}/${hostId}`,
       body: "",
     });
   };
 
   const nextQuestion = () => {
     client.publish({
-      destination: `/app/quiz/next/${sessionId}`,
+      destination: `/app/quiz/next/${sessionId}/${hostId}`,
       body: "",
     });
   };
 
   const revealAnswer = () => {
     client.publish({
-      destination: `/app/quiz/reveal/${sessionId}`,
+      destination: `/app/quiz/reveal/${sessionId}/${hostId}`,
       body: "",
     });
     setStage("reveal");

@@ -1,13 +1,11 @@
 import { create } from "zustand";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
-import { getAccessToken } from "./store";
 
 export const useWS = create((set, get) => ({
   client: null,
   isConnected: false,
   connect: () => {
-    const token = getAccessToken();
 
     const socket = new SockJS(
       `${import.meta.env.VITE_API_BASE_URL}/quiz-websocket` ||
@@ -19,9 +17,6 @@ export const useWS = create((set, get) => ({
       onConnect: () => {
         console.log("WS Connected");
         set({ isConnected: true });
-      },
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
       },
       onDisconnect: () => {
         console.log("WS Disconnected");
@@ -40,10 +35,5 @@ export const useWS = create((set, get) => ({
     const { client } = get();
     if (client) client.deactivate();
     set({ client: null, isConnected: false });
-  },
-
-  reconnectWithFreshToken: () => {
-    get().disconnect();
-    setTimeout(() => get().connect(), 200);
   },
 }));
