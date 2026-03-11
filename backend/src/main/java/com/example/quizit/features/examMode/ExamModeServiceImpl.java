@@ -2,6 +2,7 @@ package com.example.quizit.features.examMode;
 
 import com.example.quizit.features.allowedUser.AllowedUser;
 import com.example.quizit.features.allowedUser.AllowedUserRepository;
+import com.example.quizit.features.allowedUser.InvitationStatus;
 import com.example.quizit.features.participant.ParticipantDto;
 import com.example.quizit.features.participant.ParticipantStatus;
 import com.example.quizit.features.question.Question;
@@ -84,7 +85,6 @@ public class ExamModeServiceImpl implements ExamModeService {
         Duration duration = Duration.between(quiz.getStartTime(), quiz.getEndTime());
 
         examRedisService.cacheQuestions(preRegisterUserDto.getQuizId(), questionDtos, duration);
-
         List<UUID> questionIds = questionList.stream()
                 .map(Question::getQuestionId)
                 .collect(Collectors.toList());
@@ -102,6 +102,7 @@ public class ExamModeServiceImpl implements ExamModeService {
                 ,duration
         );
         examRedisService.initializeAttempt(preRegisterUserDto.getQuizId(), registeredUser.getParticipant().getParticipantId(), duration);
+        examRedisService.getOrInitializeParticipantCount(preRegisterUserDto.getQuizId(), () ->  allowedUserRepository.countAllowedUserByQuiz_QuizIdAndInvitationStatus(preRegisterUserDto.getQuizId(), InvitationStatus.REGISTERED), duration);
         return PreRegisterResponse.builder()
                 .registeredUser(modelMapper.map(registeredUser, RegisteredUserDto.class))
                 .participant(modelMapper.map(registeredUser.getParticipant(), ParticipantDto.class))

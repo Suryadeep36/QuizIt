@@ -409,5 +409,67 @@ public class QuizServiceImpl implements QuizService {
         }
     }
 
+    @Override
+    @Transactional
+    public void endQuizEarly(UUID quizId) {
+        System.out.println("Ending quiz early " + quizId);
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found in Quiz Early Function"));
+        if (quiz.getStatus() == QuizStatus.ENDED) {
+            return;
+        }
+
+        quiz.setStatus(QuizStatus.ENDED);
+        quizRepository.save(quiz);
+
+        generateAnalytics(quiz);
+    }
+
+    private void generateAnalytics(Quiz quiz) {
+
+        UUID quizId = quiz.getQuizId();
+
+        Map<UUID, Participant> participantMap =
+                participantRepository.findAllByQuiz_QuizId(quizId)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Participant::getParticipantId,
+                                p -> p
+                        ));
+
+        List<Object[]> stats =
+                questionAnalyticsUserRepository.getParticipantStats(quizId);
+
+        List<ParticipantPerformance> performances = new ArrayList<>();
+
+        for (Object[] row : stats) {
+
+            UUID participantId = (UUID) row[0];
+            Integer score = ((Long) row[1]).intValue();
+            Long totalTime = (Long) row[2];
+
+            performances.add(
+                    ParticipantPerformance.builder()
+                            .participant(participantMap.get(participantId))
+                            .quiz(quiz)
+                            .score(score)
+                            .totalTimeSpent(totalTime)
+                            .build()
+            );
+        }
+
+        participantPerformanceRepository.saveAll(performances);
+        participantPerformanceRepository.assignRanksByQuizId(quizId);
+
+        questionAnalyticsQuizService.createAllByQuizId(
+                quizId.toString(),
+                quiz.getHost().getId()
+        );
+
+        questionAnalyticsQuizService.calculateAfterQuiz(
+                quizId,
+                quiz.getHost().getId()
+        );
+    }
 }
 

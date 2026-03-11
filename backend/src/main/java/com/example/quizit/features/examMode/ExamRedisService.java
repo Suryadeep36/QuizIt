@@ -3,6 +3,7 @@ package com.example.quizit.features.examMode;
 import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserDto;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserService;
+import com.example.quizit.features.quiz.QuizService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class ExamRedisService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     private final QuestionAnalyticsUserService analyticsUserService;
+    private final QuizService quizService;
     private static final String ATTEMPT_KEY_PREFIX = "attempt:";
     private static final String QUIZ_KEY_PREFIX = "quiz:";
     private static final long EXTRA_SECONDS = Duration.ofHours(2).getSeconds();
@@ -54,6 +57,41 @@ public class ExamRedisService {
 
     public String getQuizDurationKey(UUID quizId){
         return QUIZ_KEY_PREFIX + quizId + ":duration";
+    }
+
+    public String getTotalParticipantsKey(UUID quizId){
+        return QUIZ_KEY_PREFIX + quizId + ":participants:total";
+    }
+
+    public String getSubmittedParticipantsKey(UUID quizId){
+        return QUIZ_KEY_PREFIX + quizId + ":participants:submitted";
+    }
+
+    public void getOrInitializeParticipantCount(UUID quizId, Supplier<Long> dbCountSupplier, Duration duration) {
+
+        String key = getTotalParticipantsKey(quizId);
+
+        String existing = redisTemplate.opsForValue().get(key);
+        if (existing != null) {
+            return;
+        }
+
+        synchronized (this) {
+            existing = redisTemplate.opsForValue().get(key);
+            if (existing != null) {
+                return;
+            }
+
+            long count = dbCountSupplier.get();
+            System.out.println("Total participants saved " + count);
+            redisTemplate.opsForValue().set(key, String.valueOf(count));
+            setTTL(key, duration.getSeconds());
+
+            String submittedKey = getSubmittedParticipantsKey(quizId);
+            redisTemplate.opsForValue().setIfAbsent(submittedKey, "0");
+            setTTL(submittedKey, duration.getSeconds());
+
+        }
     }
 
     public void initializeAttempt(UUID quizId,
@@ -406,6 +444,7 @@ public class ExamRedisService {
     }
 
     public void doFinalSubmit(UUID quizId, UUID participantId){
+        System.out.println("final submit for " + participantId);
         String attemptKey = getAttemptKey(quizId, participantId);
         String answerKey = getAnswerKey(quizId, participantId);
         String orderKey = getQuestionOrderKey(quizId, participantId);
@@ -420,8 +459,8 @@ public class ExamRedisService {
 
         long now = System.currentTimeMillis();
         long endTime = Long.parseLong(attemptData.get("endTime").toString());
-
-        if (now > endTime) {
+        long GRACE_PERIOD_MS = 5000;
+        if (now > endTime + GRACE_PERIOD_MS) {
             throw new ResponseStatusException(
                     HttpStatus.GONE,
                     "Your attempt time has expired. Submission not allowed."
@@ -462,8 +501,23 @@ public class ExamRedisService {
             dtoList.add(dto);
         }
         analyticsUserService.createAnalyticsInBulk(dtoList, quizId, participantId);
+        String submittedKey = getSubmittedParticipantsKey(quizId);
+        Long submittedCount = redisTemplate.opsForValue().increment(submittedKey);
+
+        String totalKey = getTotalParticipantsKey(quizId);
+        String totalStr = redisTemplate.opsForValue().get(totalKey);
+
+        if(totalStr != null){
+            long totalParticipants = Long.parseLong(totalStr);
+            System.out.println(totalParticipants);
+            System.out.println(submittedCount);
+            if(submittedCount != null && submittedCount == totalParticipants){
+                quizService.endQuizEarly(quizId);
+            }
+        }
         redisTemplate.opsForHash()
                 .put(attemptKey, "status", "SUBMITTED");
+
         redisTemplate.delete(attemptKey);
         redisTemplate.delete(answerKey);
         redisTemplate.delete(orderKey);

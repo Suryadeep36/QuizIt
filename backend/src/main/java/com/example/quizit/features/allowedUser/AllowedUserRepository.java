@@ -28,4 +28,8 @@ public interface AllowedUserRepository extends JpaRepository<AllowedUser, UUID> 
     Optional<AllowedUser> findByEmailAndQuiz_QuizId(String email, UUID quizQuizId);
 
     List<AllowedUser> findAllByQuiz_QuizIdAndRegistered(UUID quizId, boolean b);
+
+    long countAllowedUserByInvitationStatus(InvitationStatus invitationStatus);
+
+    Long countAllowedUserByQuiz_QuizIdAndInvitationStatus(UUID quizQuizId, InvitationStatus invitationStatus);
 }

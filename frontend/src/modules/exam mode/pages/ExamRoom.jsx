@@ -197,8 +197,7 @@ export default function ExamRoom() {
 
           handleQuizEnd();
           handleSubmitTest(); 
-          toast.error("The quiz has ended!");
-
+          toast.success("The quiz has ended!");
           return 0;
         }
         return prev > 0 ? prev - 1 : 0;
