@@ -29,7 +29,8 @@ public class SendJoinLinkService {
     private String registerUrl;
 
     @Transactional
-    public void sendJoinLinkAll(UUID quizId, UUID hostId){
+    public void sendJoinLinkAll(UUID quizId, UUID hostId) {
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
 
@@ -37,13 +38,25 @@ public class SendJoinLinkService {
             throw new AccessDeniedException("Not quiz host");
         }
 
-        List<AllowedUser> users = allowedUserRepository.findAllByQuiz_QuizIdAndRegistered(quizId, true);
+        List<AllowedUser> users =
+                allowedUserRepository.findAllByQuiz_QuizIdAndRegistered(quizId, true);
 
-        for (AllowedUser user : users) {
-            sendJoinLinkInternal(quiz, user);
+        try {
+            for (AllowedUser user : users) {
+                try {
+                    sendJoinLinkInternal(quiz, user);
+                    Thread.sleep(150);
+                } catch (Exception e) {
+                    System.out.println("Failed to send mail to: " + user.getEmail());
+                    e.printStackTrace();
+                }
+            }
+        } finally {
+            // GUARANTEED to run
+            quizService.scheduleQuizEnd(quiz);
         }
-        quizService.scheduleQuizEnd(quiz);
     }
+
     private void sendJoinLinkInternal(Quiz quiz, AllowedUser user) {
         String link = registerUrl + "/waiting-room/" + quiz.getQuizId();
         try {
