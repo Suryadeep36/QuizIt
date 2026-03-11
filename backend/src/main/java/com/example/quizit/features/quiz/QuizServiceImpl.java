@@ -10,6 +10,8 @@ import com.example.quizit.features.participantPerformance.ParticipantPerformance
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.participantPerformance.ParticipantPerformanceRepository;
 import com.example.quizit.features.question.Question;
+import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuiz;
+import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuizService;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRepository;
 import com.example.quizit.features.quizSession.QuizSession;
 import com.example.quizit.features.quizSession.QuizSessionRepository;
@@ -45,7 +47,7 @@ public class QuizServiceImpl implements QuizService {
     private final QuizAntiCheatService quizAntiCheatService;
     private final AllowedUserSerivce allowedUserSerivce;
     private final AllowedUserRepository allowedUserRepository;
-
+    private final QuestionAnalyticsQuizService questionAnalyticsQuizService;
     private final TaskScheduler taskScheduler;
 
 
@@ -237,7 +239,7 @@ public class QuizServiceImpl implements QuizService {
 
         Quiz existingQuiz = quizRepository.findById(quizUUID)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
-
+        System.out.println("Duration"  + quizRepository.getTotalDurationByQuizId(quizUUID));
         return QuizDtoForParticipant.builder()
                 .quizId(quizUUID)
                 .quizName(existingQuiz.getQuizName())
@@ -245,6 +247,7 @@ public class QuizServiceImpl implements QuizService {
                 .startTime(existingQuiz.getStartTime())
                 .endTime(existingQuiz.getEndTime())
                 .host(existingQuiz.getHost().getId())
+                .duration(quizRepository.getTotalDurationByQuizId(quizUUID))
                 .build();
     }
 
@@ -350,6 +353,8 @@ public class QuizServiceImpl implements QuizService {
             //CHECKING PURPOSE
             //        Instant executionTime = quiz.getEndTime();
             System.out.println("Exection time " + executionTime.toString());
+
+
             taskScheduler.schedule(() -> {
                 System.out.println("Start execting task");
                 quiz.setStatus(QuizStatus.ENDED);
@@ -387,6 +392,16 @@ public class QuizServiceImpl implements QuizService {
 
                     // 🔥 ONE ranking query
                     participantPerformanceRepository.assignRanksByQuizId(quizId);
+
+                }
+
+                try{
+                    questionAnalyticsQuizService.createAllByQuizId(quizId.toString(),quiz.getHost().getId());
+                    questionAnalyticsQuizService.calculateAfterQuiz(quizId,quiz.getHost().getId());
+
+                }catch(Exception e){
+                    e.printStackTrace();
+                    System.out.println("QAQ");
                 }
             }, executionTime);
             quizRepository.save(quiz);

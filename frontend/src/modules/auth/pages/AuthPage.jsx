@@ -5,10 +5,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { registerUser, loginUser, addUserToParticipant, verifyEmail } from "../../../services/AuthService";
 import useAuth, { useParticipant } from "../../../stores/store";
 import VerificationForm from "../components/VerificationForm";
+import MobileAuthView from "./MobileAuthView";
 
 
 
-const GoogleButton = () => (
+export const GoogleButton = () => (
   <NavLink
     to={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/oauth2/authorization/google`}
     className="block w-full "
@@ -23,7 +24,7 @@ const GoogleButton = () => (
   </NavLink>
 );
 
-const Divider = () => (
+export const Divider = () => (
   <div className="flex p-2 items-center gap-4 m-2 ">
     <div className="h-[1px] bg-gray-300 flex-1 min-w-[40px] block"></div>
     <span className="text-[10px] text-white-400 font-bold uppercase">Or</span>
@@ -192,132 +193,159 @@ export default function AuthPage() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-600 to-teal-500 px-4">
-      <div className="relative w-full max-w-4xl h-[520px] bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="absolute inset-0 flex">
-          <div className="w-1/2 flex flex-col justify-center px-12">
-            <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
-            <p className="text-gray-500 mb-6">Sign in to manage your quizzes</p>
+    <>
+      <div className="hidden md:block">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-600 to-teal-500 px-4">
+          <div className="relative w-full max-w-4xl h-[520px] bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="absolute inset-0 flex">
+              <div className="w-1/2 flex flex-col justify-center px-12">
+                <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
+                <p className="text-gray-500 mb-6">Sign in to manage your quizzes</p>
 
-            <input
-              type="email"
-              className="auth-input"
-              placeholder="Email"
-              name="email"
-              value={loginData.email}
-              onChange={handleLoginChange}
-            />
-            <input
-              className="auth-input"
-              placeholder="Password"
-              type="password"
-              name="password"
-              value={loginData.password}
-              onChange={handleLoginChange}
-            />
-            {loginError && (
-              <p className="text-red-500 text-sm mb-2">{loginError}</p>
-            )}
+                <input
+                  type="email"
+                  className="auth-input"
+                  placeholder="Email"
+                  name="email"
+                  value={loginData.email}
+                  onChange={handleLoginChange}
+                />
+                <input
+                  className="auth-input"
+                  placeholder="Password"
+                  type="password"
+                  name="password"
+                  value={loginData.password}
+                  onChange={handleLoginChange}
+                />
+                {loginError && (
+                  <p className="text-red-500 text-sm mb-2">{loginError}</p>
+                )}
 
-            <button
-              type="button"
-              onClick={handleLogin}
-              disabled={loginLoading}
-            className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] mb-6 flex justify-center items-center"
-            >
-              {loginLoading ? <CircularProgress size={24} color="inherit" /> : "Login"}
-            </button>
-          </div>
-
-          {step === "verify" ? (
-            <VerificationForm
-              email={signupData.email}
-              loading={verificationLoading}
-              error={verificationError}
-              onCancel={() => setStep("auth")}
-              onVerify={handleVerify}
-            />
-          ) : (
-            <div className="w-1/2 flex flex-col justify-center px-12 bg-gray-50">
-              <h2 className="text-3xl font-bold mb-2">Create Account</h2>
-              <p className="text-gray-500 mb-6">Start creating smarter quizzes</p>
-
-              <input
-                type="name"
-                className="auth-input"
-                placeholder="Username"
-                name="username"
-                value={signupData.username}
-                onChange={handleSignupChange}
-              />
-              <input
-                type="email"
-                className="auth-input"
-                placeholder="Email"
-                name="email"
-                value={signupData.email}
-                onChange={handleSignupChange}
-              />
-              <input
-                className="auth-input"
-                placeholder="Password"
-                type="password"
-                name="password"
-                value={signupData.password}
-                onChange={handleSignupChange}
-              />
-
-              {signupError && <p className="text-red-500 text-sm mb-2">{signupError}</p>}
-
-              <button
-                onClick={handleSignup}
-                disabled={signupLoading}
-                   className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] mb-6 flex justify-center items-center"
-              >
-                {signupLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
-              </button>
-
-              {/* ADD THIS SECTION BELOW THE BUTTON */}
-              <p className="mt-4 text-xs text-center text-gray-400">
-                Already have a verification code?{" "}
                 <button
-                  onClick={() => setStep("verify")}
-                  className="text-cyan-600 hover:underline font-medium"
+                  type="button"
+                  onClick={handleLogin}
+                  disabled={loginLoading}
+                  className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] mb-6 flex justify-center items-center"
                 >
-                  Verify here
+                  {loginLoading ? <CircularProgress size={24} color="inherit" /> : "Login"}
                 </button>
-              </p>
-            </div>
-          )}
-        </div>
+              </div>
 
-        <div
-          className={`absolute top-0 left-1/2 w-1/2 h-full bg-gradient-to-br from-cyan-600 to-teal-500 text-white
+              {step === "verify" ? (
+                <VerificationForm
+                  email={signupData.email}
+                  loading={verificationLoading}
+                  error={verificationError}
+                  onCancel={() => setStep("auth")}
+                  onVerify={handleVerify}
+                />
+              ) : (
+                <div className="w-1/2 flex flex-col justify-center px-12 bg-gray-50">
+                  <h2 className="text-3xl font-bold mb-2">Create Account</h2>
+                  <p className="text-gray-500 mb-6">Start creating smarter quizzes</p>
+
+                  <input
+                    type="name"
+                    className="auth-input"
+                    placeholder="Username"
+                    name="username"
+                    value={signupData.username}
+                    onChange={handleSignupChange}
+                  />
+                  <input
+                    type="email"
+                    className="auth-input"
+                    placeholder="Email"
+                    name="email"
+                    value={signupData.email}
+                    onChange={handleSignupChange}
+                  />
+                  <input
+                    className="auth-input"
+                    placeholder="Password"
+                    type="password"
+                    name="password"
+                    value={signupData.password}
+                    onChange={handleSignupChange}
+                  />
+
+                  {signupError && <p className="text-red-500 text-sm mb-2">{signupError}</p>}
+
+                  <button
+                    onClick={handleSignup}
+                    disabled={signupLoading}
+                    className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] mb-6 flex justify-center items-center"
+                  >
+                    {signupLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
+                  </button>
+
+                  {/* ADD THIS SECTION BELOW THE BUTTON */}
+                  <p className="mt-4 text-xs text-center text-gray-400">
+                    Already have a verification code?{" "}
+                    <button
+                      onClick={() => setStep("verify")}
+                      className="text-cyan-600 hover:underline font-medium"
+                    >
+                      Verify here
+                    </button>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div
+              className={`absolute top-0 left-1/2 w-1/2 h-full bg-gradient-to-br from-cyan-600 to-teal-500 text-white
           transition-transform duration-700 ease-in-out
           ${isSignUp ? "-translate-x-full" : "translate-x-0"}`}
-        >
-          <div className="h-full flex flex-col items-center justify-center px-10 text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              {isSignUp ? "Already have an account?" : "New here?"}
-            </h2>
-            <p className="mb-6 text-white/80">
-              {isSignUp
-                ? "Sign in and continue building quizzes"
-                : "Create an account and start instantly"}
-            </p>
-
-            <button
-              onClick={() => {setIsSignUp(!isSignUp); setStep("auth")}}
-              className="border border-white px-6 py-2 rounded-lg hover:bg-white hover:text-cyan-700 transition"
             >
-              {isSignUp ? "Sign In" : "Sign Up"}
-            </button>
+              <div className="h-full flex flex-col items-center justify-center px-10 text-center">
+                <h2 className="text-3xl font-bold mb-4">
+                  {isSignUp ? "Already have an account?" : "New here?"}
+                </h2>
+                <p className="mb-6 text-white/80">
+                  {isSignUp
+                    ? "Sign in and continue building quizzes"
+                    : "Create an account and start instantly"}
+                </p>
 
-            <Divider />
-            <GoogleButton />
+                <button
+                  onClick={() => { setIsSignUp(!isSignUp); setStep("auth") }}
+                  className="border border-white px-6 py-2 rounded-lg hover:bg-white hover:text-cyan-700 transition"
+                >
+                  {isSignUp ? "Sign In" : "Sign Up"}
+                </button>
+
+                <Divider />
+                <GoogleButton />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* MOBILE VERSION */}
+      <div className="block md:hidden">
+        <MobileAuthView
+          isSignUp={isSignUp}
+          setIsSignUp={setIsSignUp}
+          loginData={loginData}
+          handleLoginChange={handleLoginChange}
+          handleLogin={handleLogin}
+          loginLoading={loginLoading}
+          signupData={signupData}
+          handleSignupChange={handleSignupChange}
+          handleSignup={handleSignup}
+          signupLoading={signupLoading}
+          step={step}
+          setStep={setStep}
+          handleVerify={handleVerify}
+          verificationLoading={verificationLoading}
+          signupError={signupError}
+          loginError={loginError}
+          verificationError={verificationError}
+        />
+      </div>
+    </>
   );
 }
