@@ -51,8 +51,8 @@ export default function HostLiveQuiz() {
   function normalizeBackendParticipant(p) {
     return {
       participantSessionId: p.participantSessionId,
-      participantId: p.participant.participantId,
-      participantName: p.participant.participantName,
+      participantId: p.participantId,
+      participantName: p.participantName,
       score: p.score ?? 0,
       status: p.status,
       answered: false,
@@ -211,7 +211,10 @@ export default function HostLiveQuiz() {
                 setCorrectAnswer(sessionRes.correctAnswer);
                 setStage("reveal");
               }
-              if(sessionRes.status != "STARTED" || sessionRes.status != "REVEALED"){
+              if (
+                sessionRes.status !== "STARTED" &&
+                sessionRes.status !== "REVEALED"
+              ) {
                 setStage("waiting");
               }
 
@@ -400,7 +403,7 @@ export default function HostLiveQuiz() {
     //        err.message ||
     //        "something happend!"
     //      );
-    //    } 
+    //    }
     client.publish({
       destination: `/app/quiz/start/${sessionId}/${hostId}`,
       body: "",
@@ -421,10 +424,13 @@ export default function HostLiveQuiz() {
     });
     setStage("reveal");
   };
+  const connectedParticipants = participants.filter(
+    (p) => p.status !== "DISCONNECTED",
+  );
 
-  const answeredCount = participants.filter((p) => p.answered).length;
-  const progressPercent = participants.length
-    ? (answeredCount / participants.length) * 100
+  const answeredCount = connectedParticipants.filter((p) => p.answered).length;
+  const progressPercent = connectedParticipants.length
+    ? (answeredCount / connectedParticipants.length) * 100
     : 0;
 
   if (loading) {
@@ -455,7 +461,7 @@ export default function HostLiveQuiz() {
           <div className="flex items-center gap-4">
             <LiveIndicator
               isLive={stage === "question"}
-              participantCount={participants.length}
+              participantCount={connectedParticipants.length}
             />
 
             <QrSharePopover joinLink={joinLink} joinCode={joinCode} />
@@ -516,7 +522,7 @@ export default function HostLiveQuiz() {
                 <ResponseStats
                   question={currentQuestion}
                   answeredCount={answeredCount}
-                  totalParticipants={participants.length}
+                  totalParticipants={connectedParticipants.length}
                   progressPercent={progressPercent}
                 />
 
@@ -530,7 +536,7 @@ export default function HostLiveQuiz() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-slate-600">Answered</span>
                         <span className="font-semibold text-slate-800">
-                          {answeredCount}/{participants.length}
+                          {answeredCount}/{connectedParticipants.length}
                         </span>
                       </div>
                       <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -542,7 +548,8 @@ export default function HostLiveQuiz() {
                     </div>
                     <div className="text-xs text-slate-600 mt-4 pt-4 border-t border-slate-200">
                       <p>
-                        Waiting for {participants.length - answeredCount}{" "}
+                        Waiting for{" "}
+                        {connectedParticipants.length - answeredCount}{" "}
                         participants
                       </p>
                     </div>
@@ -564,8 +571,8 @@ export default function HostLiveQuiz() {
 
                 <ResponseStats
                   question={currentQuestion}
-                  answeredCount={participants.length}
-                  totalParticipants={participants.length}
+                  answeredCount={connectedParticipants.length}
+                  totalParticipants={connectedParticipants.length}
                   progressPercent={100}
                   showResults={true}
                 />

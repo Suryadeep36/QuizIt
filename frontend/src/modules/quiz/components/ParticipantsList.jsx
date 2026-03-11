@@ -1,14 +1,19 @@
 import { Users } from "lucide-react";
 
 export default function ParticipantsList({ participants, maxShow = 6 }) {
-  const displayed = participants.slice(0, maxShow);
-  const hidden = participants.length - displayed.length;
+
+  const connectedParticipants = participants.filter(
+    (p) => p.status !== "DISCONNECTED"
+  );
+
+  const displayed = connectedParticipants.slice(0, maxShow);
+  const hidden = connectedParticipants.length - displayed.length;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-md">
       <h3 className="text-sm font-semibold text-teal-700 mb-6 flex items-center gap-2">
         <Users className="w-4 h-4" />
-        Participants Joined ({participants.length})
+        Participants Joined ({connectedParticipants.length})
       </h3>
 
       <div className="flex flex-wrap gap-3 justify-center">
@@ -22,6 +27,7 @@ export default function ParticipantsList({ participants, maxShow = 6 }) {
             </span>
           </div>
         ))}
+
         {hidden > 0 && (
           <div className="bg-gray-100 border border-gray-300 px-6 py-3 rounded-full">
             <span className="text-sm font-semibold text-gray-700">

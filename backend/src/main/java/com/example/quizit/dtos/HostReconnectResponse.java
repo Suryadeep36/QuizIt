@@ -1,6 +1,7 @@
 package com.example.quizit.dtos;
 
 import com.example.quizit.features.participantSession.ParticipantSession;
+import com.example.quizit.features.participantSession.ParticipantSessionDto;
 import com.example.quizit.features.question.AnswerKey;
 import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.quizSession.QuizSessionStatus;
@@ -21,7 +22,7 @@ public class HostReconnectResponse {
     private QuestionForUserDto currentQuestionState;
     private String joinCode;
     // Participant info
-    private List<ParticipantSession> participants;
+    private List<ParticipantSessionDto> participants;
     private Integer participantCount;
     private List<AnswerKey> correctAnswer;
 }

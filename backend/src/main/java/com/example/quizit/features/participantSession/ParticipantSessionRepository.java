@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface ParticipantSessionRepository extends JpaRepository<ParticipantSession, UUID> {
     boolean existsByQuizSessionAndParticipant(QuizSession quizSession, Participant participant);
     List<ParticipantSession> getParticipantSessionByQuizSession_SessionId(UUID quizSessionSessionId);
+
+    ParticipantSession findByQuizSessionAndParticipant(QuizSession quizSession, Participant participant);
 }

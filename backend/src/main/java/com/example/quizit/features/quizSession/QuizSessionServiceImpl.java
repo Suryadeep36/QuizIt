@@ -1,6 +1,7 @@
 package com.example.quizit.features.quizSession;
 
 import com.example.quizit.dtos.*;
+import com.example.quizit.features.participantSession.ParticipantSessionDto;
 import com.example.quizit.features.participantSession.ParticipantSessionStatus;
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.participant.Participant;
@@ -127,7 +128,14 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         UUID quizId = session.getQuiz().getQuizId();
 
         List<ParticipantSession> participantSessionList = participantSessionRepository.getParticipantSessionByQuizSession_SessionId(sessionId);
-
+        List<ParticipantSessionDto> dtoList = participantSessionList.stream()
+                .map(ps -> new ParticipantSessionDto(
+                        ps.getParticipantSessionId(), ps.getParticipant().getParticipantId(),
+                        ps.getParticipant().getParticipantName(),
+                        ps.getStatus(),
+                        ps.getScore()
+                ))
+                .toList();
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
         HostReconnectResponse.HostReconnectResponseBuilder builder = HostReconnectResponse.builder()
                 .sessionId(session.getSessionId())
@@ -135,7 +143,7 @@ public class QuizSessionServiceImpl implements QuizSessionService {
                 .status(session.getStatus())
                 .joinCode(session.getJoinCode())
                 .totalQuestions(questions.size())
-                .participants(participantSessionList)
+                .participants(dtoList)
                 .participantCount(participantSessionList.size());
 
 
@@ -326,22 +334,28 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             throw new IllegalStateException("Participant does not belong to this quiz");
         }
 
-        boolean alreadyJoined = participantSessionRepository
-                .existsByQuizSessionAndParticipant(session, participant);
+        ParticipantSession participantSession =
+                participantSessionRepository.findByQuizSessionAndParticipant(session, participant);
 
-        if (alreadyJoined) {
-            throw new IllegalStateException("Participant already joined this session");
+        if (participantSession != null) {
+
+            participantSession.setStatus(ParticipantSessionStatus.JOINED);
+            participantSession.setJoinedAt(Instant.now());
+            participantSessionRepository.save(participantSession);
+
+        } else {
+
+            ParticipantSession newParticipantSession = ParticipantSession.builder()
+                    .quizSession(session)
+                    .participant(participant)
+                    .status(ParticipantSessionStatus.JOINED)
+                    .joinedAt(Instant.now())
+                    .score(0)
+                    .build();
+
+            participantSessionRepository.save(newParticipantSession);
         }
 
-        ParticipantSession participantSession = ParticipantSession.builder()
-                .quizSession(session)
-                .participant(participant)
-                .status(ParticipantSessionStatus.JOINED)
-                .joinedAt(Instant.now())
-                .score(0)
-                .build();
-
-        participantSessionRepository.save(participantSession);
         ParticipantJoinedMessageDto participantJoinedMessageDto = ParticipantJoinedMessageDto.builder()
                 .messageType("PLAYER_JOINED")
                 .sessionId(sessionId)
