@@ -59,16 +59,6 @@ return (
         </>
       )}
     </div>
-
-    <div className="block md:hidden">
-        <MobileAuthView 
-          isSignUp={isSignUp} 
-          setIsSignUp={setIsSignUp}
-          step={step}
-          setStep={setStep}
-          // ... pass all other props
-        />
-      </div>
   </div>
 );
 
