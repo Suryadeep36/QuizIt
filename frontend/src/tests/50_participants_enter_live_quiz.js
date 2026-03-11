@@ -1,10 +1,10 @@
 const puppeteer = require("puppeteer");
 
 const PLAYERS = 50;
-const QUESTIONS = 3;
+const QUESTIONS = 2;
 
 const URL =
-  "https://quiz-it-smart.vercel.app/quiz/c3c6721d-deca-404c-b887-509fd85767ca/join/c8ac9038-e1c2-4ef2-ab65-6ef43919b3ce";
+  "https://quiz-it-smart.vercel.app/quiz/6c05befa-0511-4233-bb10-3d76518b36fa/join/1ee9e8dc-c1fb-4056-b6e4-ad0c6776e514";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -13,49 +13,52 @@ function sleep(ms) {
 async function simulatePlayer(browser, id) {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
-
   await page.goto(URL, { waitUntil: "networkidle2" });
 
   await page.waitForSelector('input[placeholder="Enter your name"]', {
-    timeout: 180000,
+    timeout: 180_000,
   });
-
   await page.type('input[placeholder="Enter your name"]', `player-${id}`);
-  await page.click("button");
+  const buttons = await page.$$("button");
+  // Find the one with text "Join Quiz"
+  const joinButton = buttons.find(async (b) => {
+    const text = await page.evaluate((el) => el.innerText, b);
+    return text.trim() === "Join Quiz";
+  });
+  if (joinButton) await joinButton.click();
 
   console.log(`Player ${id} joined`);
 
-  await page.waitForSelector("h2.text-2xl, h2.text-3xl", { timeout: 180000 });
+  await page.waitForSelector('main button:not(:has-text("Final Submit"))', {
+    timeout: 180_000,
+  });
 
   for (let q = 1; q <= QUESTIONS; q++) {
     console.log(`Player ${id} waiting for question ${q}`);
 
-    await page.waitForSelector("main button", { timeout: 180000 });
-
-    await page.evaluate(() => {
-      const optionButtons = Array.from(
-        document.querySelectorAll("main button"),
-      ).filter((btn) => !btn.innerText.includes("Submit"));
-
-      const random =
-        optionButtons[Math.floor(Math.random() * optionButtons.length)];
-
-      random.click();
-    });
+    const allButtons = await page.$$("main button");
+    const answerButtons = [];
+    for (let btn of allButtons) {
+      const text = await page.evaluate((el) => el.innerText, btn);
+      if (!text.includes("Final Submit")) answerButtons.push(btn);
+    }
+    // Click random answer
+    const randomIndex = Math.floor(Math.random() * answerButtons.length);
+    await answerButtons[randomIndex].click();
 
     await sleep(500 + Math.random() * 2000);
 
-    await page.evaluate(() => {
-      const submit = Array.from(document.querySelectorAll("button")).find((b) =>
-        b.innerText.includes("Final Submit"),
-      );
-
-      if (submit) submit.click();
-    });
+    const [submit] = await page.$x("//button[contains(., 'Final Submit')]");
+    if (submit) await submit.click();
 
     console.log(`Player ${id} answered question ${q}`);
 
-    await sleep(2000);
+    await page.waitForTimeout(2000);
+    if (q < QUESTIONS) {
+      await page.waitForSelector('main button:not(:has-text("Final Submit"))', {
+        timeout: 180_000,
+      });
+    }
   }
 
   console.log(`Player ${id} finished quiz`);
@@ -66,14 +69,10 @@ async function simulatePlayer(browser, id) {
     headless: true,
     args: ["--no-sandbox"],
   });
-
   const players = [];
-
   for (let i = 1; i <= PLAYERS; i++) {
     players.push(simulatePlayer(browser, i));
   }
-
   await Promise.all(players);
-
   console.log("All players finished quiz");
 })();
