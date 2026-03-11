@@ -112,44 +112,46 @@ export default function QuizSettings({ quiz }) {
   };
 
   const handleFileUpload = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    try {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      // Extract emails ONLY from the first column (index 0)
-      const extractedEmails = data
-        .map(row => row[0]) 
-        .filter(val => val !== undefined && val !== null && val !== "")
-        .map(val => String(val).trim().toLowerCase())
-        .filter(val => /^\S+@\S+\.\S+$/.test(val));
+        // Extract emails ONLY from the first column (index 0)
+        const extractedEmails = data
+          .map((row) => row[0])
+          .filter((val) => val !== undefined && val !== null && val !== "")
+          .map((val) => String(val).trim().toLowerCase())
+          .filter((val) => /^\S+@\S+\.\S+$/.test(val));
 
-      setFormData(prev => {
-        const newEmails = [...new Set([...prev.allowedEmails, ...extractedEmails])];
-        const addedCount = newEmails.length - prev.allowedEmails.length;
-        
-        if (addedCount > 0) {
-          toast.success(`Imported ${addedCount} new emails from Column A`);
-        } else {
-          toast.error("No new valid emails found in the first column");
-        }
-        
-        return { ...prev, allowedEmails: newEmails };
-      });
-    } catch (err) {
-      toast.error("Error reading Excel file");
-      console.error(err);
-    }
+        setFormData((prev) => {
+          const newEmails = [
+            ...new Set([...prev.allowedEmails, ...extractedEmails]),
+          ];
+          const addedCount = newEmails.length - prev.allowedEmails.length;
+
+          if (addedCount > 0) {
+            toast.success(`Imported ${addedCount} new emails from Column A`);
+          } else {
+            toast.error("No new valid emails found in the first column");
+          }
+
+          return { ...prev, allowedEmails: newEmails };
+        });
+      } catch (err) {
+        toast.error("Error reading Excel file");
+        console.error(err);
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null; // Clear input for re-uploads
   };
-  reader.readAsBinaryString(file);
-  e.target.value = null; // Clear input for re-uploads
-};
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-4 pb-20 animate-in fade-in slide-in-from-bottom-4">
@@ -307,6 +309,8 @@ export default function QuizSettings({ quiz }) {
                   {isEditing ? (
                     <input
                       type="datetime-local"
+                      min="1000-01-01T00:00"
+                      max="9999-12-31T23:59"
                       name="startTime"
                       value={formData.startTime}
                       onChange={handleChange}
@@ -326,6 +330,8 @@ export default function QuizSettings({ quiz }) {
                     <input
                       type="datetime-local"
                       name="endTime"
+                      min="1000-01-01T00:00"
+                      max="9999-12-31T23:59"
                       value={formData.endTime}
                       onChange={handleChange}
                       className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 font-bold text-sm outline-none focus:ring-2 ring-[#4a9cb0]/20"
@@ -366,51 +372,53 @@ export default function QuizSettings({ quiz }) {
         </div>
 
         {/* Right Side: Email Access List */}
-       <div
-  className={`w-full lg:w-[380px] space-y-4 transition-all duration-500 ${formData.mode === "EXAM" && !formData.allowAllAuthenticated ? "opacity-100 translate-x-0" : "opacity-0 hidden lg:block pointer-events-none"}`}
->
-  <div className="bg-slate-50/50 rounded-[2rem] p-6 border border-slate-200 h-full flex flex-col">
-    <div className="mb-4">
-      <h3 className="font-black text-slate-800 uppercase text-xs tracking-tighter">
-        Access Registry
-      </h3>
-      <p className="text-[10px] text-slate-500 font-medium">
-        Participants restricted to this list.
-      </p>
-    </div>
+        <div
+          className={`w-full lg:w-[380px] space-y-4 transition-all duration-500 ${formData.mode === "EXAM" && !formData.allowAllAuthenticated ? "opacity-100 translate-x-0" : "opacity-0 hidden lg:block pointer-events-none"}`}
+        >
+          <div className="bg-slate-50/50 rounded-[2rem] p-6 border border-slate-200 h-full flex flex-col">
+            <div className="mb-4">
+              <h3 className="font-black text-slate-800 uppercase text-xs tracking-tighter">
+                Access Registry
+              </h3>
+              <p className="text-[10px] text-slate-500 font-medium">
+                Participants restricted to this list.
+              </p>
+            </div>
 
-    {isEditing && (
-      <div className="space-y-3 mb-4">
-        {/* Manual Input */}
-        <div className="relative">
-          <input
-            placeholder="Add email..."
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addEmail()}
-            className="w-full bg-white border-2 border-slate-100 focus:border-[#4a9cb0] rounded-xl pl-4 pr-10 py-3 text-xs font-bold transition-all outline-none shadow-sm"
-          />
-          <button
-            onClick={addEmail}
-            className="absolute right-2 top-2 bg-[#4a9cb0] text-white p-1.5 rounded-lg hover:bg-[#3d8394] transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-          </button>
-        </div>
+            {isEditing && (
+              <div className="space-y-3 mb-4">
+                {/* Manual Input */}
+                <div className="relative">
+                  <input
+                    placeholder="Add email..."
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addEmail()}
+                    className="w-full bg-white border-2 border-slate-100 focus:border-[#4a9cb0] rounded-xl pl-4 pr-10 py-3 text-xs font-bold transition-all outline-none shadow-sm"
+                  />
+                  <button
+                    onClick={addEmail}
+                    className="absolute right-2 top-2 bg-[#4a9cb0] text-white p-1.5 rounded-lg hover:bg-[#3d8394] transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-        {/* Excel Upload Button */}
-        <label className="flex items-center justify-center gap-2 w-full py-2.5 bg-white border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#4a9cb0] hover:bg-[#4a9cb0]/5 transition-all group">
-          <input 
-            type="file" 
-            accept=".xlsx, .xls, .csv" 
-            className="hidden" 
-            onChange={handleFileUpload}
-          />
-          <Upload className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#4a9cb0]" />
-          <span className="text-[10px] font-bold text-slate-500 group-hover:text-[#4a9cb0] uppercase">Import Excel</span>
-        </label>
-      </div>
-    )}
+                {/* Excel Upload Button */}
+                <label className="flex items-center justify-center gap-2 w-full py-2.5 bg-white border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#4a9cb0] hover:bg-[#4a9cb0]/5 transition-all group">
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <Upload className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#4a9cb0]" />
+                  <span className="text-[10px] font-bold text-slate-500 group-hover:text-[#4a9cb0] uppercase">
+                    Import Excel
+                  </span>
+                </label>
+              </div>
+            )}
             <div className="flex-1 bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-inner max-h-[400px]">
               <div className="p-3 border-b bg-slate-50/50 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
                 <span>Whitelist</span>
@@ -446,7 +454,6 @@ export default function QuizSettings({ quiz }) {
             </div>
           </div>
         </div>
-        
       </div>
 
       <DeleteConfirmationModal

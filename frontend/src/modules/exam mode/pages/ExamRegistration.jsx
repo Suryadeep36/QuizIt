@@ -11,13 +11,17 @@ import {
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
 import { useParams } from "react-router";
-import { checkStatusForRegistered, getQuizForParticipantById, registerExam } from "../../../services/AuthService";
+import {
+  checkStatusForRegistered,
+  getQuizForParticipantById,
+  registerExam,
+} from "../../../services/AuthService";
 
 export default function ExamRegistration() {
   const user = useAuth((state) => state.user);
   const { quizId, token } = useParams();
   const [quiz, setQuiz] = useState(null);
-const [isRegistered, setIsRegistered] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -25,7 +29,8 @@ const [isRegistered, setIsRegistered] = useState(false);
     enrollmentId: "",
   });
 
-  async function checkRegistration() { // renamed for clarity
+  async function checkRegistration() {
+    // renamed for clarity
     try {
       const response = await checkStatusForRegistered(token);
       // Set the state based on the response
@@ -37,44 +42,42 @@ const [isRegistered, setIsRegistered] = useState(false);
     }
   }
 
+  useEffect(() => {
+    async function fetchQuiz() {
+      try {
+        const response = await getQuizForParticipantById(quizId);
+        setQuiz(response);
 
-useEffect(() => {
-  async function fetchQuiz() {
-    try {
-      const response = await getQuizForParticipantById(quizId);
-      setQuiz(response);
-
-      // only check registration if quiz requires invitation
-      if (!response.allowAllAuthenticated && token) {
-        checkRegistration();
+        // only check registration if quiz requires invitation
+        if (!response.allowAllAuthenticated && token) {
+          checkRegistration();
+        }
+      } catch (error) {
+        toast.error("Unable to load quiz details");
       }
-
-    } catch (error) {
-      toast.error("Unable to load quiz details");
     }
-  }
 
-  if (quizId) {
-    fetchQuiz();
-  }
-}, [quizId]);
+    if (quizId) {
+      fetchQuiz();
+    }
+  }, [quizId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const registrationData = {
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: user.email,
-      birthDate: formData.birthDate, 
+      birthDate: formData.birthDate,
       enrollmentId: formData.enrollmentId,
       registrationToken: token,
-      quizId: quizId, 
+      quizId: quizId,
     };
 
     try {
       const registrateredData = await registerExam(registrationData);
       console.log(registrateredData);
       toast.success("Details saved successfully!");
-      checkRegistration()
+      checkRegistration();
     } catch (err) {
       console.log(err);
       toast.error(err.response?.data?.message || err.message || "Send failed");
@@ -101,21 +104,24 @@ useEffect(() => {
       minute: "2-digit",
     });
   };
-if (!quiz?.allowAllAuthenticated && isRegistered) {
-  return (
-    <div className=" bg-slate-50 flex items-center justify-center p-6">
-      <div className="bg-white p-12 rounded-[2.5rem] shadow-xl text-center max-w-md">
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-          <ClipboardCheck className="w-10 h-10" />
+  if (!quiz?.allowAllAuthenticated && isRegistered) {
+    return (
+      <div className=" bg-slate-50 flex items-center justify-center p-6">
+        <div className="bg-white p-12 rounded-[2.5rem] shadow-xl text-center max-w-md">
+          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ClipboardCheck className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-800 uppercase mb-2">
+            Already Registered
+          </h2>
+          <p className="text-slate-500 font-medium mb-8">
+            You have already registered for <strong>{quiz?.quizName}</strong>.
+            Please check your email for further instructions.
+          </p>
         </div>
-        <h2 className="text-2xl font-black text-slate-800 uppercase mb-2">Already Registered</h2>
-        <p className="text-slate-500 font-medium mb-8">
-          You have already registered for <strong>{quiz?.quizName}</strong>. Please check your email for further instructions.
-        </p>
       </div>
-    </div>
-  );
-}
+    );
+  }
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-0 md:p-6 font-sans">
       {/* Container: Full width on mobile, max-width on desktop */}
@@ -168,7 +174,7 @@ if (!quiz?.allowAllAuthenticated && isRegistered) {
                     Duration
                   </p>
                   <p className="font-bold">
-                     {quiz?.duration ? quiz.duration/60 + " Minutes" : "N/A"}
+                    {quiz?.duration ? quiz.duration / 60 + " Minutes" : "N/A"}
                   </p>
                 </div>
               </div>
@@ -254,6 +260,8 @@ if (!quiz?.allowAllAuthenticated && isRegistered) {
                 </label>
                 <input
                   type="date"
+                  min="1000-01-01"
+                  max="9999-12-31"
                   required
                   className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] focus:bg-white outline-none px-5 py-4 rounded-2xl font-bold text-slate-700 transition-all"
                   onChange={(e) =>

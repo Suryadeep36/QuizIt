@@ -231,3 +231,39 @@ export const importGoogleForm = async (quizId,formUrl) => {
     return response.data;
 }
 
+export const getPendingTeachers = async () => {
+  const response = await apiClient.get(`/admin/teachers/pending`);
+  return response.data;
+};
+
+
+export const approveTeacherByEmail = async (email, isApproved) => {
+  const decision = {
+    approved: isApproved,
+    reason: isApproved ? "Welcome to QuizIt!" : "Request declined by administrator."
+  };
+  const response = await apiClient.post(`/admin/teachers/approve/${email}`, decision);
+  return response.data;
+};
+
+export const getApprovedTeachers = async () => {
+  const response = await apiClient.get(`/admin/teachers/approved`);
+  return response.data;
+};
+
+export const getApprovedAdmins = async () => {
+  const response = await apiClient.get(`/admins/approved`);
+  return response.data;
+};
+
+// Revoke Teacher
+export const revokeTeacher = async (email) => {
+  const response = await apiClient.patch(`/admin/teachers/email/${email}/revoke`);
+  return response.data;
+};
+
+// Revoke Admin
+export const revokeAdmin = async (email) => {
+  const response = await apiClient.patch(`/admin/admins/email/${email}/revoke`);
+  return response.data;
+};

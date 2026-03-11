@@ -30,7 +30,8 @@ import SecurityProvider from "./modules/exam mode/component/SecurityProvider.jsx
 
 import ExamWaitingRoom from "./modules/exam mode/pages/ExamWaitingRoom.jsx";
 import ExamRoom from "./modules/exam mode/pages/ExamRoom.jsx";
-import AdminApprovalPage from "./modules/auth/pages/AdminApprovalPage.jsx";
+import AdminDashboard from "./modules/admin/pages/AdminDashboard.jsx";
+import AdminApprovalPage from "./modules/admin/pages/AdminApprovalPage.jsx";
 
 
 const router = createBrowserRouter([
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />, // Landing page has its own internal nav
+  },
+  {
+    path: "/admin",
+    element: <AdminDashboard />
   },
   {
     path: "/oauth2/login/success",
