@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -154,63 +155,77 @@ public class QuestionAnalyticsQuizServiceImpl implements QuestionAnalyticsQuizSe
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
-        // 2️⃣ Fetch all questions directly
-        List<Question> questions =
-                questionRepository.findByQuiz_QuizId(quizId);
-
+        // 2️⃣ Fetch questions
+        List<Question> questions = questionRepository.findByQuiz_QuizId(quizId);
         if (questions.isEmpty()) return;
 
+        List<UUID> questionIds = questions.stream()
+                .map(Question::getQuestionId)
+                .toList();
+
+        // 3️⃣ Fetch stats for all questions (1 query)
+        List<Object[]> statsList = questionAnalyticsQuizRepository.getAllQuestionStats(quizId);
+
+        Map<UUID, Object[]> statsMap = statsList.stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> row
+                ));
+
+        // 4️⃣ Fetch fastest participants (1 query)
+        List<Object[]> fastestList =
+                questionAnalyticsQuizRepository.getFastestParticipants(quizId);
+
+        Map<UUID, Participant> fastestMap = fastestList.stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Participant) row[1]
+                ));
+
+        // 5️⃣ Fetch existing analytics rows (1 query)
+        List<QuestionAnalyticsQuiz> existingAnalytics =
+                questionAnalyticsQuizRepository.findAllByQuiz_QuizId(quizId);
+
+        Map<UUID, QuestionAnalyticsQuiz> existingMap =
+                existingAnalytics.stream()
+                        .collect(Collectors.toMap(
+                                qaq -> qaq.getQuestion().getQuestionId(),
+                                qaq -> qaq
+                        ));
+
+        List<QuestionAnalyticsQuiz> toSave = new ArrayList<>();
+
+        // 6️⃣ Process each question
         for (Question question : questions) {
 
             UUID questionId = question.getQuestionId();
+            Object[] stats = statsMap.get(questionId);
 
-            // 3️⃣ Aggregate from QuestionAnalyticsUser
-            Integer totalAnswered =
-                    questionAnalyticsQuizRepository.countTotalAnswered(quizId, questionId);
+            long totalAnswered = stats != null ? ((Number) stats[1]).longValue() : 0;
+            long correctCount = stats != null ? ((Number) stats[2]).longValue() : 0;
+            long avgTime = stats != null ? ((Number) stats[3]).longValue() : 0;
 
-            Integer correctCount =
-                    questionAnalyticsQuizRepository.countCorrectAnswers(quizId, questionId);
+            Participant fastest = fastestMap.get(questionId);
 
-            Long avgTime =
-                    questionAnalyticsQuizRepository.calculateAverageTime(quizId, questionId);
+            QuestionAnalyticsQuiz qaq = existingMap.getOrDefault(
+                    questionId,
+                    QuestionAnalyticsQuiz.builder()
+                            .quiz(quiz)
+                            .question(question)
+                            .build()
+            );
 
-            Participant fastest =
-                    questionAnalyticsQuizRepository
-                            .findFastestParticipant(
-                                    quizId,
-                                    questionId,
-                                    PageRequest.of(0, 1)
-                            )
-                            .stream()
-                            .findFirst()
-                            .orElse(null);
-
-            // 4️⃣ Get existing analytics row OR create new one safely
-            QuestionAnalyticsQuiz qaq =
-                    questionAnalyticsQuizRepository
-                            .findByQuestion_QuestionId(questionId)
-                            .orElseGet(() ->
-                                    QuestionAnalyticsQuiz.builder()
-                                            .quiz(quiz)
-                                            .question(question)
-                                            .totalAnswered(0)
-                                            .correctAnswerCount(0)
-                                            .averageTime(0L)
-                                            .fastestParticipant(null)
-                                            .build()
-                            );
-
-            // 5️⃣ Update values safely (handle nulls)
-            qaq.setTotalAnswered(totalAnswered != null ? totalAnswered : 0);
-            qaq.setCorrectAnswerCount(correctCount != null ? correctCount : 0);
-            qaq.setAverageTime(avgTime != null ? avgTime : 0L);
+            qaq.setTotalAnswered((int) totalAnswered);
+            qaq.setCorrectAnswerCount((int) correctCount);
+            qaq.setAverageTime(avgTime);
             qaq.setFastestParticipant(fastest);
 
-            questionAnalyticsQuizRepository.save(qaq);
+            toSave.add(qaq);
         }
+
+        // 7️⃣ Batch save
+        questionAnalyticsQuizRepository.saveAll(toSave);
     }
-
-
 
     @Override
     public List<QuestionWithAnalyticsDto> getDetailedAnalyticsByQuizId(String quizId) {

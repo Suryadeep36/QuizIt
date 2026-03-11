@@ -60,6 +60,33 @@ public interface QuestionAnalyticsQuizRepository extends JpaRepository<QuestionA
     Long calculateAverageTime(UUID quizId, UUID questionId);
 
     @Query("""
+SELECT 
+    qau.question.questionId,
+    COUNT(qau),
+    SUM(CASE WHEN qau.isCorrect = true THEN 1 ELSE 0 END),
+    AVG(qau.timeSpent)
+FROM QuestionAnalyticsUser qau
+WHERE qau.quiz.quizId = :quizId
+GROUP BY qau.question.questionId
+""")
+    List<Object[]> getAllQuestionStats(UUID quizId);
+
+    @Query("""
+SELECT qau.question.questionId, qau.participant
+FROM QuestionAnalyticsUser qau
+WHERE qau.quiz.quizId = :quizId
+AND qau.isCorrect = true
+AND qau.timeSpent = (
+    SELECT MIN(q2.timeSpent)
+    FROM QuestionAnalyticsUser q2
+    WHERE q2.quiz.quizId = :quizId
+    AND q2.question.questionId = qau.question.questionId
+    AND q2.isCorrect = true
+)
+""")
+    List<Object[]> getFastestParticipants(UUID quizId);
+
+    @Query("""
        SELECT qau.participant
        FROM QuestionAnalyticsUser qau
        WHERE qau.quiz.quizId = :quizId
