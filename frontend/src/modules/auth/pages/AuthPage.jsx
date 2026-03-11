@@ -48,11 +48,19 @@ export default function AuthPage() {
     username: "",
     email: "",
     password: "",
+    role: "STUDENT",
   });
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   });
+
+  const ROLE_MAP = {
+    STUDENT: "USER",
+    TEACHER: "TEACHER",
+    ADMIN: "ADMIN"
+  };
+
 
   const [signupLoading, setSignupLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -61,6 +69,9 @@ export default function AuthPage() {
   const [loginError, setLoginError] = useState("");
 
 
+  const handleRoleSelect = (role) => {
+    setSignupData(prev => ({ ...prev, role }));
+  };
   const handleSignupChange = (e) => {
     setSignupData({
       ...signupData,
@@ -101,6 +112,7 @@ export default function AuthPage() {
     setSignupLoading(true);
     setSignupError("");
 
+    // Basic validation
     if (!signupData.username.trim() || !signupData.email.trim() || !signupData.password.trim()) {
       toast.error("Please fill in all fields");
       setSignupLoading(false);
@@ -108,14 +120,20 @@ export default function AuthPage() {
     }
 
 
-
     try {
-      const userdata = await registerUser({
-        email: signupData.email,
-        username: signupData.username,
-        password: signupData.password,
-        enable: true,
-      });
+      const assignedRole = signupData.role === "STUDENT" ? "USER" : signupData.role;
+    
+    // 1. Rename this to something like 'signupPayload'
+    const signupPayload = {
+      email: signupData.email,
+      username: signupData.username,
+      password: signupData.password,
+      enable: true,
+      roles: [assignedRole],
+    };
+      console.log(signupPayload)
+      const userdata = await registerUser(signupPayload);
+      console.log("Registration successful:", userdata);
 
       toast.success("Code sent to your email!");
       setStep("verify");
@@ -202,6 +220,7 @@ export default function AuthPage() {
                 <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
                 <p className="text-gray-500 mb-6">Sign in to manage your quizzes</p>
 
+
                 <input
                   type="email"
                   className="auth-input"
@@ -244,6 +263,22 @@ export default function AuthPage() {
                 <div className="w-1/2 flex flex-col justify-center px-12 bg-gray-50">
                   <h2 className="text-3xl font-bold mb-2">Create Account</h2>
                   <p className="text-gray-500 mb-6">Start creating smarter quizzes</p>
+                  <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-lg border border-gray-200">
+                    {["STUDENT", "TEACHER", "ADMIN"].map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setSignupData({ ...signupData, role })}
+                        className={`flex-1 py-2 text-xs font-bold rounded-md transition-all duration-200 ${signupData.role === role
+                            ? "bg-cyan-600 text-white shadow-md"
+                            : "text-gray-500 hover:bg-gray-200"
+                          }`}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                  </div>
+
 
                   <input
                     type="name"

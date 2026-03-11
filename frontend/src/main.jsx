@@ -30,6 +30,7 @@ import SecurityProvider from "./modules/exam mode/component/SecurityProvider.jsx
 
 import ExamWaitingRoom from "./modules/exam mode/pages/ExamWaitingRoom.jsx";
 import ExamRoom from "./modules/exam mode/pages/ExamRoom.jsx";
+import AdminApprovalPage from "./modules/auth/pages/AdminApprovalPage.jsx";
 
 
 const router = createBrowserRouter([
@@ -93,6 +94,10 @@ const router = createBrowserRouter([
           {
             path: "/profile/:username",
             element: <UserProfile />
+          },
+           {
+            path: "/admin/teachers",
+            element: <AdminApprovalPage/>
           },
           {
             path: "/register-exam/:quizId/:token",

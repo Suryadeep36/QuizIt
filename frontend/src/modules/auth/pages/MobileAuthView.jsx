@@ -3,8 +3,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import VerificationForm from "../components/VerificationForm";
 import { NavLink } from "react-router";
 
+
 // Internal Mobile-Specific Components for better theme matching
 const MobileGoogleButton = () => (
+
+
+
   <NavLink
     to={`${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/oauth2/authorization/google`}
     className="block w-full mt-4"
@@ -27,40 +31,40 @@ const MobileDivider = () => (
   </div>
 );
 
-const MobileAuthView = ({ 
+const MobileAuthView = ({
   isSignUp, setIsSignUp, loginData, handleLoginChange, handleLogin, loginLoading,
-  signupData, handleSignupChange, handleSignup, signupLoading, step, setStep, 
-  handleVerify, verificationLoading, signupError, loginError, verificationError 
+  signupData, handleSignupChange, handleSignup, signupLoading, step, setStep,
+  handleVerify, verificationLoading, signupError, loginError, verificationError
 }) => {
+
+  const roles = ["STUDENT", "TEACHER", "ADMIN"];
+
   return (
     <div className="md:hidden min-h-screen bg-white flex flex-col overflow-x-hidden">
-      
+
       {/* 1. Themed Header */}
       <div className="bg-gradient-to-br from-cyan-600 to-teal-500 pt-12 pb-10 px-6 rounded-b-[40px] shadow-lg">
         <h1 className="text-3xl font-black text-white text-center mb-6 tracking-tight">QuizIt</h1>
-        
+
         {/* Sliding Tab Selector */}
         <div className="relative flex bg-white/20 backdrop-blur-md rounded-2xl p-1 h-14">
-          <div 
-            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-lg transition-transform duration-300 ease-out ${
-              isSignUp ? 'translate-x-full' : 'translate-x-0'
-            }`}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-lg transition-transform duration-300 ease-out ${isSignUp ? 'translate-x-full' : 'translate-x-0'
+              }`}
           />
-          
-          <button 
-            onClick={() => {setIsSignUp(false); setStep("auth")}}
-            className={`relative z-10 w-1/2 font-bold text-sm transition-colors duration-300 ${
-              !isSignUp ? 'text-cyan-700' : 'text-white'
-            }`}
+
+          <button
+            onClick={() => { setIsSignUp(false); setStep("auth") }}
+            className={`relative z-10 w-1/2 font-bold text-sm transition-colors duration-300 ${!isSignUp ? 'text-cyan-700' : 'text-white'
+              }`}
           >
             Login
           </button>
-          
-          <button 
-            onClick={() => {setIsSignUp(true); setStep("auth")}}
-            className={`relative z-10 w-1/2 font-bold text-sm transition-colors duration-300 ${
-              isSignUp ? 'text-cyan-700' : 'text-white'
-            }`}
+
+          <button
+            onClick={() => { setIsSignUp(true); setStep("auth") }}
+            className={`relative z-10 w-1/2 font-bold text-sm transition-colors duration-300 ${isSignUp ? 'text-cyan-700' : 'text-white'
+              }`}
           >
             Sign Up
           </button>
@@ -69,13 +73,12 @@ const MobileAuthView = ({
 
       {/* 2. Content Slider */}
       <div className="flex-1 relative mt-8">
-        <div 
-          className={`flex h-full transition-transform duration-500 ease-in-out ${
-            isSignUp ? "-translate-x-1/2" : "translate-x-0"
-          }`}
+        <div
+          className={`flex h-full transition-transform duration-500 ease-in-out ${isSignUp ? "-translate-x-1/2" : "translate-x-0"
+            }`}
           style={{ width: "200%" }}
         >
-          
+
           {/* --- LOGIN PANE --- */}
           <div className="w-1/2 px-8 flex flex-col">
             <div className="mb-6">
@@ -84,29 +87,29 @@ const MobileAuthView = ({
             </div>
 
             <div className="space-y-4">
-              <input 
-                type="email" 
-                name="email" 
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700" 
-                placeholder="Email Address" 
-                value={loginData.email} 
-                onChange={handleLoginChange} 
+              <input
+                type="email"
+                name="email"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700"
+                placeholder="Email Address"
+                value={loginData.email}
+                onChange={handleLoginChange}
               />
-              <input 
-                type="password" 
-                name="password" 
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700" 
-                placeholder="Password" 
-                value={loginData.password} 
-                onChange={handleLoginChange} 
+              <input
+                type="password"
+                name="password"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700"
+                placeholder="Password"
+                value={loginData.password}
+                onChange={handleLoginChange}
               />
             </div>
 
             {loginError && <p className="text-red-500 text-xs mt-3 font-medium ml-1">{loginError}</p>}
 
-            <button 
-              onClick={handleLogin} 
-              disabled={loginLoading} 
+            <button
+              onClick={handleLogin}
+              disabled={loginLoading}
               className="w-full bg-orange-400 hover:bg-orange-500 text-white h-14 rounded-2xl font-bold shadow-xl shadow-orange-200 mt-8 flex justify-center items-center active:scale-[0.97] transition-all"
             >
               {loginLoading ? <CircularProgress size={24} color="inherit" /> : "Login"}
@@ -121,11 +124,11 @@ const MobileAuthView = ({
             {step === "verify" ? (
               <div className="bg-white rounded-3xl">
                 <VerificationForm
-                  email={signupData.email} 
-                  loading={verificationLoading} 
-                  error={verificationError} 
-                  onCancel={() => setStep("auth")} 
-                  onVerify={handleVerify} 
+                  email={signupData.email}
+                  loading={verificationLoading}
+                  error={verificationError}
+                  onCancel={() => setStep("auth")}
+                  onVerify={handleVerify}
                 />
               </div>
             ) : (
@@ -135,38 +138,57 @@ const MobileAuthView = ({
                   <p className="text-gray-500 text-sm">Start creating smarter quizzes</p>
                 </div>
 
+                <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-lg border border-gray-200">
+                  {/* ROLE SELECTION TABS */}
+                  {["STUDENT", "TEACHER", "ADMIN"].map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      // We trigger handleSignupChange manually for the 'role' field
+                      onClick={() => handleSignupChange({ target: { name: "role", value: role } })}
+                      className={`flex-1 py-2 text-xs font-bold rounded-md transition-all duration-200 ${signupData.role === role
+                          ? "bg-cyan-600 text-white shadow-md"
+                          : "text-gray-500 hover:bg-gray-200"
+                        }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
                 <div className="space-y-4">
-                  <input 
-                    type="text" 
-                    name="username" 
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700" 
-                    placeholder="Username" 
-                    value={signupData.username} 
-                    onChange={handleSignupChange} 
+
+
+                  <input
+                    type="text"
+                    name="username"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700"
+                    placeholder="Username"
+                    value={signupData.username}
+                    onChange={handleSignupChange}
                   />
-                  <input 
-                    type="email" 
-                    name="email" 
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700" 
-                    placeholder="Email Address" 
-                    value={signupData.email} 
-                    onChange={handleSignupChange} 
+                  <input
+                    type="email"
+                    name="email"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700"
+                    placeholder="Email Address"
+                    value={signupData.email}
+                    onChange={handleSignupChange}
                   />
-                  <input 
-                    type="password" 
-                    name="password" 
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700" 
-                    placeholder="Password" 
-                    value={signupData.password} 
-                    onChange={handleSignupChange} 
+                  <input
+                    type="password"
+                    name="password"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl h-14 px-5 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all text-gray-700"
+                    placeholder="Password"
+                    value={signupData.password}
+                    onChange={handleSignupChange}
                   />
                 </div>
 
                 {signupError && <p className="text-red-500 text-xs mt-3 font-medium ml-1">{signupError}</p>}
 
-                <button 
-                  onClick={handleSignup} 
-                  disabled={signupLoading} 
+                <button
+                  onClick={handleSignup}
+                  disabled={signupLoading}
                   className="w-full bg-orange-400 hover:bg-orange-500 text-white h-14 rounded-2xl font-bold shadow-xl shadow-orange-200 mt-8 flex justify-center items-center active:scale-[0.97] transition-all"
                 >
                   {signupLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}

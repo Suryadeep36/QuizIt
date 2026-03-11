@@ -4,7 +4,7 @@ const PLAYERS = 50;
 const QUESTIONS = 3;
 
 const URL =
-  "https://quiz-it-smart.vercel.app/quiz/c3c6721d-deca-404c-b887-509fd85767ca/join/c8ac9038-e1c2-4ef2-ab65-6ef43919b3ce";
+  "https://quiz-it-smart.vercel.app/quiz/b9a10a5b-4472-4bb5-92e2-7f728d22c7b0/join/f2f9fa49-72c5-4bb5-93b4-c787c0224f50";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -20,7 +20,7 @@ async function simulatePlayer(browser, id) {
     timeout: 180000,
   });
 
-  await page.type('input[placeholder="Enter your name"]', `player-${id}`);
+  await page.type('input[placeholder="Enter your name"]', `player2-${id}`);
   await page.click("button");
 
   console.log(`Player ${id} joined`);
