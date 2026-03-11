@@ -13,6 +13,8 @@ import toast from "react-hot-toast"
 import { useNavigate } from "react-router";
 import { createQuiz } from "../../../services/AuthService";
 import useAuth from "../../../stores/store";
+import * as XLSX from "xlsx";
+
 
 export default function CreateQuiz() {
   const navigate = useNavigate();
@@ -106,6 +108,48 @@ export default function CreateQuiz() {
       allowedEmails: prev.allowedEmails.filter((_, index) => index !== indexToRemove)
     }));
   };
+
+const handleFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: "binary" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      
+      // header: 1 returns an array of arrays (rows)
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // Only look at the first column (row[0]) of each row
+      const extractedEmails = data
+        .map(row => row[0]) // Get the first cell of every row
+        .filter(val => val !== undefined && val !== null && val !== "") // Remove empty cells
+        .map(val => String(val).trim().toLowerCase()) // Format
+        .filter(val => /^\S+@\S+\.\S+$/.test(val)); // Validate email format
+
+      setQuiz(prev => {
+        const newEmails = [...new Set([...prev.allowedEmails, ...extractedEmails])];
+        const addedCount = newEmails.length - prev.allowedEmails.length;
+        
+        if (addedCount > 0) {
+          toast.success(`Imported ${addedCount} new emails from column 1!`);
+        } else {
+          toast.error("No new valid emails found in the first column");
+        }
+        
+        return { ...prev, allowedEmails: newEmails };
+      });
+    } catch (err) {
+      toast.error("Error reading Excel file");
+      console.error(err);
+    }
+  };
+  reader.readAsBinaryString(file);
+  e.target.value = null;
+};
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-2 md:p-10 flex items-center justify-center font-sans">
@@ -254,22 +298,38 @@ export default function CreateQuiz() {
           </div>
 
           {/* Input Area */}
-          <div className="relative mb-6">
-            <input
-              type="text"
-              placeholder="Add participant email..."
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full bg-white border-2 border-slate-200 focus:border-[#1b8599] outline-none pl-4 pr-12 py-3 md:py-4 rounded-2xl text-sm font-bold transition-all"
-            />
-            <button
-              type="button"
-              onClick={addEmail}
-              className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-[#1b8599] text-white rounded-xl flex items-center justify-center hover:bg-[#166d7d] transition-colors"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
+         {/* NEW: Upload & Input Container */}
+  <div className="space-y-3 mb-6">
+    {/* Manual Input */}
+    <div className="relative">
+      <input
+        type="text"
+        placeholder="Add participant email..."
+        value={emailInput}
+        onChange={(e) => setEmailInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="w-full bg-white border-2 border-slate-200 focus:border-[#1b8599] outline-none pl-4 pr-12 py-3 rounded-2xl text-sm font-bold transition-all"
+      />
+      <button
+        type="button"
+        onClick={addEmail}
+        className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-[#1b8599] text-white rounded-xl flex items-center justify-center hover:bg-[#166d7d]"
+      >
+        <Sparkles className="w-4 h-4" />
+      </button>
+    </div>
+
+    {/* Excel Upload Button */}
+    <label className="flex items-center justify-center gap-2 w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-2xl cursor-pointer hover:border-[#1b8599] hover:bg-[#1b8599]/5 transition-all group">
+      <input 
+        type="file" 
+        accept=".xlsx, .xls, .csv" 
+        className="hidden" 
+        onChange={handleFileUpload}
+      />
+      <Layout className="w-4 h-4 text-slate-400 group-hover:text-[#1b8599]" />
+      <span className="text-xs font-bold text-slate-500 group-hover:text-[#1b8599]">Import from Excel/CSV</span>
+    </label>
           </div>
 
           {/* Dynamic Email List Container */}

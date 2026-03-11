@@ -31,6 +31,7 @@
     "socket.io-client": "^4.8.3",
     "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.1.18",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

@@ -30,7 +30,7 @@ public class RegisteredUserDto {
     @NotBlank(message = "Enrollment ID is required")
     private String enrollmentId;
 
-    @NotBlank(message = "registration Token is required")
+
     private String registrationToken;
 
     private String userAgent;

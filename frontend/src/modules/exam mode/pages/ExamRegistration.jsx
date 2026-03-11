@@ -11,7 +11,7 @@ import {
 import toast from "react-hot-toast";
 import useAuth from "../../../stores/store";
 import { useParams } from "react-router";
-import { checkStatusForRegistered, getQuizById, getQuizForParticipantById, registerExam } from "../../../services/AuthService";
+import { checkStatusForRegistered, getQuizForParticipantById, registerExam } from "../../../services/AuthService";
 
 export default function ExamRegistration() {
   const user = useAuth((state) => state.user);
@@ -36,27 +36,28 @@ const [isRegistered, setIsRegistered] = useState(false);
       toast.error("Unable to verify registration status");
     }
   }
+
+
 useEffect(() => {
-  if (token) {
-    checkRegistration();
-  }
-}, [token]);
+  async function fetchQuiz() {
+    try {
+      const response = await getQuizForParticipantById(quizId);
+      setQuiz(response);
 
-  useEffect(() => {
-    async function fetchQuiz() {
-      try {
-        const response = await getQuizForParticipantById(quizId);
-        console.log(response)
-        setQuiz(response);
-      } catch (error) {
-        toast.error("Unable to load quiz details");
+      // only check registration if quiz requires invitation
+      if (!response.allowAllAuthenticated && token) {
+        checkRegistration();
       }
-    }
 
-    if (quizId) {
-      fetchQuiz();
+    } catch (error) {
+      toast.error("Unable to load quiz details");
     }
-  }, [quizId]);
+  }
+
+  if (quizId) {
+    fetchQuiz();
+  }
+}, [quizId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,7 +101,7 @@ useEffect(() => {
       minute: "2-digit",
     });
   };
-if (isRegistered) {
+if (!quiz?.allowAllAuthenticated && isRegistered) {
   return (
     <div className=" bg-slate-50 flex items-center justify-center p-6">
       <div className="bg-white p-12 rounded-[2.5rem] shadow-xl text-center max-w-md">

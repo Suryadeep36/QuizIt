@@ -30,13 +30,13 @@ public class AllowedUser {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String token;
 
     @Column(nullable = false)
     private boolean registered = false;
 
-    @Column(nullable = false)
+
     private Instant tokenExpiry;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
