@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -74,7 +75,9 @@ public class QuizWebSocketController {
     }
 
     @MessageMapping("/quiz/join/{sessionId}/{participantId}")
-    public void joinSession(@DestinationVariable UUID sessionId, @DestinationVariable UUID participantId) {
+    public void joinSession(@DestinationVariable UUID sessionId, @DestinationVariable UUID participantId, StompHeaderAccessor accessor) {
+        accessor.getSessionAttributes().put("quizSessionId", sessionId);
+        accessor.getSessionAttributes().put("participantId", participantId);
         ParticipantJoinedMessageDto session = quizSessionService.joinSession(sessionId, participantId);
         quizAntiCheatService.registerParticipant(sessionId, participantId);
         WsMessageDto<ParticipantJoinedMessageDto> msg = WsMessageDto.<ParticipantJoinedMessageDto>builder()

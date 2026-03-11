@@ -48,8 +48,9 @@ export default function QuizManagementDashboard() {
   const [questions, setQuestions] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [generating, setGenerating] = useState(false);
-    const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [openImportModal, setOpenImportModal] = useState(false);
+  const [questionModalOpen, setQuestionModalOpen] = useState(false);
   const normalizeQuestionFromApi = (q) => {
     const baseQuestion = {
       questionId: q.questionId,
@@ -66,7 +67,7 @@ export default function QuizManagementDashboard() {
       maxAnswerLength: q.maxAnswerLength ?? 200,
       allowMultipleAnswers: q.allowMultipleAnswers ?? false,
       isAIGenerated: q.isAIGenerated || false,
-      displayOrder: q.displayOrder || 0
+      displayOrder: q.displayOrder || 0,
     };
 
     // Normalize options based on question type
@@ -187,16 +188,15 @@ export default function QuizManagementDashboard() {
     try {
       const savedQuestion = await createQuestion(newQuestion);
       console.log("savedQuestion: ", savedQuestion);
-      setQuestions((prev) => [...prev, normalizeQuestionFromApi(savedQuestion)]);
-    }
-    catch (err) {
+      setQuestions((prev) => [
+        ...prev,
+        normalizeQuestionFromApi(savedQuestion),
+      ]);
+    } catch (err) {
       toast.error(
-        err.response?.data?.message ||
-        err.message ||
-        "Quiz Not found!"
+        err.response?.data?.message || err.message || "Quiz Not found!",
       );
     }
-
   };
 
   const deleteQuestion = async (questionId) => {
@@ -234,11 +234,9 @@ export default function QuizManagementDashboard() {
       setQuiz(quizData);
       setQuestions(quesData.map(normalizeQuestionFromApi));
     } catch (err) {
-      console.log(err)
+      console.log(err);
       toast.error(
-        err.response?.data?.message ||
-        err.message ||
-        "Quiz Not found!"
+        err.response?.data?.message || err.message || "Quiz Not found!",
       );
     } finally {
       setLoading(false);
@@ -257,26 +255,26 @@ export default function QuizManagementDashboard() {
     );
   }
 
-const handleFormImport = async (formUrl) => {
-  try {
-    setImporting(true); 
-    // Call the service
-    await importGoogleForm(quizId, formUrl);
+  const handleFormImport = async (formUrl) => {
+    try {
+      setImporting(true);
+      // Call the service
+      await importGoogleForm(quizId, formUrl);
 
-    // Refresh the local questions list
-    await fetchData();
-    toast.success("Questions imported from Google Form! 📝");
-  } catch (err) {
-    console.error("Import Error:", err);
-    toast.error(
-      err.response?.data?.message ||
-      err.message ||
-      "Failed to import from Google Form"
-    );
-  } finally {
-    setImporting(false);
-  }
-};
+      // Refresh the local questions list
+      await fetchData();
+      toast.success("Questions imported from Google Form! 📝");
+    } catch (err) {
+      console.error("Import Error:", err);
+      toast.error(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to import from Google Form",
+      );
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const handleAiGen = async (prompt) => {
     try {
@@ -285,20 +283,19 @@ const handleFormImport = async (formUrl) => {
       const data = await AIGenQuestions(quizId, { prompt: prompt });
       console.log("Ai response:", data);
       fetchData();
-      toast.success("AI Generated Questions added to Quiz")
+      toast.success("AI Generated Questions added to Quiz");
     } catch (err) {
-      console.log(err)
+      console.log(err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Questions Not generated!"
+          err.message ||
+          "Questions Not generated!",
       );
     } finally {
       // setLoading(false);
       setGenerating(false);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] text-slate-800 font-sans selection:bg-white/30">
@@ -339,10 +336,11 @@ const handleFormImport = async (formUrl) => {
           <div className="space-y-1">
             <button
               onClick={() => setActiveTab("questions")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "questions"
-                ? "bg-white text-[#4a9cb0] shadow-lg"
-                : "hover:bg-white/20 text-white/80 hover:text-white"
-                }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${
+                activeTab === "questions"
+                  ? "bg-white text-[#4a9cb0] shadow-lg"
+                  : "hover:bg-white/20 text-white/80 hover:text-white"
+              }`}
             >
               <LayoutDashboard className="w-5 h-5" />
               Questions
@@ -350,38 +348,35 @@ const handleFormImport = async (formUrl) => {
 
             <button
               onClick={() => setActiveTab("allowedUser")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "allowedUser"
-                ? "bg-white text-[#4a9cb0] shadow-lg"
-                : "hover:bg-white/20 text-white/80 hover:text-white"
-                }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${
+                activeTab === "allowedUser"
+                  ? "bg-white text-[#4a9cb0] shadow-lg"
+                  : "hover:bg-white/20 text-white/80 hover:text-white"
+              }`}
             >
               <Settings className="w-5 h-5" />
               Registered User
             </button>
             <button
               onClick={() => setActiveTab("settings")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${activeTab === "settings"
-                ? "bg-white text-[#4a9cb0] shadow-lg"
-                : "hover:bg-white/20 text-white/80 hover:text-white"
-                }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${
+                activeTab === "settings"
+                  ? "bg-white text-[#4a9cb0] shadow-lg"
+                  : "hover:bg-white/20 text-white/80 hover:text-white"
+              }`}
             >
               <Settings className="w-5 h-5" />
               Settings
             </button>
-
-
-
           </div>
         </aside>
 
         {/* Main */}
 
-
-
         <main className="flex-1 p-2 md:p-8">
-          {activeTab == "settings" && (<QuizSettings quiz={quiz} />)}
+          {activeTab == "settings" && <QuizSettings quiz={quiz} />}
 
-          {(activeTab == "allowedUser" ) && (<InvitationManager quiz={quiz} />)}
+          {activeTab == "allowedUser" && <InvitationManager quiz={quiz} />}
 
           {activeTab === "questions" && (
             <div className="max-w-4xl mx-auto space-y-8">
@@ -396,17 +391,17 @@ const handleFormImport = async (formUrl) => {
                 </div>
                 <div className="flex items-center gap-4">
                   <button
-                   disabled={importing}
+                    disabled={importing}
                     onClick={() => setOpenImportModal(true)}
                     className="flex items-center gap-2 px-5 py-2 rounded-full border border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 transition-all active:scale-95 shadow-md"
                   >
                     {importing ? (
                       <span className="animate-spin">🌀</span>
                     ) : (
-                         <FileText className="w-4 h-4 text-white" />
+                      <FileText className="w-4 h-4 text-white" />
                     )}
-                 
-                     {importing ? "Importing..." : "Import from Forms"}
+
+                    {importing ? "Importing..." : "Import from Forms"}
                     {/* <span>Import from Forms</span> */}
                   </button>
                   {/* Ai Gen Button */}
@@ -431,10 +426,10 @@ const handleFormImport = async (formUrl) => {
                   />
 
                   <FormImportModal
-  open={openImportModal}
-  onClose={() => setOpenImportModal(false)}
-  onImport={handleFormImport}
-/>
+                    open={openImportModal}
+                    onClose={() => setOpenImportModal(false)}
+                    onImport={handleFormImport}
+                  />
                   {/* Add Question Dropdown */}
                   <div className="relative group">
                     <button className="bg-white text-[#4a9cb0] px-5 py-3 rounded-2xl font-bold flex items-center gap-2 hover:shadow-xl transition-all">
@@ -443,7 +438,6 @@ const handleFormImport = async (formUrl) => {
                     </button>
 
                     <div className="absolute right-0 mt-2 w-52 bg-slate-50/95 backdrop-blur-md border border-slate-200 rounded-2xl p-2 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-
                       <button
                         onClick={() => addQuestion("MCQ")}
                         className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 text-sm text-slate-700"
@@ -483,12 +477,9 @@ const handleFormImport = async (formUrl) => {
                         <ArrowLeftRight className="w-4 h-4 text-pink-500" />
                         Match the Following
                       </button>
-
                     </div>
                   </div>
-
                 </div>
-
               </div>
 
               {/* Questions */}
@@ -501,7 +492,6 @@ const handleFormImport = async (formUrl) => {
                     <div className="flex items-start justify-between gap-6">
                       <div className="flex-1 space-y-6">
                         <div className="flex items-center gap-3 flex-wrap">
-
                           <span className="bg-[#4a9cb0] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                             Question {index + 1}
                           </span>
@@ -515,7 +505,9 @@ const handleFormImport = async (formUrl) => {
                             <>
                               <span className="text-slate-300">•</span>
                               <Chip
-                                icon={<Sparkles className="w-3 h-3 text-[#f5a65b]" />}
+                                icon={
+                                  <Sparkles className="w-3 h-3 text-[#f5a65b]" />
+                                }
                                 label="AI Generated"
                                 size="small"
                                 className="
@@ -532,10 +524,7 @@ const handleFormImport = async (formUrl) => {
                               />
                             </>
                           )}
-
-
                         </div>
-
 
                         <input
                           type="text"
@@ -616,81 +605,81 @@ const handleFormImport = async (formUrl) => {
                         {/* MCQ */}
                         {q.questionType === "MCQ" && (
                           <div className="grid md:grid-cols-2 gap-4 mt-6">
-                            {
-                              q.options.map((value, i) => {
-                                const key = String.fromCharCode(65 + i);
-                                const isCorrect = q.correctAnswer?.some(
-                                  (ans) => ans.key === key,
-                                );
-                                const selectCorrectAnswer = () => {
-                                  let newCorrect;
+                            {q.options.map((value, i) => {
+                              const key = String.fromCharCode(65 + i);
+                              const isCorrect = q.correctAnswer?.some(
+                                (ans) => ans.key === key,
+                              );
+                              const selectCorrectAnswer = () => {
+                                let newCorrect;
 
-                                  if (q.allowMultipleAnswers) {
-                                    const exists = q.correctAnswer.some(
-                                      (ans) => ans.key === key,
-                                    );
+                                if (q.allowMultipleAnswers) {
+                                  const exists = q.correctAnswer.some(
+                                    (ans) => ans.key === key,
+                                  );
 
-                                    newCorrect = exists
-                                      ? q.correctAnswer.filter(
+                                  newCorrect = exists
+                                    ? q.correctAnswer.filter(
                                         (ans) => ans.key !== key,
                                       )
-                                      : [...q.correctAnswer, { key }];
-                                  } else {
-                                    newCorrect = [{ key }];
-                                  }
+                                    : [...q.correctAnswer, { key }];
+                                } else {
+                                  newCorrect = [{ key }];
+                                }
 
-                                  updateLocalQuestion(q.questionId, {
-                                    correctAnswer: newCorrect,
-                                  });
+                                updateLocalQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
 
-                                  updateQuestion(q.questionId, {
-                                    correctAnswer: newCorrect,
-                                  });
-                                };
-                                return (
+                                updateQuestion(q.questionId, {
+                                  correctAnswer: newCorrect,
+                                });
+                              };
+                              return (
+                                <div
+                                  key={key}
+                                  className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white cursor-pointer`}
+                                  onClick={selectCorrectAnswer}
+                                >
                                   <div
-                                    key={key}
-                                    className={`flex items-center gap-3 bg-white/80 border border-slate-200 rounded-2xl p-4 transition-all focus-within:border-[#4a9cb0] focus-within:bg-white cursor-pointer`}
-                                    onClick={selectCorrectAnswer}
-                                  >
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
-    ${isCorrect
-                                          ? "border-[#f5a65b] bg-[#f5a65b] text-white"
-                                          : "border-slate-300 text-slate-400"
-                                        }
+                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
+    ${
+      isCorrect
+        ? "border-[#f5a65b] bg-[#f5a65b] text-white"
+        : "border-slate-300 text-slate-400"
+    }
   `}
-                                    >
-                                      {isCorrect ? "✓" : key}
-                                    </div>
-
-                                    <input
-                                      type="text"
-                                      placeholder={`Option ${key}`}
-                                      className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
-                                      value={value}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onChange={(e) => {
-                                        const updatedOptions = [...q.options];
-                                        updatedOptions[i] = e.target.value;
-
-                                        updateLocalQuestion(q.questionId, {
-                                          options: updatedOptions,
-                                        });
-
-                                        updateQuestion(q.questionId, {
-                                          options:
-                                            mapOptionsToApi(updatedOptions),
-                                        });
-                                      }}
-                                    />
-
-                                    {isCorrect && (
-                                      <CheckCircle2 className="w-4 h-4 text-[#4a9cb0]" />
-                                    )}
+                                  >
+                                    {isCorrect ? "✓" : key}
                                   </div>
-                                );
-                              })}
+
+                                  <input
+                                    type="text"
+                                    placeholder={`Option ${key}`}
+                                    className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
+                                    value={value}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      const updatedOptions = [...q.options];
+                                      updatedOptions[i] = e.target.value;
+
+                                      updateLocalQuestion(q.questionId, {
+                                        options: updatedOptions,
+                                      });
+
+                                      updateQuestion(q.questionId, {
+                                        options:
+                                          mapOptionsToApi(updatedOptions),
+                                      });
+                                    }}
+                                  />
+
+                                  {isCorrect && (
+                                    <CheckCircle2 className="w-4 h-4 text-[#4a9cb0]" />
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 
@@ -728,10 +717,11 @@ const handleFormImport = async (formUrl) => {
                               return (
                                 <button
                                   key={val}
-                                  className={`px-6 py-3 rounded-xl font-bold transition-all ${isSelected
-                                    ? "bg-[#4a9cb0] text-white shadow-lg"
-                                    : "bg-white/80 text-slate-800 border border-slate-200 hover:border-[#4a9cb0]"
-                                    }`}
+                                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                                    isSelected
+                                      ? "bg-[#4a9cb0] text-white shadow-lg"
+                                      : "bg-white/80 text-slate-800 border border-slate-200 hover:border-[#4a9cb0]"
+                                  }`}
                                   onClick={() => {
                                     const newCorrect = [{ key: val }];
                                     updateLocalQuestion(q.questionId, {
@@ -1109,7 +1099,7 @@ const handleFormImport = async (formUrl) => {
                                           if (
                                             tempLine &&
                                             tempLine.dataset.leftIndex !==
-                                            undefined
+                                              undefined
                                           ) {
                                             const leftIdx =
                                               tempLine.dataset.leftIndex;
@@ -1175,10 +1165,9 @@ const handleFormImport = async (formUrl) => {
                                 {Object.entries(
                                   q.correctAnswer?.[0]?.matchPairs || {},
                                 ).map((ele) => {
-                                  let leftIdx = ele[0]
-                                  let rightIdx = ele[1]
+                                  let leftIdx = ele[0];
+                                  let rightIdx = ele[1];
                                   return (
-
                                     <div
                                       key={rightIdx}
                                       className="flex items-center gap-2"
@@ -1189,8 +1178,9 @@ const handleFormImport = async (formUrl) => {
                                       </span>
                                       <span className="text-slate-400">→</span>
                                       <span className="text-[#f5a65b] font-medium">
-                                        {q.options?.right?.[parseInt(rightIdx)] ||
-                                          `Match ${parseInt(rightIdx) + 1}`}
+                                        {q.options?.right?.[
+                                          parseInt(rightIdx)
+                                        ] || `Match ${parseInt(rightIdx) + 1}`}
                                       </span>
                                       <button
                                         onClick={() => {
@@ -1224,15 +1214,15 @@ const handleFormImport = async (formUrl) => {
                                         <Trash2 className="w-3 h-3" />
                                       </button>
                                     </div>
-                                  )
+                                  );
                                 })}
                                 {Object.keys(q.correctAnswer || {}).length ===
                                   0 && (
-                                    <p className="text-slate-400 italic">
-                                      No matches set. Drag from blue dot to orange
-                                      dot.
-                                    </p>
-                                  )}
+                                  <p className="text-slate-400 italic">
+                                    No matches set. Drag from blue dot to orange
+                                    dot.
+                                  </p>
+                                )}
                               </div>
                             </div>
 
@@ -1340,57 +1330,58 @@ const handleFormImport = async (formUrl) => {
                           </div>
                           {(q.questionType === "MCQ" ||
                             q.questionType === "IMAGE_BASED") && (
-                              <div className="flex items-center gap-4">
-                                {/* Label */}
-                                <div className="flex items-center gap-2">
-                                  <ListChecks className="w-4 h-4 text-slate-500" />
-                                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                    Multiple Answers
-                                  </span>
-                                </div>
-
-                                {/* Toggle */}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const allowMultiple = !q.allowMultipleAnswers;
-
-                                    updateLocalQuestion(q.questionId, {
-                                      allowMultipleAnswers: allowMultiple,
-                                      correctAnswer: allowMultiple
-                                        ? q.correctAnswer
-                                        : q.correctAnswer?.slice(0, 1),
-                                    });
-
-                                    updateQuestion(q.questionId, {
-                                      allowMultipleAnswers: allowMultiple,
-                                      correctAnswer: allowMultiple
-                                        ? q.correctAnswer
-                                        : q.correctAnswer?.slice(0, 1),
-                                    });
-                                  }}
-                                  className={`relative w-11 h-6 rounded-full transition-colors
-      ${q.allowMultipleAnswers ? "bg-[#4a9cb0]" : "bg-slate-300"}
-    `}
-                                >
-                                  <span
-                                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform
-        ${q.allowMultipleAnswers ? "translate-x-5" : ""}
-      `}
-                                  />
-                                </button>
-
-                                {/* Status */}
-                                <span
-                                  className={`text-xs font-semibold ${q.allowMultipleAnswers
-                                    ? "text-[#4a9cb0]"
-                                    : "text-slate-400"
-                                    }`}
-                                >
-                                  {q.allowMultipleAnswers ? "ON" : "OFF"}
+                            <div className="flex items-center gap-4">
+                              {/* Label */}
+                              <div className="flex items-center gap-2">
+                                <ListChecks className="w-4 h-4 text-slate-500" />
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                  Multiple Answers
                                 </span>
                               </div>
-                            )}
+
+                              {/* Toggle */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const allowMultiple = !q.allowMultipleAnswers;
+
+                                  updateLocalQuestion(q.questionId, {
+                                    allowMultipleAnswers: allowMultiple,
+                                    correctAnswer: allowMultiple
+                                      ? q.correctAnswer
+                                      : q.correctAnswer?.slice(0, 1),
+                                  });
+
+                                  updateQuestion(q.questionId, {
+                                    allowMultipleAnswers: allowMultiple,
+                                    correctAnswer: allowMultiple
+                                      ? q.correctAnswer
+                                      : q.correctAnswer?.slice(0, 1),
+                                  });
+                                }}
+                                className={`relative w-11 h-6 rounded-full transition-colors
+      ${q.allowMultipleAnswers ? "bg-[#4a9cb0]" : "bg-slate-300"}
+    `}
+                              >
+                                <span
+                                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform
+        ${q.allowMultipleAnswers ? "translate-x-5" : ""}
+      `}
+                                />
+                              </button>
+
+                              {/* Status */}
+                              <span
+                                className={`text-xs font-semibold ${
+                                  q.allowMultipleAnswers
+                                    ? "text-[#4a9cb0]"
+                                    : "text-slate-400"
+                                }`}
+                              >
+                                {q.allowMultipleAnswers ? "ON" : "OFF"}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -1411,7 +1402,7 @@ const handleFormImport = async (formUrl) => {
 
                 {/* Empty State / Add Suggestion */}
                 <button
-                  onClick={() => addQuestion("MCQ")}
+                  onClick={() => setQuestionModalOpen(true)}
                   className="w-full h-32 border-2 border-dashed border-white/50 rounded-[2rem] flex flex-col items-center justify-center gap-3 hover:border-white hover:bg-white/20 transition-all group"
                 >
                   <div className="w-10 h-10 rounded-full bg-white/30 flex items-center justify-center text-white group-hover:bg-white group-hover:text-[#4a9cb0] transition-colors">
@@ -1424,8 +1415,85 @@ const handleFormImport = async (formUrl) => {
               </div>
             </div>
           )}
+          {questionModalOpen && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl p-6 w-[420px] shadow-xl">
+                <h2 className="text-xl font-bold text-slate-800 mb-5">
+                  Select Question Type
+                </h2>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      addQuestion("MCQ");
+                      setQuestionModalOpen(false);
+                    }}
+                    className="p-4 rounded-xl border hover:bg-slate-100 flex flex-col items-center gap-2"
+                  >
+                    <ListTodo className="w-5 h-5 text-[#f5a65b]" />
+                    <span className="text-sm font-semibold">
+                      Multiple Choice
+                    </span>
+                  </button>
 
+                  <button
+                    onClick={() => {
+                      addQuestion("NUMERICAL");
+                      setQuestionModalOpen(false);
+                    }}
+                    className="p-4 rounded-xl border hover:bg-slate-100 flex flex-col items-center gap-2"
+                  >
+                    <Hash className="w-5 h-5 text-blue-500" />
+                    <span className="text-sm font-semibold">Numerical</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      addQuestion("TRUE_FALSE");
+                      setQuestionModalOpen(false);
+                    }}
+                    className="p-4 rounded-xl border hover:bg-slate-100 flex flex-col items-center gap-2"
+                  >
+                    <Type className="w-5 h-5 text-emerald-500" />
+                    <span className="text-sm font-semibold">True / False</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      addQuestion("SHORT_ANSWER");
+                      setQuestionModalOpen(false);
+                    }}
+                    className="p-4 rounded-xl border hover:bg-slate-100 flex flex-col items-center gap-2"
+                  >
+                    <MessageSquare className="w-5 h-5 text-purple-500" />
+                    <span className="text-sm font-semibold">Short Answer</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      addQuestion("MATCH_FOLLOWING");
+                      setQuestionModalOpen(false);
+                    }}
+                    className="p-4 rounded-xl border hover:bg-slate-100 flex flex-col items-center gap-2 col-span-2"
+                  >
+                    <ArrowLeftRight className="w-5 h-5 text-pink-500" />
+                    <span className="text-sm font-semibold">
+                      Match the Following
+                    </span>
+                  </button>
+                </div>
+
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={() => setQuestionModalOpen(false)}
+                    className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
