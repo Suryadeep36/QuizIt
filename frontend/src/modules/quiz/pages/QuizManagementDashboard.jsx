@@ -381,7 +381,7 @@ const handleFormImport = async (formUrl) => {
         <main className="flex-1 p-2 md:p-8">
           {activeTab == "settings" && (<QuizSettings quiz={quiz} />)}
 
-          {(activeTab == "allowedUser" && !quiz?.allowAllAuthenticated) && (<InvitationManager quiz={quiz} />)}
+          {(activeTab == "allowedUser" ) && (<InvitationManager quiz={quiz} />)}
 
           {activeTab === "questions" && (
             <div className="max-w-4xl mx-auto space-y-8">

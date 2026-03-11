@@ -248,6 +248,7 @@ public class QuizServiceImpl implements QuizService {
                 .endTime(existingQuiz.getEndTime())
                 .host(existingQuiz.getHost().getId())
                 .duration(quizRepository.getTotalDurationByQuizId(quizUUID))
+                .allowAllAuthenticated(existingQuiz.isAllowAllAuthenticated())
                 .build();
     }
 

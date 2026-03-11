@@ -52,6 +52,31 @@ export default function ParticipantLiveQuiz() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   // const [score, setScore] = useState(1250);
 
+
+  const [activeLeft, setActiveLeft] = useState(null);
+
+  const handleLeftClick = (index) => {
+    setActiveLeft(index === activeLeft ? null : index);
+  };
+
+  const handleRightClick = (rightIdx) => {
+    if (activeLeft === null) return;
+    const leftIdx = activeLeft;
+
+    setUserMatchPairs((prev) => {
+      // FORCE prev to be an array. If it's an object or null, start fresh with []
+      const safePrev = Array.isArray(prev) ? prev : [];
+
+      // Now .filter() will never fail
+      const filtered = safePrev.filter(p => p.left !== leftIdx && p.right !== rightIdx);
+
+      return [...filtered, { left: leftIdx, right: rightIdx }];
+    });
+
+    setActiveLeft(null);
+  };
+
+
   const { sessionId } = useParams();
 
   const { client, isConnected, connect } = useWS();
@@ -111,21 +136,19 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(key)}
                 className={`
                 w-full p-5 md:p-6 rounded-2xl text-left transition-all duration-200 border-2 flex justify-between items-center active:scale-95
-                ${
-                  Array.isArray(selectedOption) && selectedOption.includes(key)
+                ${Array.isArray(selectedOption) && selectedOption.includes(key)
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                }
+                  }
               `}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
-                      Array.isArray(selectedOption) &&
-                      selectedOption.includes(key)
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${Array.isArray(selectedOption) &&
+                        selectedOption.includes(key)
                         ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
                         : "border-white/30"
-                    }`}
+                      }`}
                   >
                     {key}
                   </div>
@@ -149,11 +172,10 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(value)}
                 className={`
                 p-5 md:p-6 rounded-2xl border-2 text-center transition-all duration-200 active:scale-95
-                ${
-                  selectedOption === value
+                ${selectedOption === value
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                }
+                  }
               `}
               >
                 <span className="text-lg font-bold">{value}</span>
@@ -175,53 +197,35 @@ export default function ParticipantLiveQuiz() {
         );
 
       case "MATCH_FOLLOWING": {
+        // SAFE GUARD: Ensure userMatchPairs is always an array before rendering
+        const safePairs = Array.isArray(userMatchPairs) ? userMatchPairs : [];
+
         return (
-          <div className="w-full mt-2">
-            <div className="grid md:grid-cols-2 gap-12 relative">
+          <div className="w-full mt-2 space-y-6 animate-in fade-in duration-500">
+            {/* LAPTOP: md:grid-cols-2 (Side-by-Side)
+          MOBILE: grid-cols-1 (Vertical Stack) 
+      */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
+
+              {/* SVG CONNECTIONS (Laptop Only) */}
               <svg
-                className="absolute inset-0 pointer-events-none z-0"
+                className="hidden md:block absolute inset-0 pointer-events-none z-0"
                 style={{ width: "100%", height: "100%", overflow: "visible" }}
               >
-                {userMatchPairs.map((pair, idx) => {
-                  const leftDot = document.getElementById(
-                    `left-${currentQuestion.questionId}-${pair.left}`,
-                  );
-                  const rightDot = document.getElementById(
-                    `right-${currentQuestion.questionId}-${pair.right}`,
-                  );
-
+                {safePairs.map((pair, idx) => {
+                  const leftDot = document.getElementById(`left-${currentQuestion.questionId}-${pair.left}`);
+                  const rightDot = document.getElementById(`right-${currentQuestion.questionId}-${pair.right}`);
                   if (leftDot && rightDot) {
                     const leftRect = leftDot.getBoundingClientRect();
                     const rightRect = rightDot.getBoundingClientRect();
-                    const containerRect = leftDot
-                      .closest(".grid")
-                      ?.getBoundingClientRect();
-
+                    const containerRect = leftDot.closest(".grid")?.getBoundingClientRect();
                     if (containerRect) {
-                      const x1 =
-                        leftRect.left + leftRect.width / 2 - containerRect.left;
-                      const y1 =
-                        leftRect.top + leftRect.height / 2 - containerRect.top;
-                      const x2 =
-                        rightRect.left +
-                        rightRect.width / 2 -
-                        containerRect.left;
-                      const y2 =
-                        rightRect.top +
-                        rightRect.height / 2 -
-                        containerRect.top;
-
+                      const x1 = leftRect.left + leftRect.width / 2 - containerRect.left;
+                      const y1 = leftRect.top + leftRect.height / 2 - containerRect.top;
+                      const x2 = rightRect.left + rightRect.width / 2 - containerRect.left;
+                      const y2 = rightRect.top + rightRect.height / 2 - containerRect.top;
                       return (
-                        <line
-                          key={`line-${idx}`}
-                          x1={x1}
-                          y1={y1}
-                          x2={x2}
-                          y2={y2}
-                          stroke="#4a9cb0"
-                          strokeWidth="3"
-                          strokeDasharray="6,4"
-                        />
+                        <line key={`line-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f5a65b" strokeWidth="3" strokeDasharray="6,4" />
                       );
                     }
                   }
@@ -229,176 +233,80 @@ export default function ParticipantLiveQuiz() {
                 })}
               </svg>
 
+              {/* LEFT COLUMN */}
               <div>
-                <p className="text-sm font-semibold text-white/80 mb-3 text-center">
-                  Left Column
-                </p>
-                <div className="space-y-4">
-                  {(options?.left || []).map((item, i) => (
-                    <div
-                      key={`left-${i}`}
-                      className="relative bg-white/10 border border-white/20 rounded-xl flex items-center p-4 transition-all hover:bg-white/20 min-h-[64px]"
-                    >
-                      <span className="text-white font-bold text-lg">
-                        {item}
-                      </span>
+                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-3 ml-1">Column A</p>
+                <div className="space-y-3">
+                  {(options?.left || []).map((item, i) => {
+                    const isMatched = safePairs.some(p => p.left === i);
+                    const isActive = activeLeft === i;
+                    return (
                       <div
-                        id={`left-${currentQuestion.questionId}-${i}`}
-                        className="w-5 h-5 rounded-full bg-[#4a9cb0] border-2 border-white cursor-grab hover:scale-125 transition-transform absolute -right-2.5 z-10 shadow-lg"
-                        onMouseDown={(e) => {
-                          const svg = e.currentTarget
-                            .closest(".grid")
-                            .querySelector("svg");
-                          const tempLine = document.createElementNS(
-                            "http://www.w3.org/2000/svg",
-                            "line",
-                          );
-
-                          tempLine.setAttribute("stroke", "#4a9cb0");
-                          tempLine.setAttribute("stroke-width", "3");
-                          tempLine.setAttribute("stroke-dasharray", "6,4");
-                          tempLine.setAttribute("id", `temp-line`);
-
-                          const containerRect = e.currentTarget
-                            .closest(".grid")
-                            .getBoundingClientRect();
-                          const dotRect =
-                            e.currentTarget.getBoundingClientRect();
-                          const startX =
-                            dotRect.left +
-                            dotRect.width / 2 -
-                            containerRect.left;
-                          const startY =
-                            dotRect.top +
-                            dotRect.height / 2 -
-                            containerRect.top;
-
-                          tempLine.setAttribute("x1", startX);
-                          tempLine.setAttribute("y1", startY);
-                          tempLine.setAttribute("x2", startX);
-                          tempLine.setAttribute("y2", startY);
-                          tempLine.dataset.leftIndex = i;
-
-                          svg.appendChild(tempLine);
-
-                          const handleMouseMove = (moveE) => {
-                            const currentX = moveE.clientX - containerRect.left;
-                            const currentY = moveE.clientY - containerRect.top;
-                            tempLine.setAttribute("x2", currentX);
-                            tempLine.setAttribute("y2", currentY);
-                          };
-
-                          const handleMouseUp = () => {
-                            document.removeEventListener(
-                              "mousemove",
-                              handleMouseMove,
-                            );
-                            document.removeEventListener(
-                              "mouseup",
-                              handleMouseUp,
-                            );
-                            tempLine.remove();
-                          };
-
-                          document.addEventListener(
-                            "mousemove",
-                            handleMouseMove,
-                          );
-                          document.addEventListener("mouseup", handleMouseUp);
-                        }}
-                      />
-                    </div>
-                  ))}
+                        key={`left-${i}`}
+                        onClick={() => handleLeftClick(i)}
+                        className={`relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer active:scale-95
+                    ${isActive ? "bg-white border-white text-[#4a9cb0] shadow-lg" :
+                            isMatched ? "bg-emerald-500/20 border-emerald-500/40 text-white" :
+                              "bg-white/10 border-white/20 text-white hover:bg-white/20"}
+                  `}
+                      >
+                        <span className="font-bold text-base md:text-lg">{item}</span>
+                        <div id={`left-${currentQuestion.questionId}-${i}`} className="hidden md:block w-4 h-4 rounded-full bg-[#f5a65b] border-2 border-white absolute -right-2 z-10" />
+                        <div className="md:hidden">
+                          {isMatched ? <CheckCircle2 size={16} className="text-emerald-400" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* RIGHT COLUMN */}
               <div>
-                <p className="text-sm font-semibold text-white/80 mb-3 text-center">
-                  Right Column
-                </p>
-                <div className="space-y-4">
+                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-3 ml-1">Column B</p>
+                <div className="space-y-3">
                   {(options?.right || []).map((item, i) => (
                     <div
                       key={`right-${i}`}
-                      className="relative bg-white/10 border border-white/20 rounded-xl flex items-center justify-end p-4 transition-all hover:bg-white/20 min-h-[64px]"
+                      onClick={() => handleRightClick(i)}
+                      className={`relative flex items-center p-4 rounded-2xl border-2 transition-all cursor-pointer active:scale-95
+                  ${activeLeft !== null ? "bg-white/20 border-[#f5a65b] text-white" : "bg-white/5 border-white/10 text-white/40"}
+                `}
                     >
-                      {/* Connection Dot (Left Edge) */}
-                      <div
-                        id={`right-${currentQuestion.questionId}-${i}`}
-                        className="w-5 h-5 rounded-full bg-[#f5a65b] border-2 border-white cursor-pointer hover:scale-125 transition-transform absolute -left-2.5 z-10 shadow-lg"
-                        onMouseUp={(e) => {
-                          const tempLine = document.getElementById(`temp-line`);
-                          if (
-                            tempLine &&
-                            tempLine.dataset.leftIndex !== undefined
-                          ) {
-                            const leftIdx = parseInt(
-                              tempLine.dataset.leftIndex,
-                            );
-                            const rightIdx = i;
-                            setUserMatchPairs((prev) => {
-                              const filtered = prev.filter(
-                                (p) =>
-                                  p.left !== leftIdx && p.right !== rightIdx,
-                              );
-                              return [
-                                ...filtered,
-                                { left: leftIdx, right: rightIdx },
-                              ];
-                            });
-                          }
-                        }}
-                      />
-                      <span className="text-white font-bold text-lg text-right">
-                        {item}
-                      </span>
+                      <div id={`right-${currentQuestion.questionId}-${i}`} className="hidden md:block w-4 h-4 rounded-full bg-[#f5a65b] border-2 border-white absolute -left-2 z-10" />
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center text-[10px] font-black text-white/50">{String.fromCharCode(65 + i)}</span>
+                        <span className="font-bold text-base md:text-lg">{item}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col items-center">
-              <p className="text-xs text-white/50 italic mb-4">
-                💡 Drag from Blue to Orange to connect
-              </p>
-
-              {userMatchPairs.length > 0 && (
-                <div className="w-full bg-black/20 p-4 rounded-xl border border-white/10">
-                  <p className="text-xs font-bold text-white/70 mb-2 uppercase tracking-wider">
-                    Your Connections
-                  </p>
-                  <div className="grid grid-cols-1 gap-2">
-                    {userMatchPairs.map((pair, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between text-sm bg-white/5 p-2 rounded-lg"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#4a9cb0] font-bold">
-                            {options.left[pair.left]}
-                          </span>
-                          <span className="text-white/30">→</span>
-                          <span className="text-[#f5a65b] font-bold">
-                            {options.right[pair.right]}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setUserMatchPairs((prev) =>
-                              prev.filter((_, i) => i !== idx),
-                            );
-                          }}
-                          className="text-white/40 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+            {/* SUMMARY LIST (Crucial for Mobile UX) */}
+            {safePairs.length > 0 && (
+              <div className="w-full bg-black/20 backdrop-blur-md p-5 rounded-[2rem] border border-white/10 mt-8 animate-in slide-in-from-bottom-4">
+                <div className="flex justify-between items-center mb-4 px-2">
+                  <h5 className="text-[10px] font-black text-white/50 uppercase tracking-widest">Active Links</h5>
+                  <button onClick={() => setUserMatchPairs([])} className="text-[10px] font-bold text-red-400 uppercase">Reset</button>
                 </div>
-              )}
-            </div>
+                <div className="space-y-2">
+                  {safePairs.map((pair, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-white">{options.left[pair.left]}</span>
+                        <Zap size={12} className="text-[#f5a65b]" />
+                        <span className="text-sm font-bold text-[#f5a65b]">{options.right[pair.right]}</span>
+                      </div>
+                      <button onClick={() => setUserMatchPairs(prev => prev.filter((_, i) => i !== idx))} className="text-white/20 hover:text-red-400">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       }
@@ -519,18 +427,22 @@ export default function ParticipantLiveQuiz() {
           questionType: q.questionType,
         });
         setTimer(sessionRes.currentQuestionState.duration);
-        if(sessionRes.selectedAnswer){
-          if(q.questionType == "MATCH_FOLLOWING"){
-            setUserMatchPairs(sessionRes.selectedAnswer)
-          }
-          else{
+        // Inside your useEffect / init() function:
+        if (sessionRes.selectedAnswer) {
+          if (q.questionType === "MATCH_FOLLOWING") {
+            // If the backend sends an object {}, convert it to an empty array []
+            const incomingPairs = Array.isArray(sessionRes.selectedAnswer)
+              ? sessionRes.selectedAnswer
+              : [];
+            setUserMatchPairs(incomingPairs);
+          } else {
             setSelectedOption(sessionRes.selectedAnswer);
           }
           setIsSubmitted(true);
-        }
-        else{
-          setSelectedOption(null);
+        } else {
+          // Always reset to an empty array for Match Following
           setUserMatchPairs([]);
+          setSelectedOption(null);
           setIsSubmitted(false);
         }
         setIsAnswerCorrect(null);
@@ -700,7 +612,7 @@ export default function ParticipantLiveQuiz() {
     const payload = {
       questionId: currentQuestion.questionId,
       participantId: participant.id,
-      quizId:participant.quizId,
+      quizId: participant.quizId,
       timeSpent,
       selectedAnswer,
       tabSwitchCount: tabSwitches,
@@ -818,9 +730,8 @@ export default function ParticipantLiveQuiz() {
       {stage === "question" && (
         <div className="h-1.5 w-full bg-black/10">
           <div
-            className={`h-full transition-all duration-1000 ease-linear ${
-              timer < 5 ? "bg-red-400" : "bg-white"
-            }`}
+            className={`h-full transition-all duration-1000 ease-linear ${timer < 5 ? "bg-red-400" : "bg-white"
+              }`}
             style={{ width: `${(timer / TOTAL_TIME) * 100}%` }}
           />
         </div>
@@ -839,9 +750,8 @@ export default function ParticipantLiveQuiz() {
                 </div>
               )}
               <div
-                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${
-                  timer < 5 ? "text-red-500 animate-bounce" : "text-white"
-                }`}
+                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${timer < 5 ? "text-red-500 animate-bounce" : "text-white"
+                  }`}
               >
                 <Timer className="w-5 h-5 md:w-6 md:h-6" />
                 {timer}s
@@ -895,11 +805,10 @@ export default function ParticipantLiveQuiz() {
                   className={`
                       px-8 py-3 rounded-2xl font-black tracking-wide
                       transition-all duration-200 active:scale-95
-                      ${
-                        isSubmitted
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
-                      }
+                      ${isSubmitted
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
+                    }
                     `}
                 >
                   {isSubmitted ? "Answer Locked" : "Final Submit"}
