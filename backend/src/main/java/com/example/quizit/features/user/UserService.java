@@ -20,4 +20,5 @@ public interface UserService {
     List<UserDto> getUsersByRoleAndStatus(String roleName, UserStatus status);
     public void updateTeacherStatusByEmail(String email, ApprovalDecisionDto decision);
     public void revokeRoleAndUpdateStatus(String email, String roleName,UserStatus status);
+    public void grantRoleAndUpdateStatus(String email, String roleName, UserStatus status);
 }

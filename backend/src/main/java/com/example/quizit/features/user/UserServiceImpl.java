@@ -217,6 +217,9 @@ public class UserServiceImpl implements UserService {
         Role roleToRemove = roleRepository.findByName(formattedRole)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + formattedRole));
 
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Role not found: " + "USER"));
+
         // 3. Remove Role and Update Status
         if (user.getRoles().contains(roleToRemove)) {
             user.getRoles().remove(roleToRemove);
@@ -224,9 +227,9 @@ public class UserServiceImpl implements UserService {
             // If they have no special roles left, set them back to a standard status
             // You can use a specific status like TEACHER_REJECTED or just a generic PENDING
             user.setStatus(status);
-
+            user.getRoles().add(userRole);
             // Optional: If you want to block login entirely until re-approval
-            // user.setEnable(false);
+             user.setEnable(false);
 
             userRepository.save(user);
         } else {
@@ -234,5 +237,29 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Transactional
+    @Override
+    public void grantRoleAndUpdateStatus(String email, String roleName, UserStatus status) {
+        // 1. Find User
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
 
+        // 2. Find the Role entity to add
+        String formattedRole = "ROLE_" + roleName.toUpperCase();
+        Role roleToAdd = roleRepository.findByName(formattedRole)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + formattedRole));
+
+        // 3. REMOVE ALL PREVIOUS ROLES
+        // This clears the Set, effectively demoting them from previous roles
+        user.getRoles().clear();
+
+        // 4. Assign the NEW Role
+        user.getRoles().add(roleToAdd);
+
+        // 5. Update Status and Enable Account
+        user.setStatus(status);
+        user.setEnable(true);
+
+        userRepository.save(user);
+    }
 }

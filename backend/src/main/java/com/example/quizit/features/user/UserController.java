@@ -77,6 +77,23 @@ public class UserController {
         userService.revokeRoleAndUpdateStatus(email, "ADMIN", UserStatus.ADMIN_REJECTED);
         return ResponseEntity.ok("Admin role removed and status updated to REJECTED for: " + email);
     }
+    @PatchMapping("/admin/teachers/email/{email}/approve")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<String> approveTeacherAccess(@PathVariable String email) {
+        // Hardcoding "TEACHER" and "TEACHER_APPROVED"
+        userService.grantRoleAndUpdateStatus(email, "TEACHER", UserStatus.TEACHER_APPROVED);
+        return ResponseEntity.ok("Teacher role granted and status updated to APPROVED for: " + email);
+    }
+
+    @PatchMapping("/admin/admins/email/{email}/approve")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<String> approveAdminAccess(@PathVariable String email) {
+        // Hardcoding "ADMIN" and "ADMIN_APPROVED"
+        userService.grantRoleAndUpdateStatus(email, "ADMIN", UserStatus.ADMIN_APPROVED);
+        return ResponseEntity.ok("Admin role granted and status updated to APPROVED for: " + email);
+    }
+
+
 
     @PostMapping("/admin/teachers/approve/{email}")
     @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
