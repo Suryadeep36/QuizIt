@@ -121,10 +121,11 @@ public class ExamModeController {
     public ResponseEntity<ExamNavigationResponse> switchQuestion(
             @PathVariable UUID quizId,
             @PathVariable int targetIndex,
-            @CookieValue(value = "participantId") String participantId) {
+            @CookieValue(value = "participantId") String participantId,
+            @RequestBody SwitchQuestionRequestDto requestDto) {
         UUID pid = UUID.fromString(participantId);
         System.out.println(participantId);
-        ExamNavigationResponse response = examModeService.switchQuestion(quizId, pid, targetIndex);
+        ExamNavigationResponse response = examModeService.switchQuestion(quizId, pid, targetIndex, requestDto.getTabSwitchCount());
         if(response != null)
             return ResponseEntity.ok(response);
         return ResponseEntity.badRequest().build();

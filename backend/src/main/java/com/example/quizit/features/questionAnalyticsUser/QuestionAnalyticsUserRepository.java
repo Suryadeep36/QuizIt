@@ -22,13 +22,14 @@ public interface QuestionAnalyticsUserRepository extends JpaRepository<QuestionA
     <S extends QuestionAnalyticsUser> List<S> saveAll(Iterable<S> entities);
 
     @Query("""
-        SELECT
-            q.participant.participantId,
-            COUNT(CASE WHEN q.isCorrect = true THEN 1 END),
-            COALESCE(SUM(q.timeSpent), 0)
-        FROM QuestionAnalyticsUser q
-        WHERE q.participant.quiz.quizId = :quizId
-        GROUP BY q.participant.participantId
-    """)
+    SELECT
+        q.participant.participantId,
+        COUNT(CASE WHEN q.isCorrect = true THEN 1 END),
+        COALESCE(SUM(q.timeSpent), 0),
+        COALESCE(SUM(q.tabSwitchCount), 0)
+    FROM QuestionAnalyticsUser q
+    WHERE q.participant.quiz.quizId = :quizId
+    GROUP BY q.participant.participantId
+""")
     List<Object[]> getParticipantStats(UUID quizId);
 }

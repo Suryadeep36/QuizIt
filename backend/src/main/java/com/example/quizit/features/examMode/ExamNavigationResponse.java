@@ -20,4 +20,5 @@ public class ExamNavigationResponse {
     private long globalRemainingTimeMillis;
     private Map<String, Object> selectedAnswer;
     private String status;
+    private int currentQuestionTabSwitches;
 }

@@ -3,7 +3,6 @@ package com.example.quizit.features.examMode;
 import com.example.quizit.features.allowedUser.AllowedUser;
 import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.allowedUser.InvitationStatus;
-import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantDto;
 import com.example.quizit.features.participant.ParticipantStatus;
 import com.example.quizit.features.question.Question;
@@ -12,7 +11,6 @@ import com.example.quizit.features.question.QuestionForUserDto;
 import com.example.quizit.features.question.QuestionRepository;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
-import com.example.quizit.features.quiz.QuizService;
 import com.example.quizit.features.registeredUser.RegisteredUser;
 import com.example.quizit.features.registeredUser.RegisteredUserDto;
 import com.example.quizit.features.registeredUser.RegisteredUserRepository;
@@ -130,12 +128,12 @@ public class ExamModeServiceImpl implements ExamModeService {
     }
 
     @Override
-    public ExamNavigationResponse switchQuestion(UUID quizId, UUID participantId, int targetIndex) {
+    public ExamNavigationResponse switchQuestion(UUID quizId, UUID participantId, int targetIndex, int tabSwitches) {
         int totalQuestions = examRedisService.getTotalQuestions(quizId, participantId);
         if (targetIndex < 0 || targetIndex >= totalQuestions) {
             return null;
         }
-        QuestionForUserDto nextQuestion = examRedisService.switchQuestion(quizId, participantId, targetIndex);
+        QuestionForUserDto nextQuestion = examRedisService.switchQuestion(quizId, participantId, targetIndex, tabSwitches);
         return examRedisService.buildNavigationResponse(quizId, participantId, nextQuestion);
     }
 
@@ -154,4 +152,5 @@ public class ExamModeServiceImpl implements ExamModeService {
         examRedisService.doFinalSubmit(quizId, participantId);
         allowedUser.setInvitationStatus(InvitationStatus.QUIZ_SUBMITTED);
     }
+
 }

@@ -375,12 +375,14 @@ public class QuizServiceImpl implements QuizService {
                     UUID participantId = (UUID) row[0];
                     Integer score = ((Long) row[1]).intValue();
                     Long totalTime = (Long) row[2];
+                    Long totalTabSwitches = (Long) row[3];
                     performances.add(
                             ParticipantPerformance.builder()
                                     .participant(participantMap.get(participantId))
                                     .quiz(quiz)
                                     .score(score)
                                     .totalTimeSpent(totalTime)
+                                    .cheatingRiskScore(totalTabSwitches.floatValue())
                                     .build()
                     );
 
@@ -455,6 +457,7 @@ public class QuizServiceImpl implements QuizService {
             UUID participantId = (UUID) row[0];
             Integer score = ((Long) row[1]).intValue();
             Long totalTime = (Long) row[2];
+            Long totalTabSwitches = (Long) row[3];
 
             performances.add(
                     ParticipantPerformance.builder()
@@ -462,6 +465,7 @@ public class QuizServiceImpl implements QuizService {
                             .quiz(quiz)
                             .score(score)
                             .totalTimeSpent(totalTime)
+                            .cheatingRiskScore(totalTabSwitches.floatValue())
                             .build()
             );
         }

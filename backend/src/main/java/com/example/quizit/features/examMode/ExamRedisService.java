@@ -124,13 +124,11 @@ public class ExamRedisService {
                                 UUID participantId,
                                 UUID questionId,
                                 int tabSwitchCount) {
-
         String attemptKey = getAttemptKey(quizId, participantId);
 
-        Map<Object, Object> attempt =
-                redisTemplate.opsForHash().entries(attemptKey);
+        Object status = redisTemplate.opsForHash().get(attemptKey, "status");
 
-        if (!"ACTIVE".equals(attempt.get("status"))) {
+        if (!"ACTIVE".equals(status)) {
             throw new IllegalStateException("Quiz not active");
         }
 
@@ -288,7 +286,7 @@ public class ExamRedisService {
     }
 
     public QuestionForUserDto switchQuestion(UUID quizId,
-                                             UUID participantId, int newIndex) {
+                                             UUID participantId, int newIndex, int tabSwitchCount) {
 
         String attemptKey = getAttemptKey(quizId, participantId);
         long now = System.currentTimeMillis();
@@ -303,6 +301,12 @@ public class ExamRedisService {
 
         String orderKey = getQuestionOrderKey(quizId, participantId);
         String currentQuestionId = redisTemplate.opsForList().index(orderKey, currentIndex);
+        recordTabSwitch(
+                quizId,
+                participantId,
+                UUID.fromString(currentQuestionId),
+                tabSwitchCount
+        );
         long delta = now - lastTick;
         long HEARTBEAT_INTERVAL_MS = 20 * 1000L;
         long disconnectTime = attempt.get("disconnect_time") == null
@@ -447,6 +451,13 @@ public class ExamRedisService {
                 System.out.println(e.getMessage());
             }
         }
+        String tabField = "q:" + question.getQuestionId() + ":tabs";
+
+        Object tabSwitchObj = attemptData.get(tabField);
+
+        int tabSwitchCount = (tabSwitchObj == null)
+                ? 0
+                : Integer.parseInt(tabSwitchObj.toString());
 
         return ExamNavigationResponse.builder()
                 .question(question)
@@ -455,6 +466,7 @@ public class ExamRedisService {
                 .globalRemainingTimeMillis(globalRemainingTime)
                 .selectedAnswer(selectedAnswer)
                 .status((String) attemptData.get("status"))
+                .currentQuestionTabSwitches(tabSwitchCount)
                 .build();
     }
 
@@ -495,9 +507,10 @@ public class ExamRedisService {
             long timeSpentMillis = attemptData.get(timeKey) == null
                     ? 0
                     : Long.parseLong(attemptData.get(timeKey).toString());
-            int tabSwitches = attemptData.get("tab_switches") == null
+            String tabKey = "q:" + questionId + ":tabs";
+            int tabSwitches = attemptData.get(tabKey) == null
                     ? 0
-                    : Integer.parseInt(attemptData.get("tab_switches").toString());
+                    : Integer.parseInt(attemptData.get(tabKey).toString());
             Map<String, Object> selectedAnswer = null;
 
             if (answers.containsKey(questionId.toString())) {

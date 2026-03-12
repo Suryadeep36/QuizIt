@@ -140,7 +140,7 @@ export default function ExamRoom() {
     setGlobalTime(globalRemTime);
     const remTime = Math.floor(data.remainingTimeMillis / 1000);
     setQuestionTime(remTime);
-
+    setNewTabSwitches(data.currentQuestionTabSwitches)
     const qId = data.question.questionId;
     if (remTime <= 0) {
       setStatus(qId, "time_up");
