@@ -34,6 +34,7 @@ export default function ExamRoom() {
   const navigate = useNavigate();
   /* ================= STATES ================= */
   const [quizEnded, setQuizEnded] = useState(false);
+  const [newTabSwitches, setNewTabSwitches] = useState(0);
   // Store Selectors
   const participant = useParticipant((s) => s.participant);
   const clearNavigationData = useNavigationStore(
@@ -62,7 +63,7 @@ export default function ExamRoom() {
 
   // Local state for answers to ensure smooth UI before server sync
   const [currentAnswer, setCurrentAnswer] = useState(null);
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [activeLeft, setActiveLeft] = useState(null);
   const role = user?.roles?.[0];
   const dashboardRoute =
@@ -75,6 +76,17 @@ export default function ExamRoom() {
   const handleLeftClick = (index) => {
     setActiveLeft(index === activeLeft ? null : index);
   };
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setNewTabSwitches((prev) => prev + 1);
+        toast.warn("Tab switch detected!");
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   const handleRightClick = (rightIndex) => {
     if (activeLeft === null) {
@@ -111,6 +123,7 @@ export default function ExamRoom() {
         participant.quizId,
         participant.id,
         targetIndex,
+        newTabSwitches
       );
       setNavigationData(response);
       syncStateWithNavigation(response, true);
@@ -171,7 +184,9 @@ export default function ExamRoom() {
         participant.quizId,
         participant.id,
         targetIndex,
+        newTabSwitches
       );
+      setNewTabSwitches(0);
       setNavigationData(response);
       syncStateWithNavigation(response);
 
@@ -251,18 +266,16 @@ export default function ExamRoom() {
                 <button
                   key={key}
                   onClick={() => handleOptionClick(key)}
-                  className={`p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
-                    isSelected
+                  className={`p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${isSelected
                       ? "border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.01]"
                       : "border-slate-100 hover:border-slate-200"
-                  }`}
+                    }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold transition-colors ${
-                      isSelected
+                    className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold transition-colors ${isSelected
                         ? "bg-[#1b8599] text-white border-[#1b8599]"
                         : "text-slate-400 border-slate-200"
-                    }`}
+                      }`}
                   >
                     {allowMultipleAnswers && isSelected ? "✓" : key}
                   </div>
@@ -316,13 +329,12 @@ export default function ExamRoom() {
                       key={i}
                       onClick={() => handleLeftClick(i)}
                       className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex justify-between items-center group
-                  ${
-                    isActive
-                      ? "border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.01]"
-                      : isMatched
-                        ? "border-emerald-100 bg-emerald-50/50 opacity-80"
-                        : "border-slate-100 bg-white hover:border-slate-200"
-                  }
+                  ${isActive
+                          ? "border-[#1b8599] bg-[#1b8599]/5 shadow-md scale-[1.01]"
+                          : isMatched
+                            ? "border-emerald-100 bg-emerald-50/50 opacity-80"
+                            : "border-slate-100 bg-white hover:border-slate-200"
+                        }
                 `}
                     >
                       <span
@@ -603,7 +615,7 @@ export default function ExamRoom() {
             <div className="grid grid-cols-2 gap-4">
               {/* 2. SECONDARY: Navigate to Dashboard */}
               <button
-                onClick={() => navigate({dashboardRoute})}
+                onClick={() => navigate({ dashboardRoute })}
                 className="py-4 bg-slate-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-slate-950"
               >
                 <Menu size={14} />
@@ -700,8 +712,8 @@ export default function ExamRoom() {
                     />
                   </div>
                 ) : useQuestionList
-                    .getState()
-                    .getStatus(currentQuestion?.questionId) === "time_up" ? (
+                  .getState()
+                  .getStatus(currentQuestion?.questionId) === "time_up" ? (
                   /* TIME EXPIRED VIEW for CURRENT QUESTION */
                   <div className="flex-1 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
                     <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center mb-6">
@@ -746,37 +758,37 @@ export default function ExamRoom() {
                     {useQuestionList
                       .getState()
                       .getStatus(currentQuestion?.questionId) !== "time_up" && (
-                      <>
-                        <button
-                          onClick={handleMarkForReview}
-                          className="px-6 py-4 rounded-2xl border-2 border-orange-200 text-orange-600 font-black uppercase text-xs tracking-widest hover:bg-orange-50"
-                        >
-                          Mark for Review
-                        </button>
-                        <button
-                          onClick={() => setCurrentAnswer({})}
-                          className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest"
-                        >
-                          Clear
-                        </button>
-                        <button
-                          onClick={handleSaveAndNext}
-                          className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2"
-                        >
-                          Save & Next <ChevronRight size={18} />
-                        </button>
-                      </>
-                    )}
+                        <>
+                          <button
+                            onClick={handleMarkForReview}
+                            className="px-6 py-4 rounded-2xl border-2 border-orange-200 text-orange-600 font-black uppercase text-xs tracking-widest hover:bg-orange-50"
+                          >
+                            Mark for Review
+                          </button>
+                          <button
+                            onClick={() => setCurrentAnswer({})}
+                            className="px-6 py-4 rounded-2xl font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest"
+                          >
+                            Clear
+                          </button>
+                          <button
+                            onClick={handleSaveAndNext}
+                            className="px-10 py-4 rounded-2xl bg-[#1b8599] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1b8599]/20 hover:bg-[#166d7d] flex items-center gap-2"
+                          >
+                            Save & Next <ChevronRight size={18} />
+                          </button>
+                        </>
+                      )}
                     {useQuestionList
                       .getState()
                       .getStatus(currentQuestion?.questionId) === "time_up" && (
-                      <button
-                        onClick={() => handleNavigateToIndex(currentQIndex + 1)}
-                        className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest flex items-center gap-2"
-                      >
-                        SKIP TO NEXT <ChevronRight size={18} />
-                      </button>
-                    )}
+                        <button
+                          onClick={() => handleNavigateToIndex(currentQIndex + 1)}
+                          className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest flex items-center gap-2"
+                        >
+                          SKIP TO NEXT <ChevronRight size={18} />
+                        </button>
+                      )}
                   </div>
                 </footer>
               </div>
@@ -798,6 +810,12 @@ export default function ExamRoom() {
                     <h3 className="font-black text-slate-800 truncate">
                       {participant?.name || "Parth"}
                     </h3>
+                    <div className="flex items-center gap-1 mt-1">
+                      <AlertCircle size={10} className={navigationData?.tabSwitches > 0 ? "text-orange-500" : "text-slate-300"} />
+                      <p className="text-[9px] font-bold text-slate-500 uppercase">
+                        Tab Switches: {navigationData?.tabSwitches || 0}
+                      </p>
+                    </div>
                     <p className="text-[10px] font-bold text-[#1b8599] uppercase">
                       {participant?.enrollmentId || "Student"}
                     </p>
@@ -899,6 +917,7 @@ export default function ExamRoom() {
           participant={participant}
           quizId={quizId}
           handleSubmitTest={handleSubmitTest}
+          navigationData={navigationData}
         />
       </div>
     </>

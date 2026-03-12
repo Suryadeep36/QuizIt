@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { 
-  BarChart3, Clock, Target, Users, ChevronDown, ChevronUp, 
+import {
+  BarChart3, Clock, Target, Users, ChevronDown, ChevronUp,
   Zap, Info, Loader2, ArrowLeft, Trophy, CheckCircle2, ArrowRightLeft
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -38,9 +38,9 @@ export default function GlobalQuizAnalytics() {
     );
   }
 
-  const avgAccuracy = data.length > 0 
-    ? Math.round(data.reduce((acc, curr) => acc + (curr.accuracyPercentage || 0), 0) / data.length) 
-    : 0;
+  const avgAccuracy = data.length > 0
+    ? (data.reduce((acc, curr) => acc + (curr.accuracyPercentage || 0), 0) / data.length).toFixed(2)
+    : "0.00";
   const totalAttempts = data[0]?.analytics?.totalAnswered || 0;
 
   return (
@@ -68,9 +68,9 @@ export default function GlobalQuizAnalytics() {
       <main className="max-w-5xl mx-auto px-6 -mt-10">
         <div className="space-y-4">
           {data.map((item, index) => (
-            <QuestionStatCard 
-              key={item.question.questionId} 
-              item={item} 
+            <QuestionStatCard
+              key={item.question.questionId}
+              item={item}
               index={index}
               isExpanded={expandedId === item.question.questionId}
               onToggle={() => setExpandedId(expandedId === item.question.questionId ? null : item.question.questionId)}
@@ -120,7 +120,7 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
           <div className="hidden md:block text-right">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Global Accuracy</p>
             <p className={`text-xl font-black ${accuracyPercentage < 40 ? 'text-red-500' : 'text-[#4a9cb0]'}`}>
-              {accuracyPercentage}%
+              {Number(accuracyPercentage).toFixed(2)}%
             </p>
           </div>
           <div className={`p-2 rounded-full transition-colors ${isExpanded ? 'bg-slate-100 text-[#4a9cb0]' : 'text-slate-300'}`}>
@@ -132,7 +132,7 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
       {isExpanded && (
         <div className="px-6 pb-8 pt-2 bg-slate-50/50 border-t border-slate-100 rounded-b-[2rem]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-            
+
             {/* CORRECT SOLUTION PANEL */}
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
@@ -157,8 +157,8 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
               ) : (
                 <div className={`grid gap-2 ${isMultiSelect ? 'grid-cols-1' : 'grid-cols-1'}`}>
                   {correctValues.map((val, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center gap-4 transition-transform hover:scale-[1.01]"
                     >
                       <div className="bg-emerald-500 p-1.5 rounded-lg text-white shadow-lg shadow-emerald-200">
@@ -175,28 +175,30 @@ function QuestionStatCard({ item, index, isExpanded, onToggle }) {
 
             {/* METRICS PANEL */}
             <div className="flex flex-col gap-4">
-               <div className="grid grid-cols-2 gap-4">
-                  <DetailBox icon={<Users className="text-blue-500" />} label="Total Responses" value={analytics.totalAnswered} />
-                  <DetailBox icon={<Target className="text-emerald-500" />} label="Correct Hits" value={analytics.correctAnswerCount} />
-               </div>
-               
-               <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-orange-100 p-3 rounded-2xl text-orange-600">
-                      <Zap size={24} fill="currentColor" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Top Speed</p>
-                      <p className="text-lg font-black text-slate-800 uppercase tracking-tight">
-                        {analytics.fastestUserId || "No Data"}
-                      </p>
-                    </div>
+              <div className="grid grid-cols-2 gap-4">
+                <DetailBox icon={<Users className="text-blue-500" />} label="Total Responses" value={analytics.totalAnswered} />
+                <DetailBox icon={<Target className="text-emerald-500" />} label="Correct Hits" value={analytics.correctAnswerCount} />
+              </div>
+
+              <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between mt-auto">
+                <div className="flex items-center gap-4">
+                  <div className="bg-orange-100 p-3 rounded-2xl text-orange-600">
+                    <Zap size={24} fill="currentColor" />
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Avg Response</p>
-                    <p className="text-xl font-black text-[#4a9cb0]">{analytics.averageTime}s</p>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Top Speed</p>
+                    <p className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                      {analytics.fastestUserId || "No Data"}
+                    </p>
                   </div>
-               </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Avg Response</p>
+                  <p className="text-xl font-black text-[#4a9cb0]">
+                    {Number(analytics.averageTime).toFixed(2)}s
+                  </p>
+                </div>
+              </div>
             </div>
 
           </div>

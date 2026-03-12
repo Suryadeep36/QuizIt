@@ -8,7 +8,7 @@ const MobileExamRoom = ({
     currentQuestion, currentQIndex, questionTime, globalTime,
     formatTime, renderOptions, handlePrevious, handleSaveAndNext,
     handleMarkForReview, questionIds, handleNavigateToIndex,
-    isSidebarOpen, setIsSidebarOpen, participant, quizId, handleSubmitTest
+    isSidebarOpen, setIsSidebarOpen, participant, quizId, handleSubmitTest,navigationData
 }) => {
     const getStatus = useQuestionList((s) => s.getStatus);
 
@@ -83,6 +83,12 @@ const MobileExamRoom = ({
                         <div>
                             <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Candidate</p>
                             <h3 className="font-black text-slate-800 text-sm">{participant?.name || "Parth"}</h3>
+                       {/* ADD TAB SWITCH DISPLAY HERE */}
+            {navigationData?.tabSwitches > 0 && (
+                <p className="text-[9px] font-bold text-red-500 uppercase mt-1">
+                    ⚠️ {navigationData.tabSwitches} Tab Switches Detected
+                </p>
+            )}
                         </div>
                     </div>
 
