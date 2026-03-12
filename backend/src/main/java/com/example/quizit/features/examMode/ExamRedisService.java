@@ -55,15 +55,15 @@ public class ExamRedisService {
         return ATTEMPT_KEY_PREFIX + quizId + ":participant:" + participantId + ":answers";
     }
 
-    public String getQuizDurationKey(UUID quizId){
+    public String getQuizDurationKey(UUID quizId) {
         return QUIZ_KEY_PREFIX + quizId + ":duration";
     }
 
-    public String getTotalParticipantsKey(UUID quizId){
+    public String getTotalParticipantsKey(UUID quizId) {
         return QUIZ_KEY_PREFIX + quizId + ":participants:total";
     }
 
-    public String getSubmittedParticipantsKey(UUID quizId){
+    public String getSubmittedParticipantsKey(UUID quizId) {
         return QUIZ_KEY_PREFIX + quizId + ":participants:submitted";
     }
 
@@ -113,11 +113,25 @@ public class ExamRedisService {
         Map<String, String> fields = new HashMap<>();
         fields.put("status", "READY");
         fields.put("lastTick", String.valueOf(System.currentTimeMillis()));
+        fields.put("tabSwitchCount", "0");
 
         redisTemplate.opsForHash().putAll(key, fields);
         setTTL(key, duration.getSeconds());
         String answerKey = getAnswerKey(quizId, participantId);
         setTTL(answerKey, duration.getSeconds());
+    }
+
+    public long recordTabSwitch(UUID quizId, UUID participantId) {
+
+        String attemptKey = getAttemptKey(quizId, participantId);
+
+        Long count = redisTemplate.opsForHash()
+                .increment(attemptKey, "tabSwitchCount", 1);
+
+        redisTemplate.opsForHash()
+                .put(attemptKey, "lastTabSwitch", String.valueOf(System.currentTimeMillis()));
+
+        return count == null ? 0 : count;
     }
 
     public void cacheQuestions(UUID quizId, List<QuestionForUserDto> questions, Duration duration) {
@@ -262,7 +276,7 @@ public class ExamRedisService {
         redisTemplate.opsForHash().put(attemptKey, "startTime", String.valueOf(now));
         redisTemplate.opsForHash().put(attemptKey, "lastTick", String.valueOf(now));
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", "0");
-        redisTemplate.opsForHash().put(attemptKey ,"endTime", String.valueOf(endTime));
+        redisTemplate.opsForHash().put(attemptKey, "endTime", String.valueOf(endTime));
         redisTemplate.opsForHash().put(attemptKey, "disconnect_time", "0");
         return getCurrentQuestion(quizId, participantId);
     }
@@ -317,10 +331,9 @@ public class ExamRedisService {
         long questionDurationMs = question.getDuration() * 1000L;
         long newTotal = alreadySpent + delta;
         long remaining = questionDurationMs - newTotal;
-        if(remaining > 0){
+        if (remaining > 0) {
             redisTemplate.opsForHash().increment(attemptKey, "q:" + currentQuestionId + ":time", delta);
-        }
-        else{
+        } else {
             redisTemplate.opsForHash().put(attemptKey, timeKey, String.valueOf(questionDurationMs));
         }
         redisTemplate.opsForHash().put(attemptKey, "currentIndex", String.valueOf(newIndex));
@@ -356,7 +369,7 @@ public class ExamRedisService {
             throw new IllegalStateException("Invalid question index");
         }
         String answerKey = getAnswerKey(quizId, participantId);
-        if(selectedOption == null || selectedOption.isEmpty()){
+        if (selectedOption == null || selectedOption.isEmpty()) {
             redisTemplate.opsForHash()
                     .delete(answerKey, questionId);
             return;
@@ -392,7 +405,7 @@ public class ExamRedisService {
             redisTemplate.opsForHash()
                     .put(answerKey, questionId, answerJson);
             redisTemplate.opsForHash()
-.put(attemptKey, "lastTick", String.valueOf(now));
+                    .put(attemptKey, "lastTick", String.valueOf(now));
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to save answer", e);
@@ -422,7 +435,8 @@ public class ExamRedisService {
 
         if (savedAnswerJson != null) {
             try {
-                selectedAnswer = objectMapper.readValue(savedAnswerJson.toString(), new TypeReference<>() {});
+                selectedAnswer = objectMapper.readValue(savedAnswerJson.toString(), new TypeReference<>() {
+                });
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -437,13 +451,14 @@ public class ExamRedisService {
                 .status((String) attemptData.get("status"))
                 .build();
     }
+
     public int getTotalQuestions(UUID quizId, UUID participantId) {
         String orderKey = getQuestionOrderKey(quizId, participantId);
         Long size = redisTemplate.opsForList().size(orderKey);
         return size != null ? size.intValue() : 0;
     }
 
-    public void doFinalSubmit(UUID quizId, UUID participantId){
+    public void doFinalSubmit(UUID quizId, UUID participantId) {
         System.out.println("final submit for " + participantId);
         String attemptKey = getAttemptKey(quizId, participantId);
         String answerKey = getAnswerKey(quizId, participantId);
@@ -474,17 +489,19 @@ public class ExamRedisService {
             long timeSpentMillis = attemptData.get(timeKey) == null
                     ? 0
                     : Long.parseLong(attemptData.get(timeKey).toString());
-
+            int tabSwitches = attemptData.get("tab_switches") == null
+                    ? 0
+                    : Integer.parseInt(attemptData.get("tab_switches").toString());
             Map<String, Object> selectedAnswer = null;
 
             if (answers.containsKey(questionId.toString())) {
-                try{
+                try {
                     selectedAnswer = objectMapper.readValue(
-                        answers.get(questionId.toString()).toString(),
-                        new TypeReference<>() {}
-                );
-                }
-                catch (Exception e){
+                            answers.get(questionId.toString()).toString(),
+                            new TypeReference<>() {
+                            }
+                    );
+                } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
             }
@@ -497,6 +514,7 @@ public class ExamRedisService {
                     .questionId(questionId)
                     .timeSpent(timeSpentSeconds)
                     .selectedAnswer(selectedAnswer)
+                    .tabSwitchCount(tabSwitches)
                     .build();
             dtoList.add(dto);
         }
@@ -507,11 +525,11 @@ public class ExamRedisService {
         String totalKey = getTotalParticipantsKey(quizId);
         String totalStr = redisTemplate.opsForValue().get(totalKey);
 
-        if(totalStr != null){
+        if (totalStr != null) {
             long totalParticipants = Long.parseLong(totalStr);
             System.out.println(totalParticipants);
             System.out.println(submittedCount);
-            if(submittedCount != null && submittedCount == totalParticipants){
+            if (submittedCount != null && submittedCount == totalParticipants) {
                 quizService.endQuizEarly(quizId);
             }
         }
