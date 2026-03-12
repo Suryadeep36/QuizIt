@@ -1,22 +1,22 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import { Toaster } from 'react-hot-toast'
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { Toaster } from "react-hot-toast";
 import "./styles/index.css";
 
-import Dashboard from "./modules/dashboard/pages/Dashboard.jsx"
+import Dashboard from "./modules/dashboard/pages/Dashboard.jsx";
 import CreateQuiz from "./modules/quiz/pages/CreateQuiz.jsx";
-import UserAnalytics from "./modules/analytics/pages/UserAnalytics.jsx"
+import UserAnalytics from "./modules/analytics/pages/UserAnalytics.jsx";
 import LandingPage from "./modules/landing/pages/LandingPage.jsx";
-import AuthPage from './modules/auth/pages/AuthPage.jsx'
-import QuizManagementDashboard from './modules/quiz/pages/QuizManagementDashboard.jsx'
-import ProtectedRoute from "./modules/auth/components/ProtectedRoute.jsx"
-import Unprotected from "./modules/auth/components/Unprotected.jsx"
-import JoinQuizPage from './modules/quiz/pages/JoinQuizPage.jsx'
-import QuizRoom from './modules/quiz/pages/QuizRoom.jsx'
-import HostLiveQuiz from './modules/quiz/pages/HostLiveQuiz.jsx'
-import ParticipantLiveQuiz from './modules/quiz/pages/ParticipantLiveQuiz.jsx'
-import Leaderboard from "./modules/analytics/pages/Leaderboard.jsx"
+import AuthPage from "./modules/auth/pages/AuthPage.jsx";
+import QuizManagementDashboard from "./modules/quiz/pages/QuizManagementDashboard.jsx";
+import ProtectedRoute from "./modules/auth/components/ProtectedRoute.jsx";
+import Unprotected from "./modules/auth/components/Unprotected.jsx";
+import JoinQuizPage from "./modules/quiz/pages/JoinQuizPage.jsx";
+import QuizRoom from "./modules/quiz/pages/QuizRoom.jsx";
+import HostLiveQuiz from "./modules/quiz/pages/HostLiveQuiz.jsx";
+import ParticipantLiveQuiz from "./modules/quiz/pages/ParticipantLiveQuiz.jsx";
+import Leaderboard from "./modules/analytics/pages/Leaderboard.jsx";
 import AfterQuizAnalytics from "./modules/dashboard/component/AfterQuizAnalytics.jsx";
 import MainLayout from "./MainLayout.jsx";
 import UserProfile from "./modules/profile/pages/UserProfile.jsx";
@@ -32,7 +32,8 @@ import ExamWaitingRoom from "./modules/exam mode/pages/ExamWaitingRoom.jsx";
 import ExamRoom from "./modules/exam mode/pages/ExamRoom.jsx";
 import AdminDashboard from "./modules/admin/pages/AdminDashboard.jsx";
 import AdminApprovalPage from "./modules/admin/pages/AdminApprovalPage.jsx";
-
+import StudentDashboard from "./modules/student/pages/StudentDashboard.jsx";
+import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 
 const router = createBrowserRouter([
   // 1. NO NAVBAR ROUTES (Landing, Auth, Live Quiz Taking)
@@ -40,10 +41,6 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />, // Landing page has its own internal nav
-  },
-  {
-    path: "/admin",
-    element: <AdminDashboard />
   },
   {
     path: "/oauth2/login/success",
@@ -76,15 +73,13 @@ const router = createBrowserRouter([
     element: <AfterQuizAnalytics />,
   },
 
-
   // 2. ROUTES WITH NAVBAR (Dashboard, Management, Analytics)
   {
     element: <MainLayout />, // Wraps everything below with Navbar
     children: [
-
       {
         path: "/quiz/leaderboard/:quizId",
-        element: <Leaderboard />
+        element: <Leaderboard />,
       },
 
       {
@@ -93,51 +88,84 @@ const router = createBrowserRouter([
       },
 
       // Protected Routes (Require Login + Have Navbar)
+      // {
+      //   element: <ProtectedRoute />,
+      //   children: [
+      //     {
+      //       path: "/profile/:username",
+      //       element: <UserProfile />
+      //     },
+      //      {
+      //       path: "/admin/teachers",
+      //       element: <AdminApprovalPage/>
+      //     },
+      //     {
+      //       path: "/register-exam/:quizId/:token",
+      //       element: <ExamRegistration />
+      //     },
+      //     {
+      //       path: "quiz-analytics/insights/:quizId",
+      //       element: <GlobalQuizAnalytics />
+      //     },
+      //     {
+      //       path: "/create",
+      //       element: <BulkQuestionCreator />
+      //     },
+      //     {
+      //       path: "/run-quiz-host/:quizId",
+      //       element: <HostLiveQuiz />
+      //     },
+      //     {
+      //       path: "/dashboard",
+      //       element: <Dashboard />,
+      //     },
+      //     {
+      //       path: "/createQuiz",
+      //       element: <CreateQuiz />,
+      //     },
+      //     {
+      //       path: "/quiz/:quizId",
+      //       element: <QuizManagementDashboard />,
+      //     },
+      //   ],
+      // },
+
+      //admin only routes
       {
-        element: <ProtectedRoute />,
+        element: <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]} />,
         children: [
           {
-            path: "/profile/:username",
-            element: <UserProfile />
+            path: "/admin",
+            element: <AdminDashboard />,
           },
-           {
+          {
             path: "/admin/teachers",
-            element: <AdminApprovalPage/>
-          },
-          {
-            path: "/register-exam/:quizId/:token",
-            element: <ExamRegistration />
-          },
-          {
-            path: "quiz-analytics/insights/:quizId",
-            element: <GlobalQuizAnalytics />
-          },
-          {
-            path: "/create",
-            element: <BulkQuestionCreator />
-          },
-          {
-            path: "/run-quiz-host/:quizId",
-            element: <HostLiveQuiz />
-          },
-          {
-            path: "/dashboard",
-            element: <Dashboard />,
-          },
-          {
-            path: "/createQuiz",
-            element: <CreateQuiz />,
-          },
-          {
-            path: "/quiz/:quizId",
-            element: <QuizManagementDashboard />,
+            element: <AdminApprovalPage />,
           },
         ],
       },
-
-
-    ]
-
+      //teacher only routes
+      {
+        element: <RoleProtectedRoute allowedRoles={["ROLE_TEACHER"]} />,
+        children: [
+          { path: "/dashboard", element: <Dashboard /> },
+          { path: "/createQuiz", element: <CreateQuiz /> },
+          { path: "/quiz/:quizId", element: <QuizManagementDashboard /> },
+          { path: "/create", element: <BulkQuestionCreator /> },
+          { path: "/run-quiz-host/:quizId", element: <HostLiveQuiz /> },
+        ],
+      },
+      //student only routes
+      {
+        element: <RoleProtectedRoute allowedRoles={["ROLE_STUDENT"]} />,
+        children: [
+          {
+            path: "/student/dashboard",
+            element: <StudentDashboard />,
+          },
+        ],
+      },
+    ],
   },
   // Protected Routes (Require Login + No Navbar)
   {
@@ -149,21 +177,21 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/waiting-room/:quizId",
-            element: <PreQuizWaitingRoom />
-          },
-           {
-            path: "/exam/:quizId/session",
-            element: <ExamWaitingRoom/>
+            element: <PreQuizWaitingRoom />,
           },
           {
-            path:"exam/:quizId/room",
-              element: <ExamRoom/>
-          }
+            path: "/exam/:quizId/session",
+            element: <ExamWaitingRoom />,
+          },
+          {
+            path: "exam/:quizId/room",
+            element: <ExamRoom />,
+          },
           // You can add the actual Quiz component here too
-        ]
-      }
-    ]
-  }
+        ],
+      },
+    ],
+  },
 ]);
 
 // const router = createBrowserRouter([
@@ -233,5 +261,5 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Toaster />
     <RouterProvider router={router} />
-  </StrictMode>
+  </StrictMode>,
 );
