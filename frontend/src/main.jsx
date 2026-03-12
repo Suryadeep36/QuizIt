@@ -88,13 +88,13 @@ const router = createBrowserRouter([
       },
 
       // Protected Routes (Require Login + Have Navbar)
-      // {
-      //   element: <ProtectedRoute />,
-      //   children: [
-      //     {
-      //       path: "/profile/:username",
-      //       element: <UserProfile />
-      //     },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: "/profile/:username",
+            element: <UserProfile />
+          },
       //      {
       //       path: "/admin/teachers",
       //       element: <AdminApprovalPage/>
@@ -127,8 +127,8 @@ const router = createBrowserRouter([
       //       path: "/quiz/:quizId",
       //       element: <QuizManagementDashboard />,
       //     },
-      //   ],
-      // },
+        ],
+      },
 
       //admin only routes
       {

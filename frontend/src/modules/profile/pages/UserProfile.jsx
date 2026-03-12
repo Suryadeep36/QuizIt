@@ -1,9 +1,11 @@
-import { Box, Container, Grid } from "@mui/material";
+import { Box, Button, Container, Grid, Typography } from "@mui/material";
 import ProfileSidebar from "../components/ProfileSidebar";
 import ActivityFeed from "../components/ActivityFeed";
 import useAuth from "../../../stores/store";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router";
 export default function UserProfile() {
   const checkLogin = useAuth((state) => state.checkLogin);
   const user = useAuth((state) => state.user);
@@ -16,6 +18,9 @@ export default function UserProfile() {
     // This is now workable - you can trigger a modal or navigation here
     toast.success("Opening profile editor...");
   };
+  const navigate = useNavigate();
+  // 1. Logic to check if user is Admin
+  const isAdmin = user?.roles?.some(role => role === "ROLE_ADMIN");
 
   if (!user) {
     return (
@@ -53,9 +58,52 @@ export default function UserProfile() {
                <ProfileSidebar userProfile={mappedUser} />
             </Box>
           </Grid>
-          <Grid item xs={12} md={7} lg={8}>
-            <ActivityFeed activities={activities} />
+            
+<Grid item xs={12} md={7} lg={8}>
+            {/* 2. Conditional Rendering for Activity Feed */}
+            {!isAdmin ? (
+              <ActivityFeed activities={activities} />
+            ) : (
+              <Box 
+                sx={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  bgcolor: 'white',
+                  borderRadius: 4,
+                  p: 6,
+                  boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                  textAlign: 'center'
+                }}
+              >
+                <ShieldCheck size={64} color="#0891b2" style={{ marginBottom: '16px' }} />
+                <Typography variant="h5" fontWeight={800} gutterBottom>
+                  Administrator Account
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
+                  Standard activity tracking is disabled for admin accounts. Please use the administrative console to manage system data.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  onClick={() => navigate("/admin")}
+                  sx={{ 
+                    bgcolor: "#0891b2", 
+                    borderRadius: 2, 
+                    px: 4, 
+                    py: 1.5,
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    "&:hover": { bgcolor: "#0e7490" } 
+                  }}
+                >
+                  Go to Admin Panel
+                </Button>
+              </Box>
+            )}
           </Grid>
+
         </Grid>
       </Container>
     </Box>

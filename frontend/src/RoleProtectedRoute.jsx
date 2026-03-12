@@ -11,8 +11,10 @@ const RoleProtectedRoute = ({ allowedRoles }) => {
   const roles = user.roles || [];
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
   if (!hasAccess) {
-    return <Navigate to="/" replace />;
-  }
+  return window.history.length > 1
+    ? <Navigate to={-1} replace />
+    : <Navigate to="/" replace />;
+}
 
   return <Outlet />;
 };
