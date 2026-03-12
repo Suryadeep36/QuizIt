@@ -15,7 +15,7 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://localhost:5173",
                         "https://quiz-it-smart.vercel.app"
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }

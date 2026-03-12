@@ -8,6 +8,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RequestMapping("/quizit")
 @RestController
 @RequiredArgsConstructor
@@ -43,4 +45,49 @@ public class UserController {
         String userId = String.valueOf(user.getId());
         return ResponseEntity.ok(userService.updateUser(userDto, userId));
     }
+    @GetMapping("/admin/teachers/pending")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<List<UserDto>> getPendingTeachers() {
+        return ResponseEntity.ok(userService.getUsersByRoleAndStatus("TEACHER", UserStatus.TEACHER_PENDING));
+    }
+
+    @GetMapping("/admin/teachers/approved")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<List<UserDto>> getApprovedTeachers() {
+        return ResponseEntity.ok(userService.getUsersByRoleAndStatus("TEACHER", UserStatus.TEACHER_APPROVED));
+    }
+    @GetMapping("/admins/approved")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<List<UserDto>> getApprovedAdmins() {
+        return ResponseEntity.ok(userService.getUsersByRoleAndStatus("ADMIN", UserStatus.ADMIN_APPROVED));
+    }
+
+    @PatchMapping("/admin/teachers/email/{email}/revoke")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<String> revokeTeacherAccess(@PathVariable String email) {
+        // We hardcode "TEACHER" because this is the teacher-specific endpoint
+        userService.revokeRoleAndUpdateStatus(email, "TEACHER", UserStatus.TEACHER_REJECTED);
+        return ResponseEntity.ok("Teacher role removed and status updated to REJECTED for: " + email);
+    }
+
+    @PatchMapping("/admin/admins/email/{email}/revoke") // Changed path to /admins/ to avoid conflict
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<String> revokeAdminAccess(@PathVariable String email) {
+        // We hardcode "ADMIN" because this is the admin-specific endpoint
+        userService.revokeRoleAndUpdateStatus(email, "ADMIN", UserStatus.ADMIN_REJECTED);
+        return ResponseEntity.ok("Admin role removed and status updated to REJECTED for: " + email);
+    }
+
+    @PostMapping("/admin/teachers/approve/{email}")
+    @PreAuthorize("hasRole('" + AppConstraint.ADMIN_ROLE + "')")
+    public ResponseEntity<String> handleTeacherApprovalByEmail(
+            @PathVariable String email,
+            @RequestBody ApprovalDecisionDto decision) {
+        userService.updateTeacherStatusByEmail(email, decision);
+        return ResponseEntity.ok("Teacher status updated for: " + email);
+    }
+
+
+
+
 }

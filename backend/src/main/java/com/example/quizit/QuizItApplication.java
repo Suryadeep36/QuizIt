@@ -36,27 +36,38 @@ public class QuizItApplication implements CommandLineRunner {
 
     public void run(String... args) throws Exception {
         //UNCOMMENT THIS PART TO ADD ROLE IN DATABASE
-//        roleRepository.findByName("ROLE_" + AppConstraint.ADMIN_ROLE).ifPresentOrElse(role -> {
-//
-//        },()->{
-//            Role roleOb = Role
-//                    .builder()
-//                    .name("ROLE_" + AppConstraint.ADMIN_ROLE)
-//                    .build();
-//
-//            roleRepository.save(roleOb);
-//        });
-//
-//        roleRepository.findByName("ROLE_" + AppConstraint.USER_ROLE).ifPresentOrElse(role -> {
-//
-//        },()->{
-//            Role roleOb = Role
-//                    .builder()
-//                    .name("ROLE_" + AppConstraint.USER_ROLE)
-//                    .build();
-//
-//            roleRepository.save(roleOb);
-//        });
+        roleRepository.findByName("ROLE_" + AppConstraint.ADMIN_ROLE).ifPresentOrElse(role -> {
+
+        },()->{
+            Role roleOb = Role
+                    .builder()
+                    .name("ROLE_" + AppConstraint.ADMIN_ROLE)
+                    .build();
+
+            roleRepository.save(roleOb);
+        });
+
+        roleRepository.findByName("ROLE_" + AppConstraint.USER_ROLE).ifPresentOrElse(role -> {
+
+        },()->{
+            Role roleOb = Role
+                    .builder()
+                    .name("ROLE_" + AppConstraint.USER_ROLE)
+                    .build();
+
+            roleRepository.save(roleOb);
+        });
+
+        roleRepository.findByName("ROLE_" + AppConstraint.TEACHER_ROLE).ifPresentOrElse(role -> {
+
+        },()->{
+            Role roleOb = Role
+                    .builder()
+                    .name("ROLE_" + AppConstraint.TEACHER_ROLE)
+                    .build();
+
+            roleRepository.save(roleOb);
+        });
 
 
     }

@@ -32,6 +32,9 @@ public class User implements UserDetails {
     private String image;
 
     private boolean enable = true;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
 

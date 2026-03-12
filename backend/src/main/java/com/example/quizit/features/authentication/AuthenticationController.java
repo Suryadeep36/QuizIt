@@ -118,8 +118,14 @@ public class AuthenticationController {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow();
+        boolean isStandardUser = user.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_USER"));
 
-        user.setEnable(true);
+        if (isStandardUser) {
+            // Automatically enable standard users (STUDENTS)
+            user.setEnable(true);
+        }
+
         userRepository.save(user);
 
         otpVerificationRepository.delete(otpEntity);

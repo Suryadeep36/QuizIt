@@ -3,7 +3,7 @@ package com.example.quizit.services;
 
 import com.example.quizit.features.user.UserDto;
 import com.example.quizit.services.interfaces.RegisterService;
-import com.example.quizit.services.interfaces.UserService;
+import com.example.quizit.features.user.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

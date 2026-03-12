@@ -7,9 +7,6 @@ import com.example.quizit.features.otpVerification.OtpVerificationRepository;
 import com.example.quizit.features.role.Role;
 import com.example.quizit.features.role.RoleRepository;
 import com.example.quizit.helpers.UserHelper;
-import com.example.quizit.security.AppConstraint;
-import com.example.quizit.services.interfaces.UserService;
-import com.sun.security.auth.NTUserPrincipal;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -19,10 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final OtpVerificationRepository otpVerificationRepository;
     private final EmailService emailService;
+    private final RegistrationApprovalService registrationApprovalService;
     @Transactional
     @Override
     public UserDto createUser(UserDto userDto) {
@@ -58,13 +54,33 @@ public class UserServiceImpl implements UserService {
         {
             user.setEnable(false);
         }
+        // 3. Dynamic Role Assignment
         Set<Role> roleEntities = new HashSet<>();
-        Role defaultRole = roleRepository.findByName("ROLE_" + AppConstraint.USER_ROLE)
-                .orElseThrow(() -> new RuntimeException("USER role is not found"));
-        roleEntities.add(defaultRole);
-        user.setRoles(roleEntities);
+        boolean isTeacherRequest = false;
 
+        if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+            for (String roleName : userDto.getRoles()) {
+                if ("TEACHER".equalsIgnoreCase(roleName)){
+                    isTeacherRequest = true;
+                    user.setStatus(UserStatus.TEACHER_PENDING);
+                };
+
+                Role role = roleRepository.findByName("ROLE_" + roleName.toUpperCase())
+                        .orElseThrow(() -> new RuntimeException("Role " + roleName + " not found"));
+                roleEntities.add(role);
+            }
+        } else {
+            Role defaultRole = roleRepository.findByName("ROLE_USER").get();
+            roleEntities.add(defaultRole);
+        }
+
+        user.setRoles(roleEntities);
         User savedUser = userRepository.save(user);
+
+        // --- TRIGGER ADMIN PERMISSION LOGIC ---
+        if (isTeacherRequest) {
+            registrationApprovalService.notifyAdminsForTeacherSignup(userDto);
+        }
 
 
         String otp = String.valueOf(new Random().nextInt(900000) + 100000);
@@ -139,4 +155,83 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
 
     }
+
+    @Override
+    public List<UserDto> getUsersByRoleAndStatus(String roleName, UserStatus status) {
+        return userRepository.findAllByRoleNameAndStatus("ROLE_" + roleName.toUpperCase(), status)
+                .stream()
+                .map(user -> {
+                    UserDto dto = new UserDto();
+                    dto.setId(user.getId());
+                    dto.setUsername(user.getUsername());
+                    dto.setEmail(user.getEmail());
+                    // Set roles as strings to match your UserDto structure
+                    dto.setCreatedAt(user.getCreatedAt());
+                    dto.setStatus(status);
+                    dto.setRoles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()));
+                    return dto;
+                })
+                .toList();
+    }
+
+    @Transactional
+    @Override
+    public void updateTeacherStatusByEmail(String email, ApprovalDecisionDto decision) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User with email " + email + " not found"));
+
+        if (decision.isApproved()) {
+            user.setStatus(UserStatus.TEACHER_APPROVED);
+            user.setEnable(true);
+            userRepository.save(user);
+            // Notify Teacher of success
+            emailService.sendRegisterMail(user.getEmail(),
+                    "QuizIt: Account Approved!",
+                    "<h3>Congratulations!</h3><p>Your teacher account is now active.</p>");
+        } else {
+            user.setStatus(UserStatus.TEACHER_REJECTED);
+            user.setEnable(false);
+
+            // Notify Teacher of rejection
+            emailService.sendRegisterMail(user.getEmail(),
+                    "QuizIt: Account Update",
+                    "<p>Your request for teacher access was declined." + decision.getReason() + "</p>");
+
+            userRepository.delete(user);
+            // Optional: delete user if you don't want to keep rejected records
+            // userRepository.delete(user);
+        }
+
+
+    }
+    @Transactional
+    @Override
+    public void revokeRoleAndUpdateStatus(String email, String roleName,UserStatus status) {
+        // 1. Find User
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+
+        // 2. Find the Role entity to remove
+        String formattedRole = "ROLE_" + roleName.toUpperCase();
+        Role roleToRemove = roleRepository.findByName(formattedRole)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + formattedRole));
+
+        // 3. Remove Role and Update Status
+        if (user.getRoles().contains(roleToRemove)) {
+            user.getRoles().remove(roleToRemove);
+
+            // If they have no special roles left, set them back to a standard status
+            // You can use a specific status like TEACHER_REJECTED or just a generic PENDING
+            user.setStatus(status);
+
+            // Optional: If you want to block login entirely until re-approval
+            // user.setEnable(false);
+
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User does not have the role: " + roleName);
+        }
+    }
+
+
 }

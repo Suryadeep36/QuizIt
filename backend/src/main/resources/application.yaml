@@ -115,6 +115,8 @@ app:
     frontend:
       base-url: ${VITE_REACT_BASE_URL:http://localhost:5173}
       success-path: /oauth2/login/success
+      admin-review-path: /admin/teachers
+
 
 # ===============================
 # GROQ

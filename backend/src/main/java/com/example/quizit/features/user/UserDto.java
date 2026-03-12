@@ -35,7 +35,7 @@ public class UserDto {
     private Instant updatedAt;
 
     private Provider provider;
-
+    private UserStatus status;
     private Set<String> roles;
 
 }
