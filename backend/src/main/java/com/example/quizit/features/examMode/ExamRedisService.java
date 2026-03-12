@@ -113,7 +113,6 @@ public class ExamRedisService {
         Map<String, String> fields = new HashMap<>();
         fields.put("status", "READY");
         fields.put("lastTick", String.valueOf(System.currentTimeMillis()));
-        fields.put("tabSwitchCount", "0");
 
         redisTemplate.opsForHash().putAll(key, fields);
         setTTL(key, duration.getSeconds());
@@ -121,17 +120,24 @@ public class ExamRedisService {
         setTTL(answerKey, duration.getSeconds());
     }
 
-    public long recordTabSwitch(UUID quizId, UUID participantId) {
+    public void recordTabSwitch(UUID quizId,
+                                UUID participantId,
+                                UUID questionId,
+                                int tabSwitchCount) {
 
         String attemptKey = getAttemptKey(quizId, participantId);
 
-        Long count = redisTemplate.opsForHash()
-                .increment(attemptKey, "tabSwitchCount", 1);
+        Map<Object, Object> attempt =
+                redisTemplate.opsForHash().entries(attemptKey);
+
+        if (!"ACTIVE".equals(attempt.get("status"))) {
+            throw new IllegalStateException("Quiz not active");
+        }
+
+        String tabField = "q:" + questionId + ":tabs";
 
         redisTemplate.opsForHash()
-                .put(attemptKey, "lastTabSwitch", String.valueOf(System.currentTimeMillis()));
-
-        return count == null ? 0 : count;
+                .put(attemptKey, tabField, String.valueOf(tabSwitchCount));
     }
 
     public void cacheQuestions(UUID quizId, List<QuestionForUserDto> questions, Duration duration) {
