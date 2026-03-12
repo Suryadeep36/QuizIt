@@ -1,6 +1,7 @@
 package com.example.quizit.features.examMode;
 
 import com.example.quizit.features.question.QuestionForUserDto;
+import com.example.quizit.features.registeredUser.RegisteredUser;
 import com.example.quizit.features.user.User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

@@ -279,3 +279,8 @@ export const approveAdmin = async (email) => {
   const response = await apiClient.patch(`/admin/admins/email/${email}/approve`);
   return response.data;
 };
+
+export const endQuizEarlyFromHost = async (quizId) => {
+  const response = await apiClient.post(`/quiz/${quizId}/end-early`)
+  return response.data;
+}

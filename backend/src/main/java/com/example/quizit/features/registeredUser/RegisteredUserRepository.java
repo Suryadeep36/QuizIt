@@ -9,4 +9,6 @@ public interface RegisteredUserRepository extends JpaRepository<RegisteredUser, 
      public RegisteredUser save(RegisteredUser registeredUser);
 
      RegisteredUser findByAllowedUser_Id(UUID allowedUserId);
+
+    RegisteredUser findRegisteredUserByParticipant_ParticipantId(UUID participantParticipantId);
 }

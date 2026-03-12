@@ -95,6 +95,12 @@ public class QuizController {
         return ResponseEntity.noContent().build();
     }
 
-
+    @PostMapping("/quiz/{quizId}/end-early")
+    public ResponseEntity<Void> endQuizEarly(@PathVariable UUID quizId, Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        quizService.endQuizEarlyByHost(quizId, userId);
+        return ResponseEntity.noContent().build();
+    }
 
 }

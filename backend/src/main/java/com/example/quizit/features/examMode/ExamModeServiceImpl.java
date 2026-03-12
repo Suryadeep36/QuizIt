@@ -3,6 +3,7 @@ package com.example.quizit.features.examMode;
 import com.example.quizit.features.allowedUser.AllowedUser;
 import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.allowedUser.InvitationStatus;
+import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantDto;
 import com.example.quizit.features.participant.ParticipantStatus;
 import com.example.quizit.features.question.Question;
@@ -145,6 +146,12 @@ public class ExamModeServiceImpl implements ExamModeService {
 
     @Override
     public void submitExam(UUID quizId, UUID participantId) {
+        RegisteredUser registeredUser = registeredUserRepository.findRegisteredUserByParticipant_ParticipantId(participantId);
+        if (registeredUser == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registered user not found");
+        }
+        AllowedUser allowedUser = registeredUser.getAllowedUser();
         examRedisService.doFinalSubmit(quizId, participantId);
+        allowedUser.setInvitationStatus(InvitationStatus.QUIZ_SUBMITTED);
     }
 }
