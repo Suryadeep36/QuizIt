@@ -216,6 +216,9 @@ public class UserServiceImpl implements UserService {
         Role roleToRemove = roleRepository.findByName(formattedRole)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + formattedRole));
 
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Role not found: " + "USER"));
+
         // 3. Remove Role and Update Status
         if (user.getRoles().contains(roleToRemove)) {
             user.getRoles().remove(roleToRemove);
@@ -223,7 +226,7 @@ public class UserServiceImpl implements UserService {
             // If they have no special roles left, set them back to a standard status
             // You can use a specific status like TEACHER_REJECTED or just a generic PENDING
             user.setStatus(status);
-
+            user.getRoles().add(userRole);
             // Optional: If you want to block login entirely until re-approval
              user.setEnable(false);
 
