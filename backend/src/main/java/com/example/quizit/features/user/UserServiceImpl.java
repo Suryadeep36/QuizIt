@@ -158,6 +158,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsersByRoleAndStatus(String roleName, UserStatus status) {
+
         return userRepository.findAllByRoleNameAndStatus("ROLE_" + roleName.toUpperCase(), status)
                 .stream()
                 .map(user -> {

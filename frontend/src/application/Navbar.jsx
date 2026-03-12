@@ -44,7 +44,7 @@ export default function Navbar() {
   const dashboardRoute =
     role === "ROLE_ADMIN"
       ? "/admin"
-      : role === "ROLE_STUDENT"
+      : role === "ROLE_USER"
         ? "/student/dashboard"
         : "/dashboard"; // teacher default
 

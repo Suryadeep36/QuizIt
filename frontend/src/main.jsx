@@ -93,40 +93,8 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/profile/:username",
-            element: <UserProfile />
+            element: <UserProfile />,
           },
-      //      {
-      //       path: "/admin/teachers",
-      //       element: <AdminApprovalPage/>
-      //     },
-      //     {
-      //       path: "/register-exam/:quizId/:token",
-      //       element: <ExamRegistration />
-      //     },
-      //     {
-      //       path: "quiz-analytics/insights/:quizId",
-      //       element: <GlobalQuizAnalytics />
-      //     },
-      //     {
-      //       path: "/create",
-      //       element: <BulkQuestionCreator />
-      //     },
-      //     {
-      //       path: "/run-quiz-host/:quizId",
-      //       element: <HostLiveQuiz />
-      //     },
-      //     {
-      //       path: "/dashboard",
-      //       element: <Dashboard />,
-      //     },
-      //     {
-      //       path: "/createQuiz",
-      //       element: <CreateQuiz />,
-      //     },
-      //     {
-      //       path: "/quiz/:quizId",
-      //       element: <QuizManagementDashboard />,
-      //     },
         ],
       },
 
@@ -153,6 +121,30 @@ const router = createBrowserRouter([
           { path: "/quiz/:quizId", element: <QuizManagementDashboard /> },
           { path: "/create", element: <BulkQuestionCreator /> },
           { path: "/run-quiz-host/:quizId", element: <HostLiveQuiz /> },
+          {
+            path: "quiz-analytics/insights/:quizId",
+            element: <GlobalQuizAnalytics />,
+          },
+          {
+            path: "/create",
+            element: <BulkQuestionCreator />,
+          },
+          {
+            path: "/run-quiz-host/:quizId",
+            element: <HostLiveQuiz />,
+          },
+          {
+            path: "/dashboard",
+            element: <Dashboard />,
+          },
+          {
+            path: "/createQuiz",
+            element: <CreateQuiz />,
+          },
+          {
+            path: "/quiz/:quizId",
+            element: <QuizManagementDashboard />,
+          },
         ],
       },
       //student only routes
@@ -162,6 +154,10 @@ const router = createBrowserRouter([
           {
             path: "/student/dashboard",
             element: <StudentDashboard />,
+          },
+          {
+            path: "/register-exam/:quizId/:token",
+            element: <ExamRegistration />,
           },
         ],
       },

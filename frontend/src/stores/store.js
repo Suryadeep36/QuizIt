@@ -39,10 +39,6 @@ const useAuth = create(
             user: loginResponseData.user,
             authStatus: true,
           });
-          import("./webSocketStore").then(({ useWS }) =>
-            useWS.getState().reconnectWithFreshToken(),
-          );
-          // console.log(get().user);
           return loginResponseData;
         } catch (error) {
           throw error;

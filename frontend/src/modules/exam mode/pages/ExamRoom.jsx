@@ -15,7 +15,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
-import {
+import useAuth, {
   useNavigationStore,
   useParticipant,
   useQuestionList,
@@ -62,8 +62,15 @@ export default function ExamRoom() {
 
   // Local state for answers to ensure smooth UI before server sync
   const [currentAnswer, setCurrentAnswer] = useState(null);
-
+  const {user} = useAuth();
   const [activeLeft, setActiveLeft] = useState(null);
+  const role = user?.roles?.[0];
+  const dashboardRoute =
+    role === "ROLE_ADMIN"
+      ? "/admin"
+      : role === "ROLE_STUDENT"
+        ? "/student/dashboard"
+        : "/dashboard";
 
   const handleLeftClick = (index) => {
     setActiveLeft(index === activeLeft ? null : index);
@@ -196,7 +203,7 @@ export default function ExamRoom() {
           submittingRef.current = true;
 
           handleQuizEnd();
-          handleSubmitTest(); 
+          handleSubmitTest();
           toast.success("The quiz has ended!");
           return 0;
         }
@@ -596,7 +603,7 @@ export default function ExamRoom() {
             <div className="grid grid-cols-2 gap-4">
               {/* 2. SECONDARY: Navigate to Dashboard */}
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate({dashboardRoute})}
                 className="py-4 bg-slate-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-slate-950"
               >
                 <Menu size={14} />
