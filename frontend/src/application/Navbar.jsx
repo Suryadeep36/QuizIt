@@ -352,7 +352,7 @@ export default function Navbar() {
                 </Button>
               </>
             )}
-            {user && role === "TEACHER" && (
+            {user && role === "ROLE_TEACHER" && (
               <>
                 <Button
                   component={Link}
