@@ -11,7 +11,7 @@ const Unprotected = () => {
     const redirectRoute =
       role === "ROLE_ADMIN"
         ? "/admin"
-        : role === "ROLE_STUDENT"
+        : role === "ROLE_USER"
         ? "/student/dashboard"
         : "/dashboard"; 
 
