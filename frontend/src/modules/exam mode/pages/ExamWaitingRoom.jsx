@@ -180,7 +180,11 @@ const handleBeginAssessment = async () => {
                                     <p className="text-[10px] font-bold uppercase opacity-60">
                                         Duration
                                     </p>
-                                     {quiz?.duration ? quiz.duration/60 + " Minutes" : "N/A"}
+                                                     <p className="font-bold">
+                    {quiz?.duration
+                      ? (quiz.duration / 60).toFixed(2).replace(/\.00$/, "") + " Minutes"
+                      : "N/A"}
+                  </p>
                                 </div>
                             </div>
                         </div>

@@ -174,7 +174,9 @@ export default function ExamRegistration() {
                     Duration
                   </p>
                   <p className="font-bold">
-                    {quiz?.duration ? quiz.duration / 60 + " Minutes" : "N/A"}
+                    {quiz?.duration
+                      ? (quiz.duration / 60).toFixed(2).replace(/\.00$/, "") + " Minutes"
+                      : "N/A"}
                   </p>
                 </div>
               </div>
