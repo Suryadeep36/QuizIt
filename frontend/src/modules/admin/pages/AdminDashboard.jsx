@@ -20,7 +20,9 @@ import {
   getApprovedTeachers, 
   getApprovedAdmins, 
   revokeTeacher, 
-  revokeAdmin
+  revokeAdmin,
+  approveTeacher,
+  approveAdmin
 } from "../../../services/AuthService";
 
 export default function AdminDashboard() {
@@ -67,15 +69,29 @@ export default function AdminDashboard() {
       toast.error("Email is required");
       return;
     }
+
     try {
       setSendingInvite(true);
       const role = activeTab === "admins" ? "ADMIN" : "TEACHER";
-      // Logic for invitation endpoint would go here
-      toast.success(`${role.toLowerCase()} invite sent to ${inviteEmail}`);
+
+      // Call the specific service based on the active tab
+      if (role === "ADMIN") {
+        await approveAdmin(inviteEmail);
+      } else {
+        await approveTeacher(inviteEmail);
+      }
+
+      toast.success(`${inviteEmail} has been promoted to ${role}`);
+      
+      // Refresh the lists to show the new member immediately
+      loadData(); 
+
+      // Reset Modal
       setInviteEmail("");
       setInviteOpen(false);
     } catch (err) {
-      toast.error(err.message);
+      // If user doesn't exist, Spring Boot returns a 404 or 500
+      toast.error(err.response?.data?.message || "User not found or promotion failed");
     } finally {
       setSendingInvite(false);
     }
@@ -116,6 +132,7 @@ export default function AdminDashboard() {
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
 
   // Animation Variants
   const containerVars = {

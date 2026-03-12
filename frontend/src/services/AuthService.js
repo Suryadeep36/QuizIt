@@ -267,3 +267,15 @@ export const revokeAdmin = async (email) => {
   const response = await apiClient.patch(`/admin/admins/email/${email}/revoke`);
   return response.data;
 };
+
+// Approve Teacher
+export const approveTeacher = async (email) => {
+  const response = await apiClient.patch(`/admin/teachers/email/${email}/approve`);
+  return response.data;
+};
+
+// Approve Admin
+export const approveAdmin = async (email) => {
+  const response = await apiClient.patch(`/admin/admins/email/${email}/approve`);
+  return response.data;
+};
