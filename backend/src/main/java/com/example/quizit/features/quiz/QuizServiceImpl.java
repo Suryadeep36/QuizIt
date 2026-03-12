@@ -9,8 +9,6 @@ import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.participantPerformance.ParticipantPerformance;
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.participantPerformance.ParticipantPerformanceRepository;
-import com.example.quizit.features.question.Question;
-import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuiz;
 import com.example.quizit.features.questionAnalyticsQuiz.QuestionAnalyticsQuizService;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRepository;
 import com.example.quizit.features.quizSession.QuizSession;
@@ -20,10 +18,8 @@ import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.records.ParticipantAntiCheatState;
 import com.example.quizit.services.QuizAntiCheatService;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -423,6 +419,18 @@ public class QuizServiceImpl implements QuizService {
         quizRepository.save(quiz);
 
         generateAnalytics(quiz);
+    }
+
+    @Transactional
+    @Override
+    public void endQuizEarlyByHost(UUID quizId, UUID hostId) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        if (!quiz.getHost().getId().equals(hostId)) {
+            throw new AccessDeniedException("Not quiz host");
+        }
+        endQuizEarly(quizId);
     }
 
     private void generateAnalytics(Quiz quiz) {

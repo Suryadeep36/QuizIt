@@ -4,5 +4,6 @@ public enum InvitationStatus {
     NOT_SENT,
     SENT,
     FAILED,
-    REGISTERED
+    REGISTERED,
+    QUIZ_SUBMITTED
 }

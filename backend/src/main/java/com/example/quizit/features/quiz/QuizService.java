@@ -15,4 +15,5 @@ public interface QuizService {
     public void endQuiz(UUID quizId);
     void scheduleQuizEnd(Quiz quiz);
     void endQuizEarly(UUID quizId);
+    void endQuizEarlyByHost(UUID quizId, UUID hostId);
   }

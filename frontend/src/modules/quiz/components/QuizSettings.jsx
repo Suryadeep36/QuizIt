@@ -11,11 +11,16 @@ import {
   Calendar,
   Sparkles,
   Upload,
+  TimerOff,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
-import { deleteQuiz, updateQuizById } from "../../../services/AuthService";
+import {
+  deleteQuiz,
+  endQuizEarlyFromHost,
+  updateQuizById,
+} from "../../../services/AuthService";
 import DeleteConfirmationModal from "../../dashboard/component/DeleteConfirmationModal";
 
 export default function QuizSettings({ quiz }) {
@@ -98,6 +103,17 @@ export default function QuizSettings({ quiz }) {
       toast.error(err.response?.data?.message || "Failed to update");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleEndQuizEarly = async () => {
+    try {
+      await endQuizEarlyFromHost(quiz.quizId);
+      toast.success("Quiz Ended Successfully");
+      navigate("/dashboard");
+    } catch (err) {
+      console.log(err);
+      toast.error(err.response?.data?.message || "Failed to End Quiz Early");
     }
   };
 
@@ -369,8 +385,29 @@ export default function QuizSettings({ quiz }) {
               Delete Permanently
             </button>
           </div>
+          <div className="bg-amber-50/60 border border-amber-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-amber-500 border border-amber-50 shadow-sm">
+                <TimerOff />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-amber-700 uppercase tracking-tighter">
+                  Quiz Control
+                </h3>
+                <p className="text-[11px] text-amber-600/70 font-medium max-w-[280px]">
+                  End the quiz immediately. All active participants will be
+                  forced to submit.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleEndQuizEarly()}
+              className="w-full md:w-auto px-6 py-3 bg-amber-100 text-amber-700 border border-amber-200 rounded-2xl hover:bg-amber-500 hover:text-white font-black text-xs transition-all shadow-sm uppercase tracking-widest"
+            >
+              End Quiz Early
+            </button>
+          </div>
         </div>
-
         {/* Right Side: Email Access List */}
         <div
           className={`w-full lg:w-[380px] space-y-4 transition-all duration-500 ${formData.mode === "EXAM" && !formData.allowAllAuthenticated ? "opacity-100 translate-x-0" : "opacity-0 hidden lg:block pointer-events-none"}`}
