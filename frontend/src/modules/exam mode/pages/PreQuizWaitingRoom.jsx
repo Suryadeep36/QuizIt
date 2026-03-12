@@ -212,19 +212,23 @@ export default function PreQuizWaitingRoom() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-                  <Timer className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase opacity-60">
-                    Duration
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
+                                    <Timer className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase opacity-60">
+                                        Duration
+                                    </p>
+                                                   <p className="font-bold">
+                    {quiz?.duration
+                      ? (quiz.duration / 60).toFixed(2).replace(/\.00$/, "") + " Minutes"
+                      : "N/A"}
                   </p>
-                  {quiz?.duration ? quiz.duration / 60 + " Minutes" : "N/A"}
-                </div>
-              </div>
-            </div>
-          </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
           <div className="relative z-10 pt-8 border-t border-white/10 mt-10">
             <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2 text-white">
