@@ -157,7 +157,7 @@ const router = createBrowserRouter([
       },
       //student only routes
       {
-        element: <RoleProtectedRoute allowedRoles={["ROLE_STUDENT"]} />,
+        element: <RoleProtectedRoute allowedRoles={["ROLE_USER"]} />,
         children: [
           {
             path: "/student/dashboard",

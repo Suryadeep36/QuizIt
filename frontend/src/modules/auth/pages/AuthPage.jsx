@@ -211,6 +211,7 @@ export default function AuthPage() {
         password: "",
       });
       const roles = userData.user.roles;
+      console.log(roles)
       if (roles.includes("ROLE_ADMIN")) {
         navigate("/admin");
       } else if (roles.includes("ROLE_TEACHER")) {
