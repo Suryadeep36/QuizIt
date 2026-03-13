@@ -244,7 +244,7 @@ export default function QuizSettings({ quiz }) {
                     onChange={handleChange}
                     className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#4a9cb0] rounded-2xl px-5 py-3.5 font-bold text-slate-700 outline-none appearance-none"
                   >
-                    <option value="SERVER">SERVER</option>
+                    <option value="SERVER">Interactive</option>
                     <option value="EXAM">EXAM</option>
                   </select>
                 ) : (
@@ -281,7 +281,7 @@ export default function QuizSettings({ quiz }) {
                                          }`}
                   >
                     <span className="text-sm font-bold text-slate-600">
-                      {"All Authenticated User"}
+                      {"All Account Users"}
                     </span>
 
                     <div
