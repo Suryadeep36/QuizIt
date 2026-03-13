@@ -7,5 +7,6 @@ public record LeaderboardResponse(
         String participantName,
         Integer score,
         Integer rank,
-        Long totalTimeSpent
+        Long totalTimeSpent,
+        Float cheatingRiskScore
 ) {}

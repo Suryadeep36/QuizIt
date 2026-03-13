@@ -21,7 +21,8 @@ public class ParticipantPerformanceServiceImpl implements ParticipantPerformance
                         p.getParticipant().getParticipantName(),
                         p.getScore(),
                         p.getRank(),
-                        p.getTotalTimeSpent()
+                        p.getTotalTimeSpent(),
+                        p.getCheatingRiskScore()
                 ))
                 .toList();
     }
