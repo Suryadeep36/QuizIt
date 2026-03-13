@@ -218,7 +218,7 @@ export default function CreateQuiz() {
                   }}
                   className="w-full bg-slate-50 border-2 border-slate-100 focus:border-[#1b8599] outline-none px-5 py-3 md:py-4 rounded-2xl font-bold text-slate-700 appearance-none cursor-pointer"
                 >
-                  <option value="SERVER">SERVER</option>
+                  <option value="SERVER">Interactive</option>
                   <option value="EXAM">EXAM</option>
                   <option value="LAN">LAN</option>
                 </select>
@@ -246,7 +246,7 @@ export default function CreateQuiz() {
                     }`}
                   >
                     <span className="text-sm font-bold text-slate-600">
-                      {"All Authenticated User"}
+                      {"All Account Users"}
                     </span>
                     <div
                       className={`w-10 h-5 rounded-full relative transition-colors ${quiz.allowAllAuthenticated ? "bg-[#1b8599]" : "bg-slate-300"}`}

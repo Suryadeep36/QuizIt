@@ -80,7 +80,11 @@ export default function ExamRoom() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        setNewTabSwitches((prev) => prev + 1);
+       setNewTabSwitches((prev) => {
+        const updated = prev + 1;
+        console.log("Tab switch detected! Unsynced switches:", updated);
+        return updated;
+      });
         toast.warn("Tab switch detected!");
       }
     };
