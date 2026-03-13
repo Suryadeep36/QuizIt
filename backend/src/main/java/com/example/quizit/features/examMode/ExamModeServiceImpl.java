@@ -15,6 +15,7 @@ import com.example.quizit.features.registeredUser.RegisteredUser;
 import com.example.quizit.features.registeredUser.RegisteredUserDto;
 import com.example.quizit.features.registeredUser.RegisteredUserRepository;
 import com.example.quizit.mapper.QuestionToQuestionUserMapper;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -143,6 +144,7 @@ public class ExamModeServiceImpl implements ExamModeService {
     }
 
     @Override
+    @Transactional
     public void submitExam(UUID quizId, UUID participantId) {
         RegisteredUser registeredUser = registeredUserRepository.findRegisteredUserByParticipant_ParticipantId(participantId);
         if (registeredUser == null) {
@@ -150,6 +152,7 @@ public class ExamModeServiceImpl implements ExamModeService {
         }
         AllowedUser allowedUser = registeredUser.getAllowedUser();
         examRedisService.doFinalSubmit(quizId, participantId);
+        System.out.println("Participant " + participantId + " submitted their quiz " + quizId);
         allowedUser.setInvitationStatus(InvitationStatus.QUIZ_SUBMITTED);
     }
 
