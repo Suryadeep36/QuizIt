@@ -44,19 +44,33 @@ public class InvitationService {
     }
 
     @Transactional
-    public void sendAllEmail(UUID quizId, UUID hostId){
+    public void sendAllEmail(UUID quizId, UUID hostId) {
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
-
         if (!quiz.getHost().getId().equals(hostId)) {
             throw new AccessDeniedException("Not quiz host");
         }
-
-        List<AllowedUser> users = allowedUserRepository.findAllowedUsersByQuiz_QuizIdAndInvitationStatusIn(quizId, List.of(InvitationStatus.NOT_SENT, InvitationStatus.FAILED));
-
+        List<AllowedUser> users =
+                allowedUserRepository.findAllowedUsersByQuiz_QuizIdAndInvitationStatusIn(
+                        quizId,
+                        List.of(InvitationStatus.NOT_SENT, InvitationStatus.FAILED)
+                );
+        System.out.println("Starting email sending for quiz " + quizId + ". Total users: " + users.size());
         for (AllowedUser user : users) {
-            sendInvitationInternal(quiz, user);
+            try {
+                sendInvitationInternal(quiz, user);
+                user.setInvitationStatus(InvitationStatus.SENT);
+                System.out.println("Email sent successfully to: " + user.getEmail());
+                Thread.sleep(150);
+            } catch (Exception e) {
+                user.setInvitationStatus(InvitationStatus.FAILED);
+                System.err.println("Failed to send email to: " + user.getEmail());
+                System.err.println("Reason: " + e.getMessage());
+            }
         }
+
+        System.out.println("Finished sending emails for quiz " + quizId);
     }
 
 
