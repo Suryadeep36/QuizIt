@@ -25,7 +25,9 @@ public class InvitationService {
     @Value("${app.auth.frontend.base-url}")
     private String registerUrl;
 
+    @Transactional
     public void sendOneEmail(UUID quizId, UUID allowedUserId, UUID hostId){
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
 
@@ -40,9 +42,17 @@ public class InvitationService {
             throw new IllegalArgumentException("User does not belong to quiz");
         }
 
-        sendInvitationInternal(quiz, user);
+        try {
+            sendInvitationInternal(quiz, user);
+            user.setInvitationStatus(InvitationStatus.SENT);
+            System.out.println("Email sent successfully to: " + user.getEmail());
+        } catch (Exception e) {
+            user.setInvitationStatus(InvitationStatus.FAILED);
+            user.setDeliveryErrorMessage(e.getMessage());
+            System.err.println("Failed to send email to: " + user.getEmail());
+            System.err.println("Reason: " + e.getMessage());
+        }
     }
-
     @Transactional
     public void sendAllEmail(UUID quizId, UUID hostId) {
 
@@ -77,21 +87,14 @@ public class InvitationService {
 
     private void sendInvitationInternal(Quiz quiz, AllowedUser user) {
         String link = registerUrl + "/register-exam/" + quiz.getQuizId() + "/" + user.getToken();
-        try {
-            emailService.sendRegisterMail(
-                    user.getEmail(),
-                    "📩 Invitation: Register for "+ quiz.getQuizName() +" | QuizIt",
-                    buildEmailBody(quiz, link)
-            );
+        emailService.sendRegisterMail(
+                user.getEmail(),
+                "📩 Invitation: Register for "+ quiz.getQuizName() +" | QuizIt",
+                buildEmailBody(quiz, link)
+        );
 
-            user.setInvitationStatus(InvitationStatus.SENT);
-            user.setInvitationSentAt(Instant.now());
-            user.setDeliveryErrorMessage(null);
-
-        } catch (Exception e) {
-            user.setInvitationStatus(InvitationStatus.FAILED);
-            user.setDeliveryErrorMessage(e.getMessage());
-        }
+        user.setInvitationSentAt(Instant.now());
+        user.setDeliveryErrorMessage(null);
     }
     private String buildEmailBody(Quiz quiz, String registrationLink) {
         String hostName = quiz.getHost().getUsername();

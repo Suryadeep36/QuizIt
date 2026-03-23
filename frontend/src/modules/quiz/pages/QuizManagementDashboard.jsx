@@ -45,7 +45,14 @@ import QrSharePopover from "../components/QrSharePopover";
 export default function QuizManagementDashboard() {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState(null);
-  const [activeTab, setActiveTab] = useState("questions");
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem(`quiz_${quizId}_activeTab`);
+    return savedTab || "questions";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`quiz_${quizId}_activeTab`, activeTab);
+  }, [activeTab, quizId]);
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [openModal, setOpenModal] = useState(false);
@@ -320,16 +327,13 @@ export default function QuizManagementDashboard() {
             </div>
           </div>
 
-
-
           <div className="flex items-center gap-4">
-
-{quiz?.mode === "EXAM" && quiz?.allowAllAuthenticated && (
-  <QrSharePopover 
-    joinCode={"xxxxxx"} 
-    joinLink={`${import.meta.env.VITE_REACT_BASE_URL}/register-exam/${quizId}/1221`} 
-  />
-)}
+            {quiz?.mode === "EXAM" && quiz?.allowAllAuthenticated && (
+              <QrSharePopover
+                joinCode={"xxxxxx"}
+                joinLink={`${import.meta.env.VITE_REACT_BASE_URL}/register-exam/${quizId}/1221`}
+              />
+            )}
 
             <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 hover:bg-blue-500/20 bg-blue-600/10 text-sm text-white">
               <Eye className="w-4 h-4" />
