@@ -1,18 +1,21 @@
-# Stage 1: Build the project
-FROM eclipse-temurin:25-jdk-jammy AS builder
+# Stage 1: Build
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
+
+# DO NOT use backend/backend
 COPY . .
 
-RUN chmod +x mvnw
+RUN chmod +x ./mvnw
 RUN ./mvnw clean package -DskipTests
 
-# Stage 2: Run the app
-FROM eclipse-temurin:25-jre-jammy
+# Stage 2: Run
+FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
+
 COPY --from=builder /app/target/*.jar app.jar
 
-EXPOSE 3000
+ENV PORT=8080
 
-ENTRYPOINT ["java", "--add-opens=java.base/sun.misc=ALL-UNNAMED", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=$PORT"]
