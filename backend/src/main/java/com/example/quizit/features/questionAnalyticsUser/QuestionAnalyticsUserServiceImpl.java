@@ -6,6 +6,7 @@ import com.example.quizit.features.question.Question;
 import com.example.quizit.exceptions.ResourceNotFoundException;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
+import com.example.quizit.features.quiz.QuizStatus;
 import com.example.quizit.helpers.UserHelper;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.question.QuestionRepository;
@@ -205,8 +206,17 @@ public class QuestionAnalyticsUserServiceImpl implements QuestionAnalyticsUserSe
         if (participantId == null) {
             throw new IllegalArgumentException("Participant ID cannot be null");
         }
+
         UUID pid = UUID.fromString(participantId);
-        Participant participant = participantRepository.findById(pid).orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
+
+        Participant participant = participantRepository.findById(pid)
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
+
+        Quiz quiz = participant.getQuiz();
+
+        if (quiz.isHoldResult() && quiz.getStatus() != QuizStatus.RESULTS_PUBLISHED) {
+            throw new IllegalStateException("Quiz results are not published yet");
+        }
 
         return questionAnalyticsUserRepository
                 .findAllByParticipant(participant)

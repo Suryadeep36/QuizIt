@@ -28,4 +28,5 @@ public class QuizDto {
     private boolean allowAllAuthenticated;
     private List<@Email @NotBlank String> allowedEmails;
     private Instant createdAt;
+    private boolean holdResult;
 }

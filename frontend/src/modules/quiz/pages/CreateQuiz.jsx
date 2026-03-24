@@ -35,6 +35,7 @@ export default function CreateQuiz() {
     passPercentage: 50,
     allowedEmails: [],
     allowAllAuthenticated: false,
+    holdResult: false,
   });
 
   const handleSubmit = async (e) => {
@@ -52,6 +53,7 @@ export default function CreateQuiz() {
       allowAllAuthenticated:
         quiz.mode === "EXAM" ? quiz.allowAllAuthenticated : false,
       allowedEmails: quiz.allowAllAuthenticated ? [] : quiz.allowedEmails,
+      holdResult: quiz.holdResult,
     };
     console.log(payload.allowedEmails);
     try {
@@ -339,6 +341,22 @@ export default function CreateQuiz() {
                 <span className="text-sm font-bold text-slate-700">
                   Show Leaderboard
                 </span>
+              </label>
+              <label className="flex items-center gap-3 p-4 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors bg-white md:bg-transparent">
+                <input
+                  type="checkbox"
+                  name="holdResult"
+                  checked={quiz.holdResult}
+                  onChange={handleChange}
+                  className="w-4 h-4 accent-[#1b8599]"
+                />
+                <span className="text-sm font-bold text-slate-700">
+                  Hold Results (Manual Publish)
+                </span>
+                <p className="text-xs text-slate-400 ml-1">
+                  Results will NOT be shown to participants until you publish
+                  them manually.
+                </p>
               </label>
             </div>
 

@@ -324,3 +324,8 @@ export const endQuizEarlyFromHost = async (quizId) => {
   const response = await apiClient.post(`/quiz/${quizId}/end-early`);
   return response.data;
 };
+
+export const publishResultForQuiz = async (quizId) => {
+  const response = await apiClient.post(`/quiz/${quizId}/publish-result`)
+  return response.data;
+}

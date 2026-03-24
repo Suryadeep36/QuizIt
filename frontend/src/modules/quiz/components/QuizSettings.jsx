@@ -12,6 +12,7 @@ import {
   Sparkles,
   Upload,
   TimerOff,
+  Trophy,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
@@ -19,6 +20,7 @@ import { useNavigate } from "react-router";
 import {
   deleteQuiz,
   endQuizEarlyFromHost,
+  publishResultForQuiz,
   updateQuizById,
 } from "../../../services/AuthService";
 import DeleteConfirmationModal from "../../dashboard/component/DeleteConfirmationModal";
@@ -49,6 +51,7 @@ export default function QuizSettings({ quiz }) {
     shuffleQuestions: quiz?.shuffleQuestions ?? false,
     showLeaderboard: quiz?.showLeaderboard ?? true,
     allowAllAuthenticated: quiz?.allowAllAuthenticated ?? true,
+    holdResult: quiz?.holdResult ?? true,
   });
 
   const handleChange = (e) => {
@@ -114,6 +117,16 @@ export default function QuizSettings({ quiz }) {
     } catch (err) {
       console.log(err);
       toast.error(err.response?.data?.message || "Failed to End Quiz Early");
+    }
+  };
+
+  const handlePublishResults = async () => {
+    try {
+      await publishResultForQuiz(quiz.quizId);
+      toast.success("Result Published Successfully");
+    } catch (err) {
+      console.log(err);
+      toast.error(err.response?.data?.message || "Failed to Publish Result");
     }
   };
 
@@ -407,6 +420,38 @@ export default function QuizSettings({ quiz }) {
               End Quiz Early
             </button>
           </div>
+          {quiz.holdResult && (
+            <div className="bg-emerald-50/60 border border-emerald-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-emerald-500 border border-emerald-50 shadow-sm">
+                  <Trophy />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-emerald-700 uppercase tracking-tighter">
+                    Publish Results
+                  </h3>
+                  <p className="text-[11px] text-emerald-600/70 font-medium max-w-[280px]">
+                    {quiz.status === "ENDED"
+                      ? "Make results visible to all participants."
+                      : "Available after quiz ends."}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handlePublishResults}
+                disabled={quiz.status !== "ENDED"}
+                className={`w-full md:w-auto px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-sm border
+        ${
+          quiz.status === "ENDED"
+            ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-500 hover:text-white"
+            : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+        }`}
+              >
+                Publish Results
+              </button>
+            </div>
+          )}
         </div>
         {/* Right Side: Email Access List */}
         <div

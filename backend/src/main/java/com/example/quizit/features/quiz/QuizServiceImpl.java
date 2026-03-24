@@ -100,6 +100,7 @@ public class QuizServiceImpl implements QuizService {
         quiz.setHost(
                 userRepository.getReferenceById(userId)
         );
+        quiz.setHoldResult(quizDto.isHoldResult());
         Quiz savedQuiz = quizRepository.save(quiz);
 
         if (quiz.getMode() == QuizMode.EXAM
@@ -163,6 +164,7 @@ public class QuizServiceImpl implements QuizService {
         existingQuiz.setAllowGuest(quizDto.isAllowGuest());
         existingQuiz.setShuffleQuestions(quizDto.isShuffleQuestions());
         existingQuiz.setShowLeaderboard(quizDto.isShowLeaderboard());
+        existingQuiz.setHoldResult(quizDto.isHoldResult());
 
         Set<String> updatedEmailList = quizDto.getAllowedEmails()
                 .stream()
@@ -423,8 +425,8 @@ public class QuizServiceImpl implements QuizService {
         generateAnalytics(quiz);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void endQuizEarlyByHost(UUID quizId, UUID hostId) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
@@ -433,6 +435,17 @@ public class QuizServiceImpl implements QuizService {
             throw new AccessDeniedException("Not quiz host");
         }
         endQuizEarly(quizId);
+    }
+
+    @Override
+    public void publishResult(UUID quizId, UUID hostId) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+        if (!quiz.getHost().getId().equals(hostId)) {
+            throw new AccessDeniedException("Not quiz host");
+        }
+        quiz.setStatus(QuizStatus.RESULTS_PUBLISHED);
+        quizRepository.save(quiz);
     }
 
     private void generateAnalytics(Quiz quiz) {

@@ -15,7 +15,7 @@ import {
   CircularProgress,
   Chip,
   Avatar,
-  Tooltip
+  Tooltip,
 } from "@mui/material";
 
 // Icons
@@ -28,7 +28,7 @@ import {
   AlertCircle,
   Settings,
   CheckCircle2,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 import { getQuizsByHostId } from "../../../services/AuthService";
 
@@ -45,9 +45,11 @@ export default function HostedQuizzes() {
     setLoading(true);
     try {
       const response = await getQuizsByHostId(user.id);
-      console.log("hosted", response)
+      console.log("hosted", response);
       // Filter for ENDED status as per your requirement
-      const endedQuizzes = response ? response.filter(q => q.status === "ENDED") : [];
+      const endedQuizzes = response
+        ? response.filter((q) => q.status === "ENDED")
+        : [];
       setQuizzes(endedQuizzes);
     } catch (err) {
       console.error(err);
@@ -64,7 +66,14 @@ export default function HostedQuizzes() {
   return (
     <Box>
       {/* Header Section */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Box
             sx={{
@@ -72,13 +81,18 @@ export default function HostedQuizzes() {
               borderRadius: "12px",
               bgcolor: "white",
               color: cyanMain,
-              boxShadow: "0 4px 12px rgba(8, 145, 178, 0.1)"
+              boxShadow: "0 4px 12px rgba(8, 145, 178, 0.1)",
             }}
           >
             <LayoutDashboard size={24} strokeWidth={2.5} />
           </Box>
           <Box>
-            <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.2 }}>
+            <Typography
+              variant="h5"
+              fontWeight={800}
+              color="text.primary"
+              sx={{ lineHeight: 1.2 }}
+            >
               Hosted Quizzes
             </Typography>
             <Typography variant="body2" color="text.secondary" fontWeight={500}>
@@ -90,7 +104,13 @@ export default function HostedQuizzes() {
         <Button
           onClick={fetchHostedQuizzes}
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <RefreshCw size={16} />}
+          startIcon={
+            loading ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <RefreshCw size={16} />
+            )
+          }
           variant="text"
           size="small"
           sx={{
@@ -98,7 +118,7 @@ export default function HostedQuizzes() {
             borderRadius: 2,
             color: "text.secondary",
             fontWeight: 600,
-            "&:hover": { color: cyanMain, bgcolor: cyanLight }
+            "&:hover": { color: cyanMain, bgcolor: cyanLight },
           }}
         >
           {loading ? "Updating..." : "Refresh"}
@@ -107,17 +127,48 @@ export default function HostedQuizzes() {
 
       {/* Loading State */}
       {loading && (
-        <Paper elevation={0} sx={{ p: 6, textAlign: 'center', border: '1px dashed', borderColor: 'grey.300', borderRadius: 4, bgcolor: 'grey.50' }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 6,
+            textAlign: "center",
+            border: "1px dashed",
+            borderColor: "grey.300",
+            borderRadius: 4,
+            bgcolor: "grey.50",
+          }}
+        >
           <CircularProgress size={28} sx={{ color: cyanMain, mb: 2 }} />
-          <Typography variant="body2" color="text.secondary">Loading hosted sessions...</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Loading hosted sessions...
+          </Typography>
         </Paper>
       )}
 
       {/* Empty State */}
       {!loading && quizzes.length === 0 && (
-        <Paper elevation={0} sx={{ p: 8, textAlign: 'center', border: '1px solid', borderColor: 'grey.200', borderRadius: 4, bgcolor: 'white' }}>
-          <Box sx={{ color: 'grey.300', mb: 2 }}><AlertCircle size={56} /></Box>
-          <Typography variant="h6" color="text.secondary" fontWeight={700} gutterBottom>No completed quizzes</Typography>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 8,
+            textAlign: "center",
+            border: "1px solid",
+            borderColor: "grey.200",
+            borderRadius: 4,
+            bgcolor: "white",
+          }}
+        >
+          <Box sx={{ color: "grey.300", mb: 2 }}>
+            <AlertCircle size={56} />
+          </Box>
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            fontWeight={700}
+            gutterBottom
+          >
+            No completed quizzes
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             Quizzes you host will appear here once the session has ended.
           </Typography>
@@ -127,7 +178,6 @@ export default function HostedQuizzes() {
       {/* List of Hosted Quiz Cards */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
         {quizzes.map((quiz) => (
-
           <Paper
             elevation={0}
             sx={{
@@ -143,110 +193,182 @@ export default function HostedQuizzes() {
                 transform: "translateY(-3px)",
                 boxShadow: "0 12px 24px -10px rgba(0, 0, 0, 0.08)",
                 borderColor: cyanMain,
-              }
+              },
             }}
           >
             {/* Status Indicator */}
-            <Box sx={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "6px", bgcolor: cyanMain }} />
+            <Box
+              sx={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "6px",
+                bgcolor: cyanMain,
+              }}
+            />
 
             <Grid container alignItems="center" spacing={3}>
               <Grid item xs={12} sm="auto">
-                <Avatar sx={{ width: 56, height: 56, bgcolor: cyanLight, color: cyanMain, borderRadius: 3 }}>
+                <Avatar
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    bgcolor: cyanLight,
+                    color: cyanMain,
+                    borderRadius: 3,
+                  }}
+                >
                   <CheckCircle2 size={26} />
                 </Avatar>
               </Grid>
 
               <Grid item xs={12} sm>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
-                  <Typography variant="h6" fontWeight={800} color="text.primary">
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight={800}
+                    color="text.primary"
+                  >
                     {quiz.quizName}
                   </Typography>
                   <Chip
                     label="Ended"
                     size="small"
-                    sx={{ height: 22, fontSize: "0.7rem", fontWeight: 700, bgcolor: "grey.100", color: "grey.700" }}
+                    sx={{
+                      height: 22,
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      bgcolor: "grey.100",
+                      color: "grey.700",
+                    }}
                   />
                 </Box>
 
-                <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: { xs: 1, sm: 3 }, color: "text.secondary" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: { xs: 1, sm: 3 },
+                    color: "text.secondary",
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
                     <Calendar size={15} />
                     <Typography variant="body2" fontWeight={500}>
-                      {quiz.createdAt ? new Date(quiz.createdAt).toLocaleDateString() : "Recently"}
+                      {quiz.createdAt
+                        ? new Date(quiz.createdAt).toLocaleDateString()
+                        : "Recently"}
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
                     <Settings size={15} />
-                    <Typography variant="body2" fontWeight={500}>Mode: {quiz.mode}</Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      Mode: {quiz.mode}
+                    </Typography>
                   </Box>
                 </Box>
               </Grid>
 
               {/* Quick Stats & Action Section */}
-<Grid item xs={12} sm={4}>
-  <Box sx={{ 
-    display: 'flex', 
-    flexDirection: 'column', 
-    alignItems: { xs: 'flex-start', sm: 'flex-end' }, 
-    gap: 1.5 
-  }}>
-    {/* Buttons Container */}
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      
-      {/* NEW: Question Insights Button */}
-      <Button
-        component={Link}
-        to={`/quiz-analytics/insights/${quiz.quizId}`} // Ensure this matches your route path
-        variant="outlined"
-        size="small"
-        startIcon={<BarChart3 size={16} />}
-        sx={{
-          textTransform: "none",
-          fontWeight: 700,
-          borderRadius: "10px",
-          color: cyanMain,
-          borderColor: cyanMain,
-          "&:hover": {
-            bgcolor: cyanLight,
-            borderColor: cyanMain,
-          }
-        }}
-      >
-        Insights
-      </Button>
+              <Grid item xs={12} sm={4}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: { xs: "flex-start", sm: "flex-end" },
+                    gap: 1.5,
+                  }}
+                >
+                  {/* Buttons Container */}
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    {/* NEW: Question Insights Button */}
+                    <Button
+                      component={Link}
+                      to={`/quiz-analytics/insights/${quiz.quizId}`} // Ensure this matches your route path
+                      variant="outlined"
+                      size="small"
+                      startIcon={<BarChart3 size={16} />}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        borderRadius: "10px",
+                        color: cyanMain,
+                        borderColor: cyanMain,
+                        "&:hover": {
+                          bgcolor: cyanLight,
+                          borderColor: cyanMain,
+                        },
+                      }}
+                    >
+                      Insights
+                    </Button>
 
-      {/* Existing: View Results Button/Link */}
-      <Button
-        component={Link}
-        to={`/quiz/leaderboard/${quiz.quizId}`}
-        variant="contained"
-        size="small"
-        endIcon={<ChevronRight size={16} />}
-        sx={{
-          textTransform: "none",
-          fontWeight: 700,
-          borderRadius: "10px",
-          bgcolor: cyanMain,
-          boxShadow: "none",
-          "&:hover": {
-            bgcolor: "#067a94", // Slightly darker cyan
-            boxShadow: "0 4px 12px rgba(8, 145, 178, 0.2)",
-          }
-        }}
-      >
-        Results
-      </Button>
-    </Box>
+                    {/* Existing: View Results Button/Link */}
+                    <Button
+                      component={Link}
+                      to={`/quiz/leaderboard/${quiz.quizId}`}
+                      variant="contained"
+                      size="small"
+                      endIcon={<ChevronRight size={16} />}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        borderRadius: "10px",
+                        bgcolor: cyanMain,
+                        boxShadow: "none",
+                        "&:hover": {
+                          bgcolor: "#067a94", // Slightly darker cyan
+                          boxShadow: "0 4px 12px rgba(8, 145, 178, 0.2)",
+                        },
+                      }}
+                    >
+                      Results
+                    </Button>
+                    <Button
+                      component={Link}
+                      to={`/quiz/${quiz.quizId}`}
+                      variant="outlined"
+                      size="small"
+                      startIcon={<LayoutDashboard size={16} />}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        borderRadius: "10px",
+                        color: "#475569", // slate-600
+                        borderColor: "#cbd5f5",
+                        "&:hover": {
+                          bgcolor: "#f1f5f9",
+                          borderColor: "#94a3b8",
+                        },
+                      }}
+                    >
+                      Dashboard
+                    </Button>
+                  </Box>
 
-    {/* Small Metadata */}
-    <Typography variant="caption" fontWeight={600} color="text.secondary">
-      {quiz.allowGuest ? "Guest Access Enabled" : "Registered Users Only"}
-    </Typography>
-  </Box>
-</Grid>
+                  {/* Small Metadata */}
+                  <Typography
+                    variant="caption"
+                    fontWeight={600}
+                    color="text.secondary"
+                  >
+                    {quiz.allowGuest
+                      ? "Guest Access Enabled"
+                      : "Registered Users Only"}
+                  </Typography>
+                </Box>
+              </Grid>
             </Grid>
           </Paper>
-
         ))}
       </Box>
     </Box>

@@ -23,14 +23,17 @@ public class QuestionAnalyticsUserController {
     }
 
     @GetMapping("/participant/{participantId}")
-    public ResponseEntity<List<QuestionAnalyticsUserDto>>
-    getQuestionAnalyticsUsersByParticipantId(
+    public ResponseEntity<?> getQuestionAnalyticsUsersByParticipantId(
             @PathVariable String participantId) {
 
-        return ResponseEntity.ok(
-                questionAnalyticsUserService
-                        .getQuestionAnalyticsUsersByParticipantId(participantId)
-        );
+        try {
+            return ResponseEntity.ok(
+                    questionAnalyticsUserService
+                            .getQuestionAnalyticsUsersByParticipantId(participantId)
+            );
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
     }
 
     @GetMapping("/{questionAnalyticsUserId}")

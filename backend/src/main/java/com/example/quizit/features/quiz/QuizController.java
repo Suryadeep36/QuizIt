@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -100,6 +101,14 @@ public class QuizController {
         User user = (User) authentication.getPrincipal();
         UUID userId = user.getId();
         quizService.endQuizEarlyByHost(quizId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/quiz/{quizId}/publish-result")
+    public ResponseEntity<Void> publishResult(@PathVariable UUID quizId, Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        quizService.publishResult(quizId, userId);
         return ResponseEntity.noContent().build();
     }
 

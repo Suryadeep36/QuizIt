@@ -69,6 +69,9 @@ public class Quiz {
     @Column(nullable = false, name = "allow_all_authenticated")
     private boolean allowAllAuthenticated;
 
+    @Column(name = "hold_result")
+    private boolean holdResult;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
