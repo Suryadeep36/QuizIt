@@ -2,8 +2,6 @@
 FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
-
-# DO NOT use backend/backend
 COPY . .
 
 RUN chmod +x ./mvnw
@@ -13,7 +11,6 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
-
 COPY --from=builder /app/target/*.jar app.jar
 
 ENV PORT=8080
