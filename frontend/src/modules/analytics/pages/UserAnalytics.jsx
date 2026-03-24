@@ -1,14 +1,26 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import {
-  Zap, Clock, Target, AlertTriangle,
-  ChevronLeft, CheckCircle2, XCircle,
-  TrendingUp, BarChart3, Brain, Activity, Loader2, Info
+  Zap,
+  Clock,
+  Target,
+  AlertTriangle,
+  ChevronLeft,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  BarChart3,
+  Brain,
+  Activity,
+  Loader2,
+  Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParticipant } from "../../../stores/store";
-import { getParticipantAnalytics, getQuestionsByQuizId } from "../../../services/AuthService";
-
+import {
+  getParticipantAnalytics,
+  getQuestionsByQuizId,
+} from "../../../services/AuthService";
 
 export default function UserAnalytics() {
   const [analytics, setAnalytics] = useState([]);
@@ -17,7 +29,9 @@ export default function UserAnalytics() {
 
   const { quizId } = useParams();
   let { participantId } = useParams();
-  participantId = participantId ? participantId : useParticipant((state) => state.participant?.id);
+  participantId = participantId
+    ? participantId
+    : useParticipant((state) => state.participant?.id);
   // console.log(participantId);
   useEffect(() => {
     if (!quizId || !participantId) return;
@@ -29,8 +43,8 @@ export default function UserAnalytics() {
           getParticipantAnalytics(participantId),
           getQuestionsByQuizId(quizId),
         ]);
-        console.log(questionData)
-        console.log(analyticsData)
+        console.log(questionData);
+        console.log(analyticsData);
         setAnalytics(analyticsData);
         setQuestions(questionData);
       } catch (err) {
@@ -48,7 +62,9 @@ export default function UserAnalytics() {
     return (
       <div className="min-h-screen bg-[#4a9cb0] flex flex-col items-center justify-center text-white p-6">
         <Loader2 className="w-12 h-12 animate-spin mb-4 text-[#f5a65b]" />
-        <p className="font-bold tracking-widest uppercase text-xs text-center">Analysing Results...</p>
+        <p className="font-bold tracking-widest uppercase text-xs text-center">
+          Analysing Results...
+        </p>
       </div>
     );
   }
@@ -60,25 +76,38 @@ export default function UserAnalytics() {
 
   const totalCorrect = analytics.filter((a) => a.isCorrect).length;
   const totalQuestions = questions.length;
-  const scorePercentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-  const totalTimeSpent = analytics.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
-  const totalTabSwitches = analytics.reduce((sum, a) => sum + (a.tabSwitchCount || 0), 0);
-  const fastAnswers = analytics.filter(a => a.timeSpent < 5 && a.isCorrect).length;
+  const scorePercentage =
+    totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+  const totalTimeSpent = analytics.reduce(
+    (sum, a) => sum + (a.timeSpent || 0),
+    0,
+  );
+  const totalTabSwitches = analytics.reduce(
+    (sum, a) => sum + (a.tabSwitchCount || 0),
+    0,
+  );
+  const fastAnswers = analytics.filter(
+    (a) => a.timeSpent < 5 && a.isCorrect,
+  ).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] pb-10 md:pb-20">
-
       {/* RESPONSIVE HEADER */}
       <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 sticky top-0 z-1 shadow-xl">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => window.history.back()} className="p-2 hover:bg-white/20 rounded-full transition text-white active:scale-90">
+              <button
+                onClick={() => window.history.back()}
+                className="p-2 hover:bg-white/20 rounded-full transition text-white active:scale-90"
+              >
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <div className="h-8 w-[1px] bg-white/20 hidden xs:block" />
               <div>
-                <h1 className="text-white font-black text-lg md:text-xl leading-none">QUIZ REPORT</h1>
+                <h1 className="text-white font-black text-lg md:text-xl leading-none">
+                  QUIZ REPORT
+                </h1>
                 <p className="text-white/60 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 truncate max-w-[150px] md:max-w-none">
                   Session Analytics
                 </p>
@@ -88,13 +117,16 @@ export default function UserAnalytics() {
             <div className="flex items-center justify-between sm:justify-end gap-3 bg-black/10 sm:bg-black/20 p-1 md:p-1.5 rounded-2xl border border-white/10">
               <div className="flex items-center gap-2 md:gap-3 px-2 md:px-3">
                 <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-[#f5a65b] flex items-center justify-center text-white font-bold text-xs">
-                  {useParticipant.getState().participant?.name?.charAt(0) || "U"}
+                  {useParticipant.getState().participant?.name?.charAt(0) ||
+                    "U"}
                 </div>
                 <div className="text-left">
                   <p className="text-white text-xs font-bold leading-none truncate max-w-[80px]">
                     {useParticipant.getState().participant?.name || "User"}
                   </p>
-                  <p className="text-white/40 text-[8px] md:text-[9px] uppercase font-bold">Participant</p>
+                  <p className="text-white/40 text-[8px] md:text-[9px] uppercase font-bold">
+                    Participant
+                  </p>
                 </div>
               </div>
               <div className="bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-xl text-[#4a9cb0] font-black text-xs md:text-sm shadow-lg">
@@ -106,13 +138,30 @@ export default function UserAnalytics() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 md:px-8 mt-6 md:mt-10">
-
         {/* INSIGHTS GRID: 2 columns on mobile, 4 on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-10">
-          <StatCard icon={<Target className="text-green-400 w-4 h-4 md:w-5 md:h-5" />} label="Accuracy" value={`${totalCorrect}/${totalQuestions}`} />
-          <StatCard icon={<Clock className="text-blue-300 w-4 h-4 md:w-5 md:h-5" />} label="Duration" value={`${Math.floor(totalTimeSpent / 60)}m ${totalTimeSpent % 60}s`} />
-          <StatCard icon={<TrendingUp className="text-[#f5a65b] w-4 h-4 md:w-5 md:h-5" />} label="Quick Wins" value={fastAnswers} />
-          <StatCard icon={<Activity className="text-red-400 w-4 h-4 md:w-5 md:h-5" />} label="Integrity" value={totalTabSwitches === 0 ? "High" : "Alert"} />
+          <StatCard
+            icon={<Target className="text-green-400 w-4 h-4 md:w-5 md:h-5" />}
+            label="Accuracy"
+            value={`${totalCorrect}/${totalQuestions}`}
+          />
+          <StatCard
+            icon={<Clock className="text-blue-300 w-4 h-4 md:w-5 md:h-5" />}
+            label="Duration"
+            value={`${Math.floor(totalTimeSpent / 60)}m ${totalTimeSpent % 60}s`}
+          />
+          <StatCard
+            icon={
+              <TrendingUp className="text-[#f5a65b] w-4 h-4 md:w-5 md:h-5" />
+            }
+            label="Quick Wins"
+            value={fastAnswers}
+          />
+          <StatCard
+            icon={<Activity className="text-red-400 w-4 h-4 md:w-5 md:h-5" />}
+            label="Integrity"
+            value={totalTabSwitches === 0 ? "High" : "Alert"}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
@@ -129,7 +178,8 @@ export default function UserAnalytics() {
                   <div className="w-2 h-2 rounded-full bg-[#4a9cb0]" /> Correct
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-[#f5a65b]" /> Incorrect
+                  <div className="w-2 h-2 rounded-full bg-[#f5a65b]" />{" "}
+                  Incorrect
                 </div>
               </div>
             </div>
@@ -150,17 +200,30 @@ export default function UserAnalytics() {
                 // 3. HEIGHT LOGIC: Using 40s as max scale to handle longer answers
                 const maxScale = 40;
                 const calculatedHeight = (time / maxScale) * 100;
-                const finalHeight = Math.min(Math.max(calculatedHeight, 4), 100);
+                const finalHeight = Math.min(
+                  Math.max(calculatedHeight, 4),
+                  100,
+                );
 
                 return (
-                  <div key={questionId || i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
-
+                  <div
+                    key={questionId || i}
+                    className="flex-1 flex flex-col items-center group relative h-full justify-end"
+                  >
                     {/* Tooltip */}
                     <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-30 w-32 pointer-events-none">
                       <div className="bg-slate-800 text-white text-[10px] p-2 rounded-lg shadow-xl text-center shadow-black/20">
-                        <p className="font-bold border-b border-white/10 mb-1 pb-1 uppercase">Question {i + 1}</p>
+                        <p className="font-bold border-b border-white/10 mb-1 pb-1 uppercase">
+                          Question {i + 1}
+                        </p>
                         <p className="font-black text-sm">{time}s</p>
-                        <p className={isCorrect ? "text-emerald-400" : "text-orange-400 font-bold"}>
+                        <p
+                          className={
+                            isCorrect
+                              ? "text-emerald-400"
+                              : "text-orange-400 font-bold"
+                          }
+                        >
                           {isCorrect ? "Correct" : "Incorrect"}
                         </p>
                       </div>
@@ -170,15 +233,16 @@ export default function UserAnalytics() {
                     {/* THE BAR: Ensure background colors are solid for testing */}
                     <div
                       className={`w-full rounded-t-lg transition-all duration-700 ease-out origin-bottom
-              ${isCorrect
-                          ? "bg-[#4a9cb0] shadow-[0_-4px_10px_rgba(74,156,176,0.2)]"
-                          : "bg-[#f5a65b] shadow-[0_-4px_10px_rgba(245,166,91,0.2)]"
-                        } 
+              ${
+                isCorrect
+                  ? "bg-[#4a9cb0] shadow-[0_-4px_10px_rgba(74,156,176,0.2)]"
+                  : "bg-[#f5a65b] shadow-[0_-4px_10px_rgba(245,166,91,0.2)]"
+              } 
               group-hover:brightness-110 group-hover:scale-x-110 z-10
             `}
                       style={{
                         height: `${finalHeight}%`,
-                        transitionDelay: `${i * 50}ms`
+                        transitionDelay: `${i * 50}ms`,
                       }}
                     />
 
@@ -198,7 +262,10 @@ export default function UserAnalytics() {
           {/* DIAGNOSTIC */}
           <div className="bg-gradient-to-br from-[#f5a65b] to-[#f59843] rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-8 text-white shadow-2xl shadow-[#f5a65b]/30">
             <Brain className="w-8 h-8 md:w-10 md:h-10 mb-4 opacity-90" />
-            <h3 className="text-lg md:text-xl font-black mb-2 leading-tight uppercase">Performance <br />Diagnostic</h3>
+            <h3 className="text-lg md:text-xl font-black mb-2 leading-tight uppercase">
+              Performance <br />
+              Diagnostic
+            </h3>
             <p className="text-white/90 text-xs md:text-sm mb-6 leading-relaxed">
               {scorePercentage > 70
                 ? "Excellent concept retention! Focus on reducing response time to master competitive levels."
@@ -207,11 +274,24 @@ export default function UserAnalytics() {
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
               <div className="bg-white/20 p-3 rounded-xl flex justify-between items-center text-[10px] md:text-xs font-bold">
                 <span className="opacity-70">Tab Switches</span>
-                <span className={totalTabSwitches > 0 ? "text-red-900 bg-white/40 px-2 py-0.5 rounded" : ""}>{totalTabSwitches}</span>
+                <span
+                  className={
+                    totalTabSwitches > 0
+                      ? "text-red-900 bg-white/40 px-2 py-0.5 rounded"
+                      : ""
+                  }
+                >
+                  {totalTabSwitches}
+                </span>
               </div>
               <div className="bg-white/20 p-3 rounded-xl flex justify-between items-center text-[10px] md:text-xs font-bold">
                 <span className="opacity-70">Avg. Response</span>
-                <span>{totalQuestions > 0 ? Math.round(totalTimeSpent / totalQuestions) : 0}s</span>
+                <span>
+                  {totalQuestions > 0
+                    ? Math.round(totalTimeSpent / totalQuestions)
+                    : 0}
+                  s
+                </span>
               </div>
             </div>
           </div>
@@ -221,7 +301,9 @@ export default function UserAnalytics() {
         <div className="space-y-4 md:space-y-6">
           <div className="flex items-center gap-3 mb-2 px-1">
             <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-white" />
-            <h2 className="text-white font-black text-lg md:text-xl tracking-tight uppercase italic">Step-by-Step Review</h2>
+            <h2 className="text-white font-black text-lg md:text-xl tracking-tight uppercase italic">
+              Step-by-Step Review
+            </h2>
           </div>
 
           {questions.map((q, index) => {
@@ -232,32 +314,62 @@ export default function UserAnalytics() {
                 className="mx-auto max-w-4xl bg-white/95 backdrop-blur-sm rounded-[1.2rem] md:rounded-[2rem] p-4 md:p-6 shadow-lg border border-white relative overflow-hidden mb-4 md:mb-6"
               >
                 {/* Result Pill */}
-                <div className={`absolute top-0 right-0 px-4 md:px-6 py-1.5 md:py-2 rounded-bl-2xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] text-white shadow-md ${qa?.isCorrect ? "bg-emerald-500" : "bg-red-500"}`}>
+                <div
+                  className={`absolute top-0 right-0 px-4 md:px-6 py-1.5 md:py-2 rounded-bl-2xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] text-white shadow-md ${qa?.isCorrect ? "bg-emerald-500" : "bg-red-500"}`}
+                >
                   {qa?.isCorrect ? "PASSED" : "FAILED"}
                 </div>
 
                 <div className="mb-6 md:mb-8 pr-12 md:pr-0">
-                  <span className="text-[#4a9cb0] font-black text-[10px] md:text-xs tracking-[0.3em] uppercase">Question {index + 1}</span>
-                  <h2 className="text-base md:text-2xl font-black text-slate-800 mt-2 leading-snug">{q.content}</h2>
+                  <span className="text-[#4a9cb0] font-black text-[10px] md:text-xs tracking-[0.3em] uppercase">
+                    Question {index + 1}
+                  </span>
+                  <h2 className="text-base md:text-2xl font-black text-slate-800 mt-2 leading-snug">
+                    {q.content}
+                  </h2>
+                  {q.imageUrl && (
+                    <div className="mt-4 md:mt-6 flex justify-center">
+                      <img
+                        src={q.imageUrl}
+                        alt="question"
+                        className="max-h-[250px] md:max-h-[400px] w-auto rounded-xl md:rounded-2xl shadow-md object-contain border border-slate-200"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* MCQ GRID */}
                 {q.questionType === "MCQ" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     {Object.entries(q.options || {}).map(([key, value]) => {
-                      const isSelected = qa?.selectedAnswer?.keys?.includes(key);
+                      const isSelected =
+                        qa?.selectedAnswer?.keys?.includes(key);
                       const isCorrect = q.correctAnswer?.[0]?.key === key;
 
-
                       let style = "bg-slate-50 border-slate-100 text-slate-500";
-                      if (isCorrect) style = "bg-emerald-50 border-emerald-400 text-emerald-800 ring-2 ring-emerald-500/10";
-                      if (isSelected && !isCorrect) style = "bg-red-50 border-red-400 text-red-800 ring-2 ring-red-500/10";
+                      if (isCorrect)
+                        style =
+                          "bg-emerald-50 border-emerald-400 text-emerald-800 ring-2 ring-emerald-500/10";
+                      if (isSelected && !isCorrect)
+                        style =
+                          "bg-red-50 border-red-400 text-red-800 ring-2 ring-red-500/10";
 
                       return (
-                        <div key={key} className={`p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 flex justify-between items-center transition-all ${style}`}>
-                          <span className="text-sm md:text-base font-bold"><b className="mr-2 md:mr-3 opacity-40">{key}</b> {value}</span>
-                          {isCorrect && <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />}
-                          {isSelected && !isCorrect && <XCircle className="w-4 h-4 md:w-5 md:h-5" />}
+                        <div
+                          key={key}
+                          className={`p-4 md:p-5 rounded-2xl md:rounded-3xl border-2 flex justify-between items-center transition-all ${style}`}
+                        >
+                          <span className="text-sm md:text-base font-bold">
+                            <b className="mr-2 md:mr-3 opacity-40">{key}</b>{" "}
+                            {value}
+                          </span>
+                          {isCorrect && (
+                            <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
+                          )}
+                          {isSelected && !isCorrect && (
+                            <XCircle className="w-4 h-4 md:w-5 md:h-5" />
+                          )}
                         </div>
                       );
                     })}
@@ -267,61 +379,102 @@ export default function UserAnalytics() {
                 {/* ================= TRUE / FALSE ================= */}
                 {q.questionType === "TRUE_FALSE" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className={`p-4 rounded-2xl border-2 ${qa?.isCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"}`}>
-                      <p className="text-[10px] font-black uppercase opacity-60 mb-1">Your Selection</p>
-                      <p className="text-lg font-bold uppercase">{String(qa?.selectedAnswer?.value)}</p>
+                    <div
+                      className={`p-4 rounded-2xl border-2 ${qa?.isCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"}`}
+                    >
+                      <p className="text-[10px] font-black uppercase opacity-60 mb-1">
+                        Your Selection
+                      </p>
+                      <p className="text-lg font-bold uppercase">
+                        {String(qa?.selectedAnswer?.value)}
+                      </p>
                     </div>
                     <div className="p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-400">
-                      <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Correct Answer</p>
-                      <p className="text-lg font-bold uppercase">{q.correctAnswer?.[0]?.key}</p>
+                      <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">
+                        Correct Answer
+                      </p>
+                      <p className="text-lg font-bold uppercase">
+                        {q.correctAnswer?.[0]?.key}
+                      </p>
                     </div>
                   </div>
                 )}
-
 
                 {/* SHORT_ANSWER & NUMERICAL */}
-                {(q.questionType === "SHORT_ANSWER" || q.questionType === "NUMERICAL") && (
+                {(q.questionType === "SHORT_ANSWER" ||
+                  q.questionType === "NUMERICAL") && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                    <div className={`p-4 rounded-2xl border-2 ${qa?.isCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"}`}>
-                      <p className="text-[10px] font-black uppercase opacity-60 mb-1">Your Answer</p>
-                      <p className="text-lg font-bold">{qa?.selectedAnswer?.value || "No Answer"}</p>
+                    <div
+                      className={`p-4 rounded-2xl border-2 ${qa?.isCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"}`}
+                    >
+                      <p className="text-[10px] font-black uppercase opacity-60 mb-1">
+                        Your Answer
+                      </p>
+                      <p className="text-lg font-bold">
+                        {qa?.selectedAnswer?.value || "No Answer"}
+                      </p>
                     </div>
                     <div className="p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-400">
-                      <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Correct Answer</p>
-                      <p className="text-lg font-bold">{q.correctAnswer?.[0]?.key}</p>
+                      <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">
+                        Correct Answer
+                      </p>
+                      <p className="text-lg font-bold">
+                        {q.correctAnswer?.[0]?.key}
+                      </p>
                     </div>
                   </div>
                 )}
-
 
                 {/* MATCH_FOLLOWING - SIDE-BY-SIDE COMPARISON */}
                 {q.questionType === "MATCH_FOLLOWING" && (
                   <div className="space-y-2 mt-3">
-                    <p className="text-[10px] font-black uppercase opacity-60 px-1 tracking-widest">Pairing Review</p>
+                    <p className="text-[10px] font-black uppercase opacity-60 px-1 tracking-widest">
+                      Pairing Review
+                    </p>
                     <div className="flex flex-col gap-2">
                       {q.options.left.map((leftText, i) => {
-                        const userPair = qa?.selectedAnswer?.matchPairs?.find(p => p.hasOwnProperty(i));
+                        const userPair = qa?.selectedAnswer?.matchPairs?.find(
+                          (p) => p.hasOwnProperty(i),
+                        );
                         const selectedIdx = userPair ? userPair[i] : null;
-                        const correctIdx = q.correctAnswer?.[0]?.matchPairs?.[i];
-                        const isCorrect = selectedIdx !== null && String(selectedIdx) === String(correctIdx);
+                        const correctIdx =
+                          q.correctAnswer?.[0]?.matchPairs?.[i];
+                        const isCorrect =
+                          selectedIdx !== null &&
+                          String(selectedIdx) === String(correctIdx);
 
                         return (
-                          <div key={i} className="flex flex-col md:flex-row md:items-center gap-2">
+                          <div
+                            key={i}
+                            className="flex flex-col md:flex-row md:items-center gap-2"
+                          >
                             {/* Left Side: User's Attempt */}
-                            <div className={`flex-1 p-3 rounded-xl border-2 flex justify-between items-center ${isCorrect ? "bg-emerald-50 border-emerald-400/30" : "bg-red-50 border-red-400/30"}`}>
+                            <div
+                              className={`flex-1 p-3 rounded-xl border-2 flex justify-between items-center ${isCorrect ? "bg-emerald-50 border-emerald-400/30" : "bg-red-50 border-red-400/30"}`}
+                            >
                               <div className=" flex-col min-w-0">
-                                <span className="text-[16px] uppercase opacity-50 font-black">{leftText.substring(0, 20)}-{">"}</span>
-                                <span className={`text-sm font-bold break-all ${isCorrect ? "text-emerald-800" : "text-red-800"}`}>
+                                <span className="text-[16px] uppercase opacity-50 font-black">
+                                  {leftText.substring(0, 20)}-{">"}
+                                </span>
+                                <span
+                                  className={`text-sm font-bold break-all ${isCorrect ? "text-emerald-800" : "text-red-800"}`}
+                                >
                                   {q.options.right[selectedIdx] || "Skipped"}
                                 </span>
                               </div>
-                              {isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+                              {isCorrect ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-red-500" />
+                              )}
                             </div>
 
                             {/* Right Side: Correct Answer (Only shown if wrong) */}
                             {!isCorrect && (
                               <div className="flex-1 p-3 bg-emerald-50 border-2 border-emerald-400/30 rounded-xl flex items-center gap-3">
-                                <div className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded">CORRECT</div>
+                                <div className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
+                                  CORRECT
+                                </div>
                                 <span className="text-sm font-bold text-emerald-800 break-all">
                                   {q.options.right[correctIdx]}
                                 </span>
@@ -336,10 +489,14 @@ export default function UserAnalytics() {
                 {/* METRICS FOOTER */}
                 <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-slate-100 flex flex-wrap gap-4 md:gap-8">
                   <div className="flex items-center gap-2 text-slate-400 font-bold text-[8px] md:text-[10px] tracking-widest uppercase">
-                    <Clock className="w-3 h-3 md:w-4 md:h-4 text-[#4a9cb0]" /> Time Spent: {qa?.timeSpent || 0}s
+                    <Clock className="w-3 h-3 md:w-4 md:h-4 text-[#4a9cb0]" />{" "}
+                    Time Spent: {qa?.timeSpent || 0}s
                   </div>
                   <div className="flex items-center gap-2 text-slate-400 font-bold text-[8px] md:text-[10px] tracking-widest uppercase">
-                    <AlertTriangle className={`w-3 h-3 md:w-4 md:h-4 ${qa?.tabSwitchCount > 0 ? "text-red-500" : "text-emerald-500"}`} /> Switches: {qa?.tabSwitchCount || 0}
+                    <AlertTriangle
+                      className={`w-3 h-3 md:w-4 md:h-4 ${qa?.tabSwitchCount > 0 ? "text-red-500" : "text-emerald-500"}`}
+                    />{" "}
+                    Switches: {qa?.tabSwitchCount || 0}
                   </div>
                 </div>
               </div>
@@ -358,9 +515,13 @@ function StatCard({ icon, label, value }) {
         <div className="p-1.5 md:p-2 bg-white/20 rounded-lg md:rounded-xl group-hover:bg-[#4a9cb0]/10 transition-colors">
           {icon}
         </div>
-        <span className="text-[8px] md:text-[10px] font-black text-white/60 group-hover:text-slate-400 uppercase tracking-widest truncate">{label}</span>
+        <span className="text-[8px] md:text-[10px] font-black text-white/60 group-hover:text-slate-400 uppercase tracking-widest truncate">
+          {label}
+        </span>
       </div>
-      <div className="text-sm md:text-2xl font-black text-white group-hover:text-slate-800 transition-colors">{value}</div>
+      <div className="text-sm md:text-2xl font-black text-white group-hover:text-slate-800 transition-colors">
+        {value}
+      </div>
     </div>
   );
 }
