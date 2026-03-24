@@ -52,7 +52,6 @@ export default function ParticipantLiveQuiz() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   // const [score, setScore] = useState(1250);
 
-
   const [activeLeft, setActiveLeft] = useState(null);
 
   const handleLeftClick = (index) => {
@@ -68,14 +67,15 @@ export default function ParticipantLiveQuiz() {
       const safePrev = Array.isArray(prev) ? prev : [];
 
       // Now .filter() will never fail
-      const filtered = safePrev.filter(p => p.left !== leftIdx && p.right !== rightIdx);
+      const filtered = safePrev.filter(
+        (p) => p.left !== leftIdx && p.right !== rightIdx,
+      );
 
       return [...filtered, { left: leftIdx, right: rightIdx }];
     });
 
     setActiveLeft(null);
   };
-
 
   const { sessionId } = useParams();
 
@@ -106,7 +106,7 @@ export default function ParticipantLiveQuiz() {
         setTabSwitches((prev) => prev + 1);
 
         if (isConnected && client?.connected) {
-          tabSwitchEvent(sessionId, participant?.id)
+          tabSwitchEvent(sessionId, participant?.id);
           toast("Tab switch detected!", {
             icon: "⚠️",
           });
@@ -125,37 +125,42 @@ export default function ParticipantLiveQuiz() {
     options,
     selectedOption,
     handleOptionClick,
+    shuffledOptionList,
   ) => {
     switch (type) {
       case "MCQ":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
-            {Object.entries(options).map(([key, value]) => (
+            {shuffledOptionList?.map((opt) => (
               <button
-                key={key}
-                onClick={() => handleOptionClick(key)}
+                key={opt.key}
+                onClick={() => handleOptionClick(opt.key)}
                 className={`
                 w-full p-5 md:p-6 rounded-2xl text-left transition-all duration-200 border-2 flex justify-between items-center active:scale-95
-                ${Array.isArray(selectedOption) && selectedOption.includes(key)
+                ${
+                  Array.isArray(selectedOption) &&
+                  selectedOption.includes(opt.key)
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  }
+                }
               `}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${Array.isArray(selectedOption) &&
-                        selectedOption.includes(key)
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold ${
+                      Array.isArray(selectedOption) &&
+                      selectedOption.includes(opt.key)
                         ? "border-[#4a9cb0] bg-[#4a9cb0]/10"
                         : "border-white/30"
-                      }`}
+                    }`}
                   >
-                    {key}
+                    {opt.key}
                   </div>
-                  <span className="text-lg font-bold">{value}</span>
+                  <span className="text-lg font-bold">{opt.value}</span>
                 </div>
+
                 {Array.isArray(selectedOption) &&
-                  selectedOption.includes(key) && (
+                  selectedOption.includes(opt.key) && (
                     <CheckCircle2 className="w-6 h-6 text-[#4a9cb0]" />
                   )}
               </button>
@@ -172,10 +177,11 @@ export default function ParticipantLiveQuiz() {
                 onClick={() => handleOptionClick(value)}
                 className={`
                 p-5 md:p-6 rounded-2xl border-2 text-center transition-all duration-200 active:scale-95
-                ${selectedOption === value
+                ${
+                  selectedOption === value
                     ? "bg-white border-white text-[#4a9cb0] shadow-2xl scale-[1.02]"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  }
+                }
               `}
               >
                 <span className="text-lg font-bold">{value}</span>
@@ -206,26 +212,48 @@ export default function ParticipantLiveQuiz() {
           MOBILE: grid-cols-1 (Vertical Stack) 
       */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
-
               {/* SVG CONNECTIONS (Laptop Only) */}
               <svg
                 className="hidden md:block absolute inset-0 pointer-events-none z-0"
                 style={{ width: "100%", height: "100%", overflow: "visible" }}
               >
                 {safePairs.map((pair, idx) => {
-                  const leftDot = document.getElementById(`left-${currentQuestion.questionId}-${pair.left}`);
-                  const rightDot = document.getElementById(`right-${currentQuestion.questionId}-${pair.right}`);
+                  const leftDot = document.getElementById(
+                    `left-${currentQuestion.questionId}-${pair.left}`,
+                  );
+                  const rightDot = document.getElementById(
+                    `right-${currentQuestion.questionId}-${pair.right}`,
+                  );
                   if (leftDot && rightDot) {
                     const leftRect = leftDot.getBoundingClientRect();
                     const rightRect = rightDot.getBoundingClientRect();
-                    const containerRect = leftDot.closest(".grid")?.getBoundingClientRect();
+                    const containerRect = leftDot
+                      .closest(".grid")
+                      ?.getBoundingClientRect();
                     if (containerRect) {
-                      const x1 = leftRect.left + leftRect.width / 2 - containerRect.left;
-                      const y1 = leftRect.top + leftRect.height / 2 - containerRect.top;
-                      const x2 = rightRect.left + rightRect.width / 2 - containerRect.left;
-                      const y2 = rightRect.top + rightRect.height / 2 - containerRect.top;
+                      const x1 =
+                        leftRect.left + leftRect.width / 2 - containerRect.left;
+                      const y1 =
+                        leftRect.top + leftRect.height / 2 - containerRect.top;
+                      const x2 =
+                        rightRect.left +
+                        rightRect.width / 2 -
+                        containerRect.left;
+                      const y2 =
+                        rightRect.top +
+                        rightRect.height / 2 -
+                        containerRect.top;
                       return (
-                        <line key={`line-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f5a65b" strokeWidth="3" strokeDasharray="6,4" />
+                        <line
+                          key={`line-${idx}`}
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke="#f5a65b"
+                          strokeWidth="3"
+                          strokeDasharray="6,4"
+                        />
                       );
                     }
                   }
@@ -235,25 +263,43 @@ export default function ParticipantLiveQuiz() {
 
               {/* LEFT COLUMN */}
               <div>
-                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-3 ml-1">Column A</p>
+                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-3 ml-1">
+                  Column A
+                </p>
                 <div className="space-y-3">
                   {(options?.left || []).map((item, i) => {
-                    const isMatched = safePairs.some(p => p.left === i);
+                    const isMatched = safePairs.some((p) => p.left === i);
                     const isActive = activeLeft === i;
                     return (
                       <div
                         key={`left-${i}`}
                         onClick={() => handleLeftClick(i)}
                         className={`relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer active:scale-95
-                    ${isActive ? "bg-white border-white text-[#4a9cb0] shadow-lg" :
-                            isMatched ? "bg-emerald-500/20 border-emerald-500/40 text-white" :
-                              "bg-white/10 border-white/20 text-white hover:bg-white/20"}
+                    ${
+                      isActive
+                        ? "bg-white border-white text-[#4a9cb0] shadow-lg"
+                        : isMatched
+                          ? "bg-emerald-500/20 border-emerald-500/40 text-white"
+                          : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    }
                   `}
                       >
-                        <span className="font-bold text-base md:text-lg">{item}</span>
-                        <div id={`left-${currentQuestion.questionId}-${i}`} className="hidden md:block w-4 h-4 rounded-full bg-[#f5a65b] border-2 border-white absolute -right-2 z-10" />
+                        <span className="font-bold text-base md:text-lg">
+                          {item}
+                        </span>
+                        <div
+                          id={`left-${currentQuestion.questionId}-${i}`}
+                          className="hidden md:block w-4 h-4 rounded-full bg-[#f5a65b] border-2 border-white absolute -right-2 z-10"
+                        />
                         <div className="md:hidden">
-                          {isMatched ? <CheckCircle2 size={16} className="text-emerald-400" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
+                          {isMatched ? (
+                            <CheckCircle2
+                              size={16}
+                              className="text-emerald-400"
+                            />
+                          ) : (
+                            <div className="w-2 h-2 rounded-full bg-white/20" />
+                          )}
                         </div>
                       </div>
                     );
@@ -263,7 +309,9 @@ export default function ParticipantLiveQuiz() {
 
               {/* RIGHT COLUMN */}
               <div>
-                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-3 ml-1">Column B</p>
+                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-3 ml-1">
+                  Column B
+                </p>
                 <div className="space-y-3">
                   {(options?.right || []).map((item, i) => (
                     <div
@@ -273,10 +321,17 @@ export default function ParticipantLiveQuiz() {
                   ${activeLeft !== null ? "bg-white/20 border-[#f5a65b] text-white" : "bg-white/5 border-white/10 text-white/40"}
                 `}
                     >
-                      <div id={`right-${currentQuestion.questionId}-${i}`} className="hidden md:block w-4 h-4 rounded-full bg-[#f5a65b] border-2 border-white absolute -left-2 z-10" />
+                      <div
+                        id={`right-${currentQuestion.questionId}-${i}`}
+                        className="hidden md:block w-4 h-4 rounded-full bg-[#f5a65b] border-2 border-white absolute -left-2 z-10"
+                      />
                       <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center text-[10px] font-black text-white/50">{String.fromCharCode(65 + i)}</span>
-                        <span className="font-bold text-base md:text-lg">{item}</span>
+                        <span className="w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center text-[10px] font-black text-white/50">
+                          {String.fromCharCode(65 + i)}
+                        </span>
+                        <span className="font-bold text-base md:text-lg">
+                          {item}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -288,18 +343,39 @@ export default function ParticipantLiveQuiz() {
             {safePairs.length > 0 && (
               <div className="w-full bg-black/20 backdrop-blur-md p-5 rounded-[2rem] border border-white/10 mt-8 animate-in slide-in-from-bottom-4">
                 <div className="flex justify-between items-center mb-4 px-2">
-                  <h5 className="text-[10px] font-black text-white/50 uppercase tracking-widest">Active Links</h5>
-                  <button onClick={() => setUserMatchPairs([])} className="text-[10px] font-bold text-red-400 uppercase">Reset</button>
+                  <h5 className="text-[10px] font-black text-white/50 uppercase tracking-widest">
+                    Active Links
+                  </h5>
+                  <button
+                    onClick={() => setUserMatchPairs([])}
+                    className="text-[10px] font-bold text-red-400 uppercase"
+                  >
+                    Reset
+                  </button>
                 </div>
                 <div className="space-y-2">
                   {safePairs.map((pair, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5"
+                    >
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-white">{options.left[pair.left]}</span>
+                        <span className="text-sm font-bold text-white">
+                          {options.left[pair.left]}
+                        </span>
                         <Zap size={12} className="text-[#f5a65b]" />
-                        <span className="text-sm font-bold text-[#f5a65b]">{options.right[pair.right]}</span>
+                        <span className="text-sm font-bold text-[#f5a65b]">
+                          {options.right[pair.right]}
+                        </span>
                       </div>
-                      <button onClick={() => setUserMatchPairs(prev => prev.filter((_, i) => i !== idx))} className="text-white/20 hover:text-red-400">
+                      <button
+                        onClick={() =>
+                          setUserMatchPairs((prev) =>
+                            prev.filter((_, i) => i !== idx),
+                          )
+                        }
+                        className="text-white/20 hover:text-red-400"
+                      >
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -415,7 +491,10 @@ export default function ParticipantLiveQuiz() {
     joinSession(sessionId, participant.id);
     setHasJoined(true);
     const init = async () => {
-      const sessionRes = await getParticipantSessionByParticipantIdAndSessionId(participant.id, sessionId);
+      const sessionRes = await getParticipantSessionByParticipantIdAndSessionId(
+        participant.id,
+        sessionId,
+      );
       setTabSwitches(sessionRes.tabSwitches);
       if (sessionRes.status === "STARTED" && sessionRes.currentQuestionState) {
         const q = sessionRes.currentQuestionState;
@@ -616,7 +695,6 @@ export default function ParticipantLiveQuiz() {
       timeSpent,
       selectedAnswer,
       tabSwitchCount: tabSwitches,
-
     };
 
     try {
@@ -730,8 +808,9 @@ export default function ParticipantLiveQuiz() {
       {stage === "question" && (
         <div className="h-1.5 w-full bg-black/10">
           <div
-            className={`h-full transition-all duration-1000 ease-linear ${timer < 5 ? "bg-red-400" : "bg-white"
-              }`}
+            className={`h-full transition-all duration-1000 ease-linear ${
+              timer < 5 ? "bg-red-400" : "bg-white"
+            }`}
             style={{ width: `${(timer / TOTAL_TIME) * 100}%` }}
           />
         </div>
@@ -750,8 +829,9 @@ export default function ParticipantLiveQuiz() {
                 </div>
               )}
               <div
-                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${timer < 5 ? "text-red-500 animate-bounce" : "text-white"
-                  }`}
+                className={`flex items-center gap-2 font-mono font-bold text-xl md:text-2xl ${
+                  timer < 5 ? "text-red-500 animate-bounce" : "text-white"
+                }`}
               >
                 <Timer className="w-5 h-5 md:w-6 md:h-6" />
                 {timer}s
@@ -794,6 +874,7 @@ export default function ParticipantLiveQuiz() {
                 currentQuestion.options,
                 selectedOption,
                 handleOptionClick,
+                currentQuestion.shuffledOptionList,
               )}
             </div>
 
@@ -805,10 +886,11 @@ export default function ParticipantLiveQuiz() {
                   className={`
                       px-8 py-3 rounded-2xl font-black tracking-wide
                       transition-all duration-200 active:scale-95
-                      ${isSubmitted
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
-                    }
+                      ${
+                        isSubmitted
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-white text-[#4a9cb0] shadow-xl hover:shadow-2xl hover:scale-[1.03]"
+                      }
                     `}
                 >
                   {isSubmitted ? "Answer Locked" : "Final Submit"}

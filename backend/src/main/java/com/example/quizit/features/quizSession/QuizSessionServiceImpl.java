@@ -8,10 +8,7 @@ import com.example.quizit.features.participant.Participant;
 import com.example.quizit.features.participant.ParticipantRepository;
 import com.example.quizit.features.participantSession.ParticipantSession;
 import com.example.quizit.features.participantSession.ParticipantSessionRepository;
-import com.example.quizit.features.question.AnswerKey;
-import com.example.quizit.features.question.Question;
-import com.example.quizit.features.question.QuestionForUserDto;
-import com.example.quizit.features.question.QuestionRepository;
+import com.example.quizit.features.question.*;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUser;
 import com.example.quizit.features.questionAnalyticsUser.QuestionAnalyticsUserRepository;
 import com.example.quizit.features.quiz.Quiz;
@@ -27,9 +24,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
@@ -194,8 +189,10 @@ public class QuizSessionServiceImpl implements QuizSessionService {
             builder.currentQuestionIndex(index);
 
             Question currentQuestion = questions.get(index);
-            builder.currentQuestionState(convertToUserDto(currentQuestion));
-
+            QuestionForUserDto currentQuestionForUserDto = convertToUserDto(currentQuestion);
+            List<OptionDto> shuffledOptions = getShuffledOptions(currentQuestion, sessionId, session.getQuiz().isShuffleQuestions());
+            currentQuestionForUserDto.setShuffledOptionList(shuffledOptions);
+            builder.currentQuestionState(currentQuestionForUserDto);
             Optional<QuestionAnalyticsUser> analytics = questionAnalyticsUserRepository.findByParticipant_ParticipantIdAndQuestion_QuestionId(participantId, currentQuestion.getQuestionId());
             analytics.ifPresent((qau) -> {
                 builder.selectedAnswer(qau.getSelectedAnswer());
@@ -239,11 +236,27 @@ public class QuizSessionServiceImpl implements QuizSessionService {
 
         Question firstQuestion = questions.get(0);
         QuestionForUserDto questionForUserDto = convertToUserDto(firstQuestion);
+        List<OptionDto> shuffledOptions = getShuffledOptions(firstQuestion, sessionId, session.getQuiz().isShuffleQuestions());
+        questionForUserDto.setShuffledOptionList(shuffledOptions);
         QuestionDetailResponse.QuestionDetailResponseBuilder builder = QuestionDetailResponse.builder()
                 .questionForUserDto(questionForUserDto)
                 .totalQuestions(questions.size())
                 .currentQuestionIndex(session.getCurrentQuestionIndex());
         return builder.build();
+    }
+
+    public List<OptionDto> getShuffledOptions(Question question, UUID participantId, boolean isShuffledOptions) {
+
+        Map<String, Object> options = question.getOptions();
+
+        List<OptionDto> optionList = new ArrayList<>(options.entrySet()
+                .stream()
+                .map(e -> new OptionDto(e.getKey(), e.getValue().toString()))
+                .toList());
+        if(isShuffledOptions){
+            Collections.shuffle(optionList, new Random(participantId.hashCode()));
+        }
+        return optionList;
     }
 
 
@@ -292,6 +305,8 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         List<Question> questions = questionRepository.findByQuiz_QuizIdOrderByDisplayOrder(quizId);
         Question nextQuestion = questions.get(nextIndex);
         QuestionForUserDto questionForUserDto = convertToUserDto(nextQuestion);
+        List<OptionDto> shuffledOptions = getShuffledOptions(nextQuestion, sessionId, session.getQuiz().isShuffleQuestions());
+        questionForUserDto.setShuffledOptionList(shuffledOptions);
         QuestionDetailResponse.QuestionDetailResponseBuilder builder = QuestionDetailResponse.builder()
                 .questionForUserDto(questionForUserDto)
                 .totalQuestions(questions.size())

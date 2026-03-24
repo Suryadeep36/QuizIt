@@ -325,7 +325,7 @@ export default function CreateQuiz() {
                   className="w-4 h-4 accent-[#1b8599]"
                 />
                 <span className="text-sm font-bold text-slate-700">
-                  Shuffle Questions
+                  Shuffle Options For Questions
                 </span>
               </label>
               <label className="flex items-center gap-3 p-4 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors bg-white md:bg-transparent">

@@ -261,6 +261,7 @@ export default function ExamRoom() {
     const {
       questionType,
       options = {},
+      shuffledOptionList = [],
       questionId,
       allowMultipleAnswers,
     } = currentQuestion;
@@ -270,8 +271,16 @@ export default function ExamRoom() {
       case "MCQ":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(options || {}).map(([key, value]) => {
-              // Updated: Access keys from the object structure
+            {(shuffledOptionList?.length > 0
+              ? shuffledOptionList
+              : Object.entries(options || {}).map(([key, value]) => ({
+                  key,
+                  value,
+                }))
+            ).map((opt) => {
+              const key = opt.key;
+              const value = opt.value;
+
               const isSelected = selected?.keys?.includes(key);
 
               return (
@@ -293,8 +302,11 @@ export default function ExamRoom() {
                   >
                     {allowMultipleAnswers && isSelected ? "✓" : key}
                   </div>
+
                   <span
-                    className={`font-bold text-lg ${isSelected ? "text-slate-900" : "text-slate-600"}`}
+                    className={`font-bold text-lg ${
+                      isSelected ? "text-slate-900" : "text-slate-600"
+                    }`}
                   >
                     {value}
                   </span>

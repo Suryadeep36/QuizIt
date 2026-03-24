@@ -25,5 +25,5 @@ public class QuestionForUserDto {
     private Integer maxAnswerLength;
     private Boolean allowMultipleAnswers;
     private Integer displayOrder;
-
+    private List<OptionDto> shuffledOptionList;
 }
