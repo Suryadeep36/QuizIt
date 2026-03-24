@@ -118,17 +118,27 @@ public class ExamModeController {
     }
 
     @PostMapping("/{quizId}/switchTo/{targetIndex}")
-    public ResponseEntity<ExamNavigationResponse> switchQuestion(
+    public ResponseEntity<?> switchQuestion(
             @PathVariable UUID quizId,
             @PathVariable int targetIndex,
             @CookieValue(value = "participantId") String participantId,
             @RequestBody SwitchQuestionRequestDto requestDto) {
-        UUID pid = UUID.fromString(participantId);
-        System.out.println(participantId);
-        ExamNavigationResponse response = examModeService.switchQuestion(quizId, pid, targetIndex, requestDto.getTabSwitchCount());
-        if(response != null)
-            return ResponseEntity.ok(response);
-        return ResponseEntity.badRequest().build();
+        try {
+            UUID pid = UUID.fromString(participantId);
+            ExamNavigationResponse response = examModeService.switchQuestion(quizId, pid, targetIndex, requestDto.getTabSwitchCount());
+
+            if (response != null) {
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid target index"));
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "An unexpected error occurred"));
+        }
     }
 
     @PostMapping("/{quizId}/submit-answer")

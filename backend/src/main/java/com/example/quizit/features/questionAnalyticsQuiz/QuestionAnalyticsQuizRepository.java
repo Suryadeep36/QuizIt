@@ -83,6 +83,14 @@ AND qau.timeSpent = (
     AND q2.question.questionId = qau.question.questionId
     AND q2.isCorrect = true
 )
+AND qau.participant.participantId = (
+    SELECT MIN(q3.participant.participantId)
+    FROM QuestionAnalyticsUser q3
+    WHERE q3.quiz.quizId = :quizId
+    AND q3.question.questionId = qau.question.questionId
+    AND q3.isCorrect = true
+    AND q3.timeSpent = qau.timeSpent
+)
 """)
     List<Object[]> getFastestParticipants(UUID quizId);
 

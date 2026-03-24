@@ -93,7 +93,7 @@ public class EmailService {
             mailSender.send(message);
 
         }
-        catch (MessagingException e){
+        catch (Exception e) {
             throw new RuntimeException("Failed to send email", e);
         }
     }

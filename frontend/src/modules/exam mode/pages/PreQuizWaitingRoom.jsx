@@ -35,7 +35,7 @@ export default function PreQuizWaitingRoom() {
   const participant = useParticipant((state) => state.participant);
   const [quiz, setQuiz] = useState({
     quizId: "ef7d764a-a550-429a-8dc4-79d19722dbbe",
-    quizName: "bhul tari che",
+    quizName: "Quiz Not Found",
     handleStartQuizost: "58142d30-76cb-4650-9d43-d366d93bf455",
     status: null,
     mode: "EXAM",
