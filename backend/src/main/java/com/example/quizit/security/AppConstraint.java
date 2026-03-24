@@ -12,7 +12,8 @@ public class AppConstraint {
             "/login/**",
             "/quizit/refresh",
             "/quizit/register",
-            "/quizit/verify-otp"
+            "/quizit/verify-otp",
+            "/quizit/health",
     };
 
     public static final String[] QUIZIT_PUBLIC_URLS= {
