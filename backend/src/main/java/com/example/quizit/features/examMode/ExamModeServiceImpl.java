@@ -5,10 +5,7 @@ import com.example.quizit.features.allowedUser.AllowedUserRepository;
 import com.example.quizit.features.allowedUser.InvitationStatus;
 import com.example.quizit.features.participant.ParticipantDto;
 import com.example.quizit.features.participant.ParticipantStatus;
-import com.example.quizit.features.question.Question;
-import com.example.quizit.features.question.QuestionDto;
-import com.example.quizit.features.question.QuestionForUserDto;
-import com.example.quizit.features.question.QuestionRepository;
+import com.example.quizit.features.question.*;
 import com.example.quizit.features.quiz.Quiz;
 import com.example.quizit.features.quiz.QuizRepository;
 import com.example.quizit.features.registeredUser.RegisteredUser;
@@ -25,9 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -125,17 +120,37 @@ public class ExamModeServiceImpl implements ExamModeService {
         Duration duration = Duration.between(startTime, endTime);
         QuestionForUserDto currentQuestion =
                 examRedisService.startAttempt(quizId, participantId, duration);
+        List<OptionDto> shuffledOptionList = getShuffledOptions(currentQuestion, participantId, quiz.isShuffleQuestions());
+        currentQuestion.setShuffledOptionList(shuffledOptionList);
         return examRedisService.buildNavigationResponse(quizId, participantId, currentQuestion);
     }
 
     @Override
     public ExamNavigationResponse switchQuestion(UUID quizId, UUID participantId, int targetIndex, int tabSwitches) {
+        Quiz quiz = quizRepository.getReferenceById(quizId);
         int totalQuestions = examRedisService.getTotalQuestions(quizId, participantId);
         if (targetIndex < 0 || targetIndex >= totalQuestions) {
             return null;
         }
+
         QuestionForUserDto nextQuestion = examRedisService.switchQuestion(quizId, participantId, targetIndex, tabSwitches);
+        List<OptionDto> shuffledOptionList = getShuffledOptions(nextQuestion, participantId, quiz.isShuffleQuestions());
+        nextQuestion.setShuffledOptionList(shuffledOptionList);
         return examRedisService.buildNavigationResponse(quizId, participantId, nextQuestion);
+    }
+
+    public List<OptionDto> getShuffledOptions(QuestionForUserDto question, UUID participantId, boolean isShuffledOptions) {
+
+        Map<String, Object> options = question.getOptions();
+
+        List<OptionDto> optionList = new ArrayList<>(options.entrySet()
+                .stream()
+                .map(e -> new OptionDto(e.getKey(), e.getValue().toString()))
+                .toList());
+        if(isShuffledOptions){
+            Collections.shuffle(optionList, new Random(participantId.hashCode()));
+        }
+        return optionList;
     }
 
     @Override
