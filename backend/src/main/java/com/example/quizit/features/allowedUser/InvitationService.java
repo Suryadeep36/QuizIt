@@ -14,6 +14,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -42,59 +43,67 @@ public class InvitationService {
             throw new IllegalArgumentException("User does not belong to quiz");
         }
 
-        try {
-            sendInvitationInternal(quiz, user);
-            user.setInvitationStatus(InvitationStatus.SENT);
-            System.out.println("Email sent successfully to: " + user.getEmail());
-        } catch (Exception e) {
-            user.setInvitationStatus(InvitationStatus.FAILED);
-            user.setDeliveryErrorMessage(e.getMessage());
-            System.err.println("Failed to send email to: " + user.getEmail());
-            System.err.println("Reason: " + e.getMessage());
-        }
+        sendInvitationInternal(quiz, user);
     }
-    @Transactional
     public void sendAllEmail(UUID quizId, UUID hostId) {
 
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
         if (!quiz.getHost().getId().equals(hostId)) {
             throw new AccessDeniedException("Not quiz host");
         }
+
         List<AllowedUser> users =
                 allowedUserRepository.findAllowedUsersByQuiz_QuizIdAndInvitationStatusIn(
                         quizId,
                         List.of(InvitationStatus.NOT_SENT, InvitationStatus.FAILED)
                 );
+
         System.out.println("Starting email sending for quiz " + quizId + ". Total users: " + users.size());
+
         for (AllowedUser user : users) {
+            sendSingleEmailTransactional(quiz, user);
             try {
-                sendInvitationInternal(quiz, user);
-                user.setInvitationStatus(InvitationStatus.SENT);
-                System.out.println("Email sent successfully to: " + user.getEmail());
                 Thread.sleep(150);
-            } catch (Exception e) {
-                user.setInvitationStatus(InvitationStatus.FAILED);
-                System.err.println("Failed to send email to: " + user.getEmail());
-                System.err.println("Reason: " + e.getMessage());
-            }
+            } catch (InterruptedException ignored) {}
         }
 
         System.out.println("Finished sending emails for quiz " + quizId);
+    }
+
+    @Transactional
+    public void sendSingleEmailTransactional(Quiz quiz, AllowedUser user) {
+        sendInvitationInternal(quiz, user);
     }
 
 
 
     private void sendInvitationInternal(Quiz quiz, AllowedUser user) {
         String link = registerUrl + "/register-exam/" + quiz.getQuizId() + "/" + user.getToken();
-        emailService.sendRegisterMail(
-                user.getEmail(),
-                "📩 Invitation: Register for "+ quiz.getQuizName() +" | QuizIt",
-                buildEmailBody(quiz, link)
-        );
+
+        try {
+            CompletableFuture<Void> future = emailService.sendRegisterMail(
+                    user.getEmail(),
+                    "📩 Invitation: Register for " + quiz.getQuizName() + " | QuizIt",
+                    buildEmailBody(quiz, link)
+            );
+
+            future.join();
+
+            user.setInvitationStatus(InvitationStatus.SENT);
+            user.setDeliveryErrorMessage(null);
+            System.out.println("Email sent successfully to: " + user.getEmail());
+
+        } catch (Exception e) {
+            user.setInvitationStatus(InvitationStatus.FAILED);
+            user.setDeliveryErrorMessage(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+
+            System.err.println("Failed to send email to: " + user.getEmail());
+            System.err.println("Reason: " + e.getMessage());
+        }
 
         user.setInvitationSentAt(Instant.now());
-        user.setDeliveryErrorMessage(null);
     }
     private String buildEmailBody(Quiz quiz, String registrationLink) {
         String hostName = quiz.getHost().getUsername();

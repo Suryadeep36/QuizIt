@@ -8,6 +8,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -81,8 +83,8 @@ public class EmailService {
     }
 
     @Async
-    public void sendRegisterMail(String toEmail, String subject, String htmlBody){
-        try{
+    public CompletableFuture<Void> sendRegisterMail(String toEmail, String subject, String htmlBody) {
+        try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
@@ -92,9 +94,10 @@ public class EmailService {
 
             mailSender.send(message);
 
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Failed to send email", e);
+            return CompletableFuture.completedFuture(null);
+
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
         }
     }
 }

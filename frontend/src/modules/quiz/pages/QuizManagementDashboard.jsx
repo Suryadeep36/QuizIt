@@ -21,6 +21,9 @@ import {
   Sparkles,
   FileText,
   QrCode,
+  LineChart,
+  BarChart3,
+  Play,
 } from "lucide-react";
 import { Link, useParams } from "react-router";
 import {
@@ -338,43 +341,64 @@ export default function QuizManagementDashboard() {
             {quiz?.mode === "SERVER" && (
               <Link
                 to={`/run-quiz-host/${quizId}`}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-green-400/30 hover:bg-green-500/20 bg-green-600/10 text-sm text-white font-semibold"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full 
+      bg-gradient-to-r from-green-500 to-emerald-500 
+      hover:from-green-600 hover:to-emerald-600 
+      text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
               >
+                <Play className="w-4 h-4" />
                 Start Quiz
               </Link>
             )}
 
-            {/* CONDITIONS FOR ANALYTICS VISIBILITY */}
+            {/* LOGIC */}
             {(() => {
               const canShowAnalytics = quiz?.holdResult
                 ? quiz?.status === "RESULTS_PUBLISHED"
                 : quiz?.status === "ENDED";
+
+              const disabledClasses =
+                "bg-slate-700/30 text-slate-400 cursor-not-allowed pointer-events-none";
+
+              const enabledBlue =
+                "bg-blue-500/10 text-blue-200 hover:bg-blue-500/20 border border-blue-400/20";
+
+              const enabledPurple =
+                "bg-purple-500/10 text-purple-200 hover:bg-purple-500/20 border border-purple-400/20";
 
               return (
                 <>
                   {/* USER ANALYTICS */}
                   <Link
                     to={`/quiz/leaderboard/${quizId}`}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border 
-            ${
-              canShowAnalytics
-                ? "border-blue-400/30 bg-blue-600/10 hover:bg-blue-500/20 text-white"
-                : "border-slate-500/20 bg-slate-600/10 text-slate-400 cursor-not-allowed pointer-events-none"
-            }`}
+                    title={
+                      canShowAnalytics
+                        ? "View participant performance"
+                        : quiz?.holdResult
+                          ? "Results not published yet"
+                          : "Quiz not ended yet"
+                    }
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all
+          ${canShowAnalytics ? enabledBlue : disabledClasses}`}
                   >
+                    <BarChart3 className="w-4 h-4" />
                     User Analytics
                   </Link>
 
                   {/* QUIZ INSIGHTS */}
                   <Link
                     to={`/quiz-analytics/insights/${quizId}`}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border 
-            ${
-              canShowAnalytics
-                ? "border-purple-400/30 bg-purple-600/10 hover:bg-purple-500/20 text-white"
-                : "border-slate-500/20 bg-slate-600/10 text-slate-400 cursor-not-allowed pointer-events-none"
-            }`}
+                    title={
+                      canShowAnalytics
+                        ? "Detailed question insights"
+                        : quiz?.holdResult
+                          ? "Results not published yet"
+                          : "Quiz not ended yet"
+                    }
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all
+          ${canShowAnalytics ? enabledPurple : disabledClasses}`}
                   >
+                    <LineChart className="w-4 h-4" />
                     Quiz Insights
                   </Link>
                 </>
