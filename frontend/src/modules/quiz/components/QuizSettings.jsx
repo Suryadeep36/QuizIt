@@ -48,10 +48,10 @@ export default function QuizSettings({ quiz }) {
     endTime: quiz?.endTime ? formatForInput(quiz.endTime) : "",
     allowGuest: quiz?.allowGuest ?? true,
     allowedEmails: quiz?.allowedEmails || [],
-    shuffleQuestions: quiz?.shuffleQuestions ?? false,
     showLeaderboard: quiz?.showLeaderboard ?? true,
     allowAllAuthenticated: quiz?.allowAllAuthenticated ?? true,
-    holdResult: quiz?.holdResult ?? true,
+    shuffleQuestions: quiz?.shuffleQuestions ?? false,
+    holdResult: quiz?.holdResult ?? false,
   });
 
   const handleChange = (e) => {
@@ -327,6 +327,87 @@ export default function QuizSettings({ quiz }) {
                     />
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase ml-1">
+                  Result Control
+                </label>
+
+                <div
+                  onClick={() => {
+                    if (!isEditing) return;
+                    setFormData((prev) => ({
+                      ...prev,
+                      holdResult: !prev.holdResult,
+                    }));
+                  }}
+                  className={`flex items-center justify-between px-5 py-3 md:py-4 rounded-2xl border-2 transition-all duration-300 
+      ${!isEditing ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"}
+      ${
+        formData.holdResult
+          ? "border-[#1b8599] bg-[#1b8599]/5"
+          : "border-slate-100 bg-slate-50"
+      }`}
+                >
+                  <span className="text-sm font-bold text-slate-600">
+                    Hold Results (Manual Publish)
+                  </span>
+
+                  <div
+                    className={`w-10 h-5 rounded-full relative transition-colors ${
+                      formData.holdResult ? "bg-[#1b8599]" : "bg-slate-300"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                        formData.holdResult ? "right-1" : "left-1"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SHUFFLE QUESTIONS TOGGLE */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase ml-1">
+                  Question Behavior
+                </label>
+
+                <div
+                  onClick={() => {
+                    if (!isEditing) return;
+                    setFormData((prev) => ({
+                      ...prev,
+                      shuffleQuestions: !prev.shuffleQuestions,
+                    }));
+                  }}
+                  className={`flex items-center justify-between px-5 py-3 md:py-4 rounded-2xl border-2 transition-all duration-300 
+      ${!isEditing ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"}
+      ${
+        formData.shuffleQuestions
+          ? "border-[#1b8599] bg-[#1b8599]/5"
+          : "border-slate-100 bg-slate-50"
+      }`}
+                >
+                  <span className="text-sm font-bold text-slate-600">
+                    Shuffle MCQ Options
+                  </span>
+
+                  <div
+                    className={`w-10 h-5 rounded-full relative transition-colors ${
+                      formData.shuffleQuestions
+                        ? "bg-[#1b8599]"
+                        : "bg-slate-300"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                        formData.shuffleQuestions ? "right-1" : "left-1"
+                      }`}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Timing */}

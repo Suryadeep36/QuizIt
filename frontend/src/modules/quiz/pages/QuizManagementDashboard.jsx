@@ -22,7 +22,7 @@ import {
   FileText,
   QrCode,
 } from "lucide-react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import {
   AIGenQuestions,
   createQuestion,
@@ -335,14 +335,51 @@ export default function QuizManagementDashboard() {
               />
             )}
 
-            <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 hover:bg-blue-500/20 bg-blue-600/10 text-sm text-white">
-              <Eye className="w-4 h-4" />
-              Preview
-            </button>
+            {quiz?.mode === "SERVER" && (
+              <Link
+                to={`/run-quiz-host/${quizId}`}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-green-400/30 hover:bg-green-500/20 bg-green-600/10 text-sm text-white font-semibold"
+              >
+                Start Quiz
+              </Link>
+            )}
 
-            <button className="bg-[#f5a65b] text-white px-6 py-2 rounded-full font-bold hover:bg-[#f59843] shadow-lg">
-              Publish
-            </button>
+            {/* CONDITIONS FOR ANALYTICS VISIBILITY */}
+            {(() => {
+              const canShowAnalytics = quiz?.holdResult
+                ? quiz?.status === "RESULTS_PUBLISHED"
+                : quiz?.status === "ENDED";
+
+              return (
+                <>
+                  {/* USER ANALYTICS */}
+                  <Link
+                    to={`/quiz/leaderboard/${quizId}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border 
+            ${
+              canShowAnalytics
+                ? "border-blue-400/30 bg-blue-600/10 hover:bg-blue-500/20 text-white"
+                : "border-slate-500/20 bg-slate-600/10 text-slate-400 cursor-not-allowed pointer-events-none"
+            }`}
+                  >
+                    User Analytics
+                  </Link>
+
+                  {/* QUIZ INSIGHTS */}
+                  <Link
+                    to={`/quiz-analytics/insights/${quizId}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border 
+            ${
+              canShowAnalytics
+                ? "border-purple-400/30 bg-purple-600/10 hover:bg-purple-500/20 text-white"
+                : "border-slate-500/20 bg-slate-600/10 text-slate-400 cursor-not-allowed pointer-events-none"
+            }`}
+                  >
+                    Quiz Insights
+                  </Link>
+                </>
+              );
+            })()}
           </div>
         </div>
       </nav>

@@ -180,13 +180,13 @@ public class ExamRedisService {
         }
 
         Collections.shuffle(questionIds);
-
         List<String> ids = questionIds.stream()
                 .map(UUID::toString)
                 .toList();
 
         redisTemplate.opsForList().rightPushAll(key, ids);
         setTTL(key, duration.getSeconds());
+        setTTL(key + ":lock", duration.getSeconds());
     }
 
     public List<UUID> getShuffledOrderQuestionList(UUID quizId, UUID participantId) {
