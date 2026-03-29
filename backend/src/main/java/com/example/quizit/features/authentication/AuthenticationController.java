@@ -111,9 +111,9 @@ public class AuthenticationController {
         if (!otpEntity.getOtp().equals(request.getOtp())) {
             throw new RuntimeException("Invalid OTP");
         }
-        if (otpEntity.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("OTP expired");
-        }
+//        if (otpEntity.getExpiryTime().isBefore(LocalDateTime.now())) {
+//            throw new RuntimeException("OTP expired");
+//        }
 
 
         User user = userRepository.findByEmail(request.getEmail())
