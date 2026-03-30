@@ -304,17 +304,14 @@ export default function HostLiveQuiz() {
 
           case "QUIZ_ENDED":
             setStage("leaderboard");
-            const finish = async () => {
-              try {
-                await endQuiz(quizId);
-                console.log("Quiz ended successfully");
-                localStorage.removeItem("quizSession");
-                navigate(`/quiz/leaderboard/${quizId}`);
-              } catch (err) {
-                console.error("Failed to end quiz:", err);
-              }
-            };
-            finish();
+
+            (async () => {
+              console.log("Ending quiz with ID:", quizId);
+              await endQuiz(quizId);
+              localStorage.removeItem("quizSession");
+              navigate(`/quiz/leaderboard/${quizId}`);
+            })();
+
             break;
 
           case "SUBMIT_ANSWER":

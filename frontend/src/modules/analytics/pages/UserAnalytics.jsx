@@ -14,6 +14,7 @@ import {
   Activity,
   Loader2,
   Info,
+  Lock, // <-- Added Lock icon
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParticipant } from "../../../stores/store";
@@ -26,30 +27,37 @@ export default function UserAnalytics() {
   const [analytics, setAnalytics] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isResultsHidden, setIsResultsHidden] = useState(false); // <-- New state for 403
 
   const { quizId } = useParams();
   let { participantId } = useParams();
   participantId = participantId
     ? participantId
     : useParticipant((state) => state.participant?.id);
-  // console.log(participantId);
+
   useEffect(() => {
     if (!quizId || !participantId) return;
 
     const fetchAnalyticsAndQuestions = async () => {
       try {
         setLoading(true);
+        setIsResultsHidden(false); // Reset on fetch
+        
         const [analyticsData, questionData] = await Promise.all([
           getParticipantAnalytics(participantId),
           getQuestionsByQuizId(quizId),
         ]);
-        console.log(questionData);
-        console.log(analyticsData);
+        
         setAnalytics(analyticsData);
         setQuestions(questionData);
       } catch (err) {
         console.error(err);
-        toast.error("Failed to load analytics");
+        // Check for 403 Forbidden status
+        if (err.response?.status === 403) {
+          setIsResultsHidden(true);
+        } else {
+          toast.error("Failed to load analytics");
+        }
       } finally {
         setLoading(false);
       }
@@ -57,6 +65,31 @@ export default function UserAnalytics() {
 
     fetchAnalyticsAndQuestions();
   }, [quizId, participantId]);
+
+  // --- NEW: Render Locked Screen for 403 ---
+  if (isResultsHidden) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#4a9cb0] via-[#5fb4c7] to-[#4a9cb0] flex flex-col items-center justify-center p-6">
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 md:p-12 rounded-[2.5rem] flex flex-col items-center max-w-md text-center shadow-2xl animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-white/10">
+            <Lock className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-2xl md:text-3xl text-white font-black uppercase tracking-tight mb-3">
+            Results Hidden
+          </h1>
+          <p className="text-white/80 font-medium text-sm md:text-base mb-8 leading-relaxed">
+            Quiz results are not published yet. Please check back later once the host releases the analytics.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="bg-white text-[#4a9cb0] px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-all active:scale-95 shadow-lg flex items-center gap-2"
+          >
+            <ChevronLeft className="w-4 h-4" /> Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -187,17 +220,12 @@ export default function UserAnalytics() {
             {/* Main Container: Fixed Height is Mandatory for Percentages to Work */}
             <div className="flex items-end gap-1.5 md:gap-3 h-48 md:h-64 px-1 relative border-b border-slate-100">
               {questions.map((q, i) => {
-                // 1. DATA CHECK: Try multiple possible ID formats from your store
                 const questionId = q.questionId || q.id || q._id;
                 const qa = analyticsMap[questionId];
-
-                // 2. LOGGING: Open your browser console (F12) to see if these numbers exist
-                // console.log(`Q${i + 1} ID: ${questionId}`, "Analytics:", qa);
 
                 const time = qa?.timeSpent || 0;
                 const isCorrect = qa?.isCorrect || false;
 
-                // 3. HEIGHT LOGIC: Using 40s as max scale to handle longer answers
                 const maxScale = 40;
                 const calculatedHeight = (time / maxScale) * 100;
                 const finalHeight = Math.min(
@@ -230,7 +258,7 @@ export default function UserAnalytics() {
                       <div className="w-2 h-2 bg-slate-800 rotate-45 -mt-1" />
                     </div>
 
-                    {/* THE BAR: Ensure background colors are solid for testing */}
+                    {/* THE BAR */}
                     <div
                       className={`w-full rounded-t-lg transition-all duration-700 ease-out origin-bottom
               ${

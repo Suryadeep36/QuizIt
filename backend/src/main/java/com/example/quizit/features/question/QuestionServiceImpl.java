@@ -46,7 +46,7 @@ public class QuestionServiceImpl implements QuestionService {
                 );
 
         // Rule 1: If ENDED → allow anyone
-        if (quiz.getStatus() == QuizStatus.ENDED) {
+        if (quiz.getStatus() == QuizStatus.ENDED || quiz.getStatus() == QuizStatus.RESULTS_PUBLISHED) {
 
             return questionRepository.findByQuiz_QuizId(id)
                     .stream()
@@ -200,7 +200,6 @@ public class QuestionServiceImpl implements QuestionService {
         if (questionDto == null) {
             throw new ResourceNotFoundException();
         }
-        System.out.println(questionDto.getCorrectAnswer());
         UUID uuid = UserHelper.parseUUID(QuestionId);
 
         Question existingQuestion = questionRepository.findById(uuid)
@@ -264,6 +263,9 @@ public class QuestionServiceImpl implements QuestionService {
         }
         if (questionDto.getMaxAnswerLength() != null) {
             existingQuestion.setMaxAnswerLength(questionDto.getMaxAnswerLength());
+        }
+        if(questionDto.getPoints() != null){
+            existingQuestion.setPoints(questionDto.getPoints());
         }
 
         Question savedQuestion = questionRepository.save(existingQuestion);
