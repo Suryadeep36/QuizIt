@@ -14,6 +14,7 @@ import {
   CheckCircle,
   MinusCircle,
   Filter,
+  CheckSquare // <-- Added new icon for the send selected button
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -21,15 +22,18 @@ import {
   sendInvitation,
   sendInvitationToAll,
   sendJoinLinkToRegistered,
+  sendInvitationToSelected // <-- Imported your new service
 } from "../../../services/AuthService";
 
 export default function InvitationManager({ quiz }) {
   const [isSendingAll, setIsSendingAll] = useState(false);
+  const [isSendingSelected, setIsSendingSelected] = useState(false); // <-- Track loading state for selected
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSendingLinksAll, setIsSendingLinksAll] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState([]); // <-- State to hold checked users
 
   const handleSendJoinLinksToRegistered = async () => {
     setIsSendingLinksAll(true);
@@ -74,10 +78,10 @@ export default function InvitationManager({ quiz }) {
   );
 
   useEffect(() => {
-    fetchUsers(); 
+    fetchUsers();
 
     const interval = setInterval(() => {
-      fetchUsers(true); 
+      fetchUsers(true);
     }, 4000);
 
     return () => clearInterval(interval);
@@ -112,9 +116,28 @@ export default function InvitationManager({ quiz }) {
     }
   };
 
-  // UPDATED: Maps strictly to your Enum
+  const handleSendSelected = async () => {
+    if (selectedUserIds.length === 0) return;
+    
+    setIsSendingSelected(true);
+    const loadId = toast.loading(`Sending invitations to ${selectedUserIds.length} selected users...`);
+    try {
+      await sendInvitationToSelected(quiz.quizId, selectedUserIds);
+      toast.success(`Sent ${selectedUserIds.length} invitations!`, { id: loadId });
+      setSelectedUserIds([]); 
+      fetchUsers();
+    } catch (err) {
+      console.log(err);
+      toast.error(
+        err.response?.data?.message || err.message || "Bulk send selected failed",
+        { id: loadId }
+      );
+    } finally {
+      setIsSendingSelected(false);
+    }
+  };
+
   const getStatusBadge = (user) => {
-    // Fallback to NOT_SENT if the backend returns null, or use user.registered for legacy support
     let status = user.invitationStatus || "NOT_SENT";
     if (user.registered && status !== "QUIZ_SUBMITTED") {
       status = "REGISTERED";
@@ -159,7 +182,7 @@ export default function InvitationManager({ quiz }) {
     );
   };
 
-  // UPDATED: Filter by both search query AND Enum status
+  // Filter by both search query AND Enum status
   const filteredUsers = users.filter((u) => {
     const matchesSearch = u.email
       ?.toLowerCase()
@@ -176,6 +199,34 @@ export default function InvitationManager({ quiz }) {
     return matchesSearch && matchesStatus;
   });
 
+  const canBeInvited = (user) => {
+    return !(
+      user.registered ||
+      user.invitationStatus === "REGISTERED" ||
+      user.invitationStatus === "QUIZ_SUBMITTED"
+    );
+  };
+
+  const eligibleFilteredUsers = filteredUsers.filter(canBeInvited);
+  const isAllSelected = eligibleFilteredUsers.length > 0 && selectedUserIds.length === eligibleFilteredUsers.length;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(eligibleFilteredUsers.map(u => u.id));
+    }
+  };
+
+  const handleSelectUser = (userId) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+
   if (loading)
     return (
       <div className="flex-1 flex items-center justify-center p-20">
@@ -186,7 +237,6 @@ export default function InvitationManager({ quiz }) {
   return (
     <div className="flex-1 p-2 max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col gap-8">
-        {/* Header Section Updates */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -221,6 +271,22 @@ export default function InvitationManager({ quiz }) {
               Send Join Links
             </button>
 
+            {/* NEW: Send Selected Button */}
+            {selectedUserIds.length > 0 && (
+              <button
+                onClick={handleSendSelected}
+                disabled={isSendingSelected}
+                className="bg-[#4a9cb0] hover:bg-[#3d8394] disabled:opacity-50 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 animate-in zoom-in-95"
+              >
+                {isSendingSelected ? (
+                  <RefreshCcw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckSquare className="w-4 h-4" />
+                )}
+                Send Selected ({selectedUserIds.length})
+              </button>
+            )}
+
             <button
               onClick={handleInviteAll}
               disabled={isSendingAll || users.length === 0}
@@ -238,7 +304,7 @@ export default function InvitationManager({ quiz }) {
 
         {/* Main Card */}
         <div className="bg-slate-50/90 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col">
-          {/* UPDATED: Search & Filter Strip */}
+          {/* Search & Filter Strip */}
           <div className="p-4 md:px-8 md:py-6 border-b border-slate-200/50 bg-white/50">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative group flex-1">
@@ -265,7 +331,6 @@ export default function InvitationManager({ quiz }) {
                   <option value="REGISTERED">Registered</option>
                   <option value="QUIZ_SUBMITTED">Submitted</option>
                 </select>
-                {/* Custom Chevron for Select */}
                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                   <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
                 </div>
@@ -280,7 +345,18 @@ export default function InvitationManager({ quiz }) {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-100/50 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    <th className="px-8 py-5">Participant</th>
+                    {/* NEW: Checkbox Header */}
+                    <th className="px-6 py-5 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleSelectAll}
+                        disabled={eligibleFilteredUsers.length === 0}
+                        className="w-4 h-4 rounded border-slate-300 text-[#4a9cb0] focus:ring-[#4a9cb0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        title="Select all eligible users"
+                      />
+                    </th>
+                    <th className="px-4 py-5">Participant</th>
                     <th className="px-4 py-5 text-center">Current Status</th>
                     <th className="px-4 py-5">Send At</th>
                     <th className="px-8 py-5 text-right">Invite</th>
@@ -292,7 +368,20 @@ export default function InvitationManager({ quiz }) {
                       key={user.id}
                       className="hover:bg-white/80 transition-all group"
                     >
-                      <td className="px-8 py-5">
+                      {/* NEW: Checkbox Body Cell */}
+                      <td className="px-6 py-5 text-center">
+                        {canBeInvited(user) ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.includes(user.id)}
+                            onChange={() => handleSelectUser(user.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-[#4a9cb0] focus:ring-[#4a9cb0] cursor-pointer transition-all"
+                          />
+                        ) : (
+                          <span className="w-4 h-4 inline-block"></span> // Placeholder spacer
+                        )}
+                      </td>
+                      <td className="px-4 py-5">
                         <div className="flex flex-col">
                           <span className="text-sm font-bold text-slate-700">
                             {user.email}
@@ -320,12 +409,7 @@ export default function InvitationManager({ quiz }) {
                         </span>
                       </td>
                       <td className="px-8 py-5 text-right">
-                        {/* Only show invite button if they haven't registered/submitted */}
-                        {!(
-                          user.registered ||
-                          user.invitationStatus === "REGISTERED" ||
-                          user.invitationStatus === "QUIZ_SUBMITTED"
-                        ) && (
+                        {canBeInvited(user) && (
                           <button
                             onClick={() => handleSendInvite(user.id)}
                             className="p-2.5 bg-slate-100 text-slate-400 hover:bg-[#4a9cb0] hover:text-white rounded-xl transition-all active:scale-90"
@@ -343,32 +427,59 @@ export default function InvitationManager({ quiz }) {
 
             {/* Mobile List View */}
             <div className="md:hidden divide-y divide-slate-100">
+              {/* Optional: Mobile "Select All" toggle strip */}
+              {eligibleFilteredUsers.length > 0 && (
+                <div className="p-4 bg-slate-50 flex items-center justify-between border-b border-slate-100">
+                  <label className="flex items-center gap-3 text-xs font-bold text-slate-500 uppercase cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-[#4a9cb0] focus:ring-[#4a9cb0]"
+                    />
+                    Select All Eligible
+                  </label>
+                </div>
+              )}
+              
               {filteredUsers.map((user) => (
                 <div
                   key={user.id}
                   className="p-6 flex flex-col gap-4 bg-white/40"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-col max-w-[70%]">
-                      <span className="text-sm font-black text-slate-800 truncate">
-                        {user.email}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">
-                        {user.invitationSentAt
-                          ? `Sent: ${new Date(user.invitationSentAt).toLocaleDateString()}`
-                          : "Never invited"}
-                      </span>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-start gap-4 flex-1 overflow-hidden">
+                      {/* NEW: Mobile Checkbox */}
+                      {canBeInvited(user) ? (
+                        <div className="pt-1">
+                           <input
+                            type="checkbox"
+                            checked={selectedUserIds.includes(user.id)}
+                            onChange={() => handleSelectUser(user.id)}
+                            className="w-5 h-5 rounded border-slate-300 text-[#4a9cb0] focus:ring-[#4a9cb0]"
+                          />
+                        </div>
+                      ) : (
+                         <div className="w-5" /> // Spacer
+                      )}
+                      
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-sm font-black text-slate-800 truncate">
+                          {user.email}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase mt-1">
+                          {user.invitationSentAt
+                            ? `Sent: ${new Date(user.invitationSentAt).toLocaleDateString()}`
+                            : "Never invited"}
+                        </span>
+                      </div>
                     </div>
                     {getStatusBadge(user)}
                   </div>
-                  {!(
-                    user.registered ||
-                    user.invitationStatus === "REGISTERED" ||
-                    user.invitationStatus === "QUIZ_SUBMITTED"
-                  ) && (
+                  {canBeInvited(user) && (
                     <button
                       onClick={() => handleSendInvite(user.id)}
-                      className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                      className="w-full mt-2 py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       <Send className="w-3 h-3" /> Resend Invite
                     </button>
@@ -377,7 +488,6 @@ export default function InvitationManager({ quiz }) {
               ))}
             </div>
 
-            {/* Empty States */}
             {filteredUsers.length === 0 && (
               <div className="py-24 text-center">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">

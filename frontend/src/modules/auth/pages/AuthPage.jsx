@@ -199,11 +199,11 @@ export default function AuthPage() {
           });
         }
       } catch (err) {
-        toast.error(
-          err.response?.data?.message ||
-            err.message ||
-            "Participant not linked!",
-        );
+        // toast.error(
+        //   err.response?.data?.message ||
+        //     err.message ||
+        //     "Participant not linked!",
+        // );
       }
 
       setLoginData({

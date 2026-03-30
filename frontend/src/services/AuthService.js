@@ -191,6 +191,11 @@ export const sendInvitationToAll = async (quizId) => {
   return response.data;
 };
 
+export const sendInvitationToSelected = async (quizId, allowedUserIds) => {
+  const response = await apiClient.post(`/quiz/${quizId}/invitations/send-selected`, allowedUserIds);
+  return response.data;
+};
+
 export const sendInvitation = async (quizId, allowedUserId) => {
   const response = await apiClient.post(
     `/quiz/${quizId}/invitations/${allowedUserId}/send`,

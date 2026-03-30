@@ -73,6 +73,42 @@ public class InvitationService {
     }
 
     @Transactional
+    public void sendBulkEmail(UUID quizId, UUID hostId, List<UUID> allowedUserIds) {
+        if (allowedUserIds == null || allowedUserIds.isEmpty()) {
+            System.out.println("No users selected for bulk email.");
+            return;
+        }
+
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        if (!quiz.getHost().getId().equals(hostId)) {
+            throw new AccessDeniedException("Not quiz host");
+        }
+
+        List<AllowedUser> users = allowedUserRepository.findAllById(allowedUserIds);
+
+        System.out.println("Starting bulk email sending for quiz " + quizId + ". Total users fetched: " + users.size());
+
+        for (AllowedUser user : users) {
+            if (!user.getQuiz().getQuizId().equals(quizId)) {
+                System.err.println("Skipping user " + user.getId() + ": Does not belong to quiz " + quizId);
+                continue;
+            }
+
+            sendSingleEmailTransactional(quiz, user);
+
+            try {
+                Thread.sleep(150);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        System.out.println("Finished bulk sending emails for quiz " + quizId);
+    }
+
+    @Transactional
     public void sendSingleEmailTransactional(Quiz quiz, AllowedUser user) {
         sendInvitationInternal(quiz, user);
     }

@@ -88,6 +88,14 @@ public class QuizController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/quiz/{quizId}/invitations/send-selected")
+    public ResponseEntity<Void> sendEmailToSelected(@PathVariable UUID quizId, @RequestBody List<UUID> allowedUserIds, Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        UUID userId = user.getId();
+        invitationService.sendBulkEmail(quizId, userId, allowedUserIds);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/quiz/{quizId}/join-link/send-all")
     public ResponseEntity<Void> sendJoinLinkAll(@PathVariable UUID quizId,Authentication authentication){
         User user = (User) authentication.getPrincipal();
@@ -95,6 +103,8 @@ public class QuizController {
         sendJoinLinkService.sendJoinLinkAll(quizId, userId);
         return ResponseEntity.noContent().build();
     }
+
+
 
     @PostMapping("/quiz/{quizId}/end-early")
     public ResponseEntity<Void> endQuizEarly(@PathVariable UUID quizId, Authentication authentication){
