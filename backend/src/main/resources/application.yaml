@@ -43,7 +43,7 @@ spring:
       max-lifetime: 25000
       connection-timeout: 20000
     url: ${DB_URL}
-    username: postgres
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
