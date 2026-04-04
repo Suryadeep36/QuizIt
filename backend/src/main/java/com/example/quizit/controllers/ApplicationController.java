@@ -26,7 +26,7 @@ public class ApplicationController {
     @GetMapping("/health")
     public ResponseEntity<String> getHealth(){
 
-        userRepository.findByEmail("For db health");
+        userRepository.count();// DB health
         return ResponseEntity.ok("QuizIt is running!");
     }
 }
